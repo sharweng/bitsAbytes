@@ -89,12 +89,22 @@ CREATE TABLE products (
     release_date DATE,
     developer VARCHAR(255),
     publisher VARCHAR(255),
-    image_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (plat_id) REFERENCES platform_types(plat_id) ON DELETE CASCADE,
     FOREIGN KEY (ptype_id) REFERENCES product_types(ptype_id) ON DELETE CASCADE
+);
+
+-- Create Product Images table
+CREATE TABLE product_images (
+    img_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    image_url VARCHAR(200),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
 -- Create Stock table
