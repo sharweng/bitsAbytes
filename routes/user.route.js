@@ -8,9 +8,9 @@ const {
   deactivateUser,
   reactivateUser,
   getUserProfile,
-} = require("../controllers/user.controller")
+} = require("../controllers/user.controller.js")
 
-const { isAuthenticatedUser } = require("../middlewares/auth")
+const { isAuthenticatedUser } = require("../middlewares/auth.js")
 
 // Public routes
 router.post("/register", registerUser)
