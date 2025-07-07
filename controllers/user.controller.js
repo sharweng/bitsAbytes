@@ -130,7 +130,8 @@ const loginUser = (req, res) => {
 }
 
 const updateUser = (req, res) => {
-  const { user_id, first_name, last_name, contact_number } = req.body
+  const { first_name, last_name, contact_number } = req.body
+  const { user_id } = req.params
   let image_url = null
 
   if (!user_id) {
@@ -191,23 +192,10 @@ const updateUser = (req, res) => {
 }
 
 const deactivateUser = (req, res) => {
-  const { user_id, email } = req.body
+  const { user_id } = req.params
 
-  if (!user_id && !email) {
-    return res.status(400).json({
-      success: false,
-      message: "User ID or email is required",
-    })
-  }
-
-  let sql, params
-  if (user_id) {
-    sql = "UPDATE users SET deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted = 0"
-    params = [user_id]
-  } else {
-    sql = "UPDATE users SET deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE email = ? AND deleted = 0"
-    params = [email]
-  }
+  const sql = "UPDATE users SET deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted = 0"
+  const params = [user_id]
 
   connection.execute(sql, params, (err, result) => {
     if (err) {
@@ -230,7 +218,6 @@ const deactivateUser = (req, res) => {
       success: true,
       message: "User deactivated successfully",
       user_id: user_id,
-      email: email,
       deactivated_at: new Date(),
     })
   })
@@ -272,23 +259,10 @@ const getUserProfile = (req, res) => {
 }
 
 const reactivateUser = (req, res) => {
-  const { user_id, email } = req.body
+  const { user_id } = req.params
 
-  if (!user_id && !email) {
-    return res.status(400).json({
-      success: false,
-      message: "User ID or email is required",
-    })
-  }
-
-  let sql, params
-  if (user_id) {
-    sql = "UPDATE users SET deleted = 0, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted = 1"
-    params = [user_id]
-  } else {
-    sql = "UPDATE users SET deleted = 0, updated_at = CURRENT_TIMESTAMP WHERE email = ? AND deleted = 1"
-    params = [email]
-  }
+  const sql = "UPDATE users SET deleted = 0, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND deleted = 1"
+  const params = [user_id]
 
   connection.execute(sql, params, (err, result) => {
     if (err) {
@@ -311,10 +285,93 @@ const reactivateUser = (req, res) => {
       success: true,
       message: "User reactivated successfully",
       user_id: user_id,
-      email: email,
       reactivated_at: new Date(),
     })
   })
+}
+
+const getAllUsers = (req, res) => {
+  const { include_deleted = "false", role_filter } = req.query
+
+  let whereClause = ""
+  const params = []
+
+  // Handle deleted users filter
+  if (include_deleted === "true") {
+    // Show all users (both active and deactivated)
+    whereClause = ""
+  } else if (include_deleted === "only") {
+    // Show only deactivated users
+    whereClause = "WHERE u.deleted = 1"
+  } else {
+    // Default: show only active users
+    whereClause = "WHERE u.deleted = 0"
+  }
+
+  // Handle role filter
+  if (role_filter) {
+    if (whereClause === "") {
+      whereClause = "WHERE r.description = ?"
+    } else {
+      whereClause += " AND r.description = ?"
+    }
+    params.push(role_filter)
+  }
+
+  const sql = `
+    SELECT u.user_id, u.email, u.first_name, u.last_name, 
+           u.contact_number, u.image_url, u.deleted, u.created_at, 
+           u.updated_at, r.description as role
+    FROM users u 
+    JOIN roles r ON u.role_id = r.role_id 
+    ${whereClause}
+    ORDER BY u.created_at DESC
+  `
+
+  try {
+    connection.execute(sql, params, (err, results) => {
+      if (err) {
+        console.log(err)
+        return res.status(500).json({
+          success: false,
+          message: "Error fetching users",
+          error: err.message,
+        })
+      }
+
+      // Convert deleted field to proper boolean and count users
+      const processedResults = results.map((user) => ({
+        ...user,
+        deleted: Boolean(user.deleted), // Convert to proper boolean
+      }))
+
+      // Count active and deactivated users using both number and boolean comparison
+      const activeUsers = results.filter((user) => user.deleted == 0 || user.deleted === false).length
+      const deactivatedUsers = results.filter((user) => user.deleted == 1 || user.deleted === true).length
+
+      console.log(
+        "Debug - Sample user deleted values:",
+        results.slice(0, 3).map((u) => ({ id: u.user_id, deleted: u.deleted, type: typeof u.deleted })),
+      )
+      console.log("Debug - Active users count:", activeUsers)
+      console.log("Debug - Deactivated users count:", deactivatedUsers)
+
+      return res.status(200).json({
+        success: true,
+        users: processedResults,
+        total_users: results.length,
+        active_users: activeUsers,
+        deactivated_users: deactivatedUsers,
+      })
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    })
+  }
 }
 
 module.exports = {
@@ -324,4 +381,5 @@ module.exports = {
   deactivateUser,
   reactivateUser,
   getUserProfile,
+  getAllUsers,
 }
