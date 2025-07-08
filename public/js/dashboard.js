@@ -1,16 +1,14 @@
-const $ = require("jquery")
-const API_BASE_URL = "https://localhost:4000/api"
-const makeAuthenticatedRequest = require("./makeAuthenticatedRequest")
-const checkAuth = require("./checkAuth")
-
 $(document).ready(() => {
+  const API_BASE_URL = window.API_BASE_URL || "http://localhost:4000/api"
+
   // Load dashboard statistics
   function loadDashboardStats() {
     // Load users count
-    makeAuthenticatedRequest({
+    window.makeAuthenticatedRequest({
       url: `${API_BASE_URL}/users`,
       method: "GET",
       success: (response) => {
+        console.log("Users response:", response)
         if (response.success) {
           $("#totalUsers").text(response.total_users || 0)
           $("#deactivatedUsers").text(response.deactivated_users || 0)
@@ -22,10 +20,11 @@ $(document).ready(() => {
     })
 
     // Load products count
-    $.ajax({
+    window.makeAuthenticatedRequest({
       url: `${API_BASE_URL}/products`,
       method: "GET",
       success: (response) => {
+        console.log("Products response:", response)
         if (response.rows) {
           $("#totalProducts").text(response.rows.length)
         }
@@ -36,10 +35,11 @@ $(document).ready(() => {
     })
 
     // Load reviews count
-    $.ajax({
+    window.makeAuthenticatedRequest({
       url: `${API_BASE_URL}/reviews`,
       method: "GET",
       success: (response) => {
+        console.log("Reviews response:", response)
         if (response.success) {
           $("#totalReviews").text(response.total_reviews || 0)
         }
@@ -51,7 +51,7 @@ $(document).ready(() => {
   }
 
   // Initialize dashboard
-  if (checkAuth()) {
+  if (window.checkAuth && window.checkAuth()) {
     loadDashboardStats()
   }
 })

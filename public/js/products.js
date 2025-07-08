@@ -1,10 +1,7 @@
-const $ = require("jquery")
-const API_BASE_URL = "https://localhost:4000/api"
-const Swal = require("sweetalert2")
-const makeAuthenticatedRequest = require("./makeAuthenticatedRequest")
-const checkAuth = require("./checkAuth")
+const $ = window.jQuery // Declare the $ variable
 
 $(document).ready(() => {
+  const API_BASE_URL = window.API_BASE_URL || "http://localhost:4000/api"
   let productsTable
   let isEditMode = false
 
@@ -14,6 +11,10 @@ $(document).ready(() => {
       ajax: {
         url: `${API_BASE_URL}/products`,
         dataSrc: "rows",
+        error: (xhr, error, code) => {
+          console.error("DataTable AJAX error:", xhr, error, code)
+          console.error("Response:", xhr.responseText)
+        },
       },
       columns: [
         { data: "product_id" },
@@ -79,6 +80,7 @@ $(document).ready(() => {
       url: `${API_BASE_URL}/products/${productId}`,
       method: "GET",
       success: (response) => {
+        console.log("Product response:", response)
         if (response.success) {
           const product = response.result
           $("#modalTitle").text("Edit Product")
@@ -97,7 +99,8 @@ $(document).ready(() => {
         }
       },
       error: (xhr) => {
-        Swal.fire({
+        console.error("Error loading product:", xhr)
+        window.Swal.fire({
           icon: "error",
           title: "Error",
           text: "Failed to load product data",
@@ -114,44 +117,45 @@ $(document).ready(() => {
     const productId = $("#productId").val()
 
     const url = isEditMode ? `${API_BASE_URL}/products/${productId}` : `${API_BASE_URL}/products`
-
     const method = isEditMode ? "PUT" : "POST"
 
-    makeAuthenticatedRequest({
-      url: url,
-      method: method,
-      data: formData,
-      processData: false,
-      contentType: false,
-      success: (response) => {
-        if (response.success) {
-          Swal.fire({
-            icon: "success",
-            title: "Success!",
-            text: isEditMode ? "Product updated successfully" : "Product added successfully",
-            timer: 1500,
-            showConfirmButton: false,
+    if (window.makeAuthenticatedRequest) {
+      window.makeAuthenticatedRequest({
+        url: url,
+        method: method,
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: (response) => {
+          if (response.success) {
+            window.Swal.fire({
+              icon: "success",
+              title: "Success!",
+              text: isEditMode ? "Product updated successfully" : "Product added successfully",
+              timer: 1500,
+              showConfirmButton: false,
+            })
+            $("#productModal").addClass("hidden").removeClass("flex")
+            productsTable.ajax.reload()
+          }
+        },
+        error: (xhr) => {
+          const response = xhr.responseJSON
+          window.Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: response?.error || "An error occurred",
           })
-          $("#productModal").addClass("hidden").removeClass("flex")
-          productsTable.ajax.reload()
-        }
-      },
-      error: (xhr) => {
-        const response = xhr.responseJSON
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: response.error || "An error occurred",
-        })
-      },
-    })
+        },
+      })
+    }
   })
 
   // Delete product
   $(document).on("click", ".delete-product", function () {
     const productId = $(this).data("id")
 
-    Swal.fire({
+    window.Swal.fire({
       title: "Are you sure?",
       text: "This will permanently delete the product",
       icon: "warning",
@@ -160,13 +164,13 @@ $(document).ready(() => {
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
     }).then((result) => {
-      if (result.isConfirmed) {
-        makeAuthenticatedRequest({
+      if (result.isConfirmed && window.makeAuthenticatedRequest) {
+        window.makeAuthenticatedRequest({
           url: `${API_BASE_URL}/products/${productId}`,
           method: "DELETE",
           success: (response) => {
             if (response.success) {
-              Swal.fire({
+              window.Swal.fire({
                 icon: "success",
                 title: "Deleted!",
                 text: response.message,
@@ -178,10 +182,10 @@ $(document).ready(() => {
           },
           error: (xhr) => {
             const response = xhr.responseJSON
-            Swal.fire({
+            window.Swal.fire({
               icon: "error",
               title: "Error",
-              text: response.error || "Failed to delete product",
+              text: response?.error || "Failed to delete product",
             })
           },
         })
@@ -195,7 +199,10 @@ $(document).ready(() => {
   })
 
   // Initialize
-  if (checkAuth()) {
+  if (window.checkAuth && window.checkAuth()) {
+    console.log("Initializing products table...")
     initializeProductsTable()
+  } else {
+    console.error("checkAuth function not available")
   }
 })

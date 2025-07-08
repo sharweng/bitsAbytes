@@ -158,6 +158,7 @@ $(document).ready(() => {
 
     const originalError = options.error
     options.error = (xhr) => {
+      console.error("AJAX Error:", xhr)
       if (xhr.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")

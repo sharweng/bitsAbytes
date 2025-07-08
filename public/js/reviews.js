@@ -1,17 +1,8 @@
-const $ = window.$ // Declare the $ variable
-const API_BASE_URL = "https://localhost:4000/api" // Declare the API_BASE_URL variable
-const Swal = window.Swal // Declare the Swal variable
-const makeAuthenticatedRequest = (options) => {
-  // Placeholder for makeAuthenticatedRequest function
-  $.ajax(options)
-}
-const checkAuth = () => {
-  // Placeholder for checkAuth function
-  return true
-}
-
 $(document).ready(() => {
+  const API_BASE_URL = window.API_BASE_URL || "http://localhost:4000/api"
   let reviewsTable
+  const $ = window.$ // Declare the $ variable
+  const Swal = window.Swal // Declare the Swal variable
 
   // Initialize DataTable
   function initializeReviewsTable() {
@@ -19,6 +10,9 @@ $(document).ready(() => {
       ajax: {
         url: `${API_BASE_URL}/reviews`,
         dataSrc: "reviews",
+        error: (xhr, error, code) => {
+          console.error("DataTable AJAX error:", xhr, error, code)
+        },
       },
       columns: [
         { data: "review_id" },
@@ -156,7 +150,7 @@ $(document).ready(() => {
       confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
-        makeAuthenticatedRequest({
+        window.makeAuthenticatedRequest({
           url: `${API_BASE_URL}/reviews/${reviewId}`,
           method: "DELETE",
           success: (response) => {
@@ -185,7 +179,7 @@ $(document).ready(() => {
   })
 
   // Initialize
-  if (checkAuth()) {
+  if (window.checkAuth && window.checkAuth()) {
     initializeReviewsTable()
   }
 })
