@@ -11,8 +11,8 @@ const {isAuthenticatedUser} = require('../middlewares/auth.js')
 
 router.get('/', getAllProducts)
 router.get('/:id', getProduct)
-router.post('/', isAuthenticatedUser, upload.single('image'), addProduct)
-router.put('/:id', isAuthenticatedUser, upload.single('image'), updateProduct)
+router.post('/', isAuthenticatedUser, upload.any('image'), addProduct)
+router.put('/:id', isAuthenticatedUser, upload.any('image'), updateProduct)
 router.delete('/:id', isAuthenticatedUser, deleteProduct)
 
 module.exports = router;
