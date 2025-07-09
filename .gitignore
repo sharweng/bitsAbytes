@@ -3,3 +3,4 @@ node_modules
 database/users.sql
 database/reviews.sql
 public/testCase
+images/*

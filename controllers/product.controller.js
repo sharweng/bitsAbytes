@@ -92,6 +92,48 @@ const getProduct = (req, res) => {
   }
 }
 
+// Get all platform types
+const getPlatformTypes = (req, res) => {
+  const sql = "SELECT plat_id, description FROM platform_types ORDER BY plat_id"
+
+  connection.execute(sql, [], (err, results) => {
+    if (err) {
+      console.log(err)
+      return res.status(500).json({
+        success: false,
+        message: "Error fetching platform types",
+        error: err.message,
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      platforms: results,
+    })
+  })
+}
+
+// Get all product types
+const getProductTypes = (req, res) => {
+  const sql = "SELECT ptype_id, description FROM product_types ORDER BY ptype_id"
+
+  connection.execute(sql, [], (err, results) => {
+    if (err) {
+      console.log(err)
+      return res.status(500).json({
+        success: false,
+        message: "Error fetching product types",
+        error: err.message,
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      productTypes: results,
+    })
+  })
+}
+
 const addProduct = (req, res) => {
   const {
     title,
@@ -290,6 +332,8 @@ const deleteProduct = (req, res) => {
 module.exports = {
   getAllProducts,
   getProduct,
+  getPlatformTypes,
+  getProductTypes,
   addProduct,
   updateProduct,
   deleteProduct,

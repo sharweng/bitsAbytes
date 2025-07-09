@@ -82,9 +82,33 @@ $(document).ready(() => {
     usersTable.ajax.url(url).load()
   })
 
+  // Add this function to fetch roles
+  function loadRolesForDropdown() {
+    $.ajax({
+      url: `${API_BASE_URL}/users/roles`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          const select = $("#userRole")
+          select.find("option").remove()
+
+          response.roles.forEach((role) => {
+            select.append(`<option value="${role.role_id}">${role.description}</option>`)
+          })
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading roles:", xhr)
+      },
+    })
+  }
+
   // Edit user
   $(document).on("click", ".edit-user", function () {
     const userId = $(this).data("id")
+
+    // First load roles
+    loadRolesForDropdown()
 
     window.makeAuthenticatedRequest({
       url: `${API_BASE_URL}/users/profile/${userId}`,
@@ -96,6 +120,20 @@ $(document).ready(() => {
           $("#firstName").val(user.first_name || "")
           $("#lastName").val(user.last_name || "")
           $("#contactNumber").val(user.contact_number || "")
+
+          // Set the role after a short delay to ensure options are loaded
+          setTimeout(() => {
+            // Find the role_id based on role description
+            const roleSelect = $("#userRole")
+            const roleOptions = roleSelect.find("option")
+
+            roleOptions.each(function () {
+              if ($(this).text().toLowerCase() === user.role.toLowerCase()) {
+                $(this).prop("selected", true)
+              }
+            })
+          }, 100)
+
           $("#userModal").removeClass("hidden").addClass("flex")
         }
       },

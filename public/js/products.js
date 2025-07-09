@@ -61,6 +61,48 @@ $(document).ready(() => {
     })
   }
 
+  // Load platform types for dropdown
+  function loadPlatformTypes() {
+    $.ajax({
+      url: `${API_BASE_URL}/products/platforms`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          const select = $("#platId")
+          select.find("option:not(:first)").remove()
+
+          response.platforms.forEach((platform) => {
+            select.append(`<option value="${platform.plat_id}">${platform.description}</option>`)
+          })
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading platform types:", xhr)
+      },
+    })
+  }
+
+  // Load product types for dropdown
+  function loadProductTypes() {
+    $.ajax({
+      url: `${API_BASE_URL}/products/types`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          const select = $("#ptypeId")
+          select.find("option:not(:first)").remove()
+
+          response.productTypes.forEach((type) => {
+            select.append(`<option value="${type.ptype_id}">${type.description}</option>`)
+          })
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading product types:", xhr)
+      },
+    })
+  }
+
   // Add product button
   $("#addProductBtn").on("click", () => {
     isEditMode = false
@@ -68,6 +110,11 @@ $(document).ready(() => {
     $("#submitProductBtn").text("Add Product")
     $("#productForm")[0].reset()
     $("#productId").val("")
+
+    // Load dropdowns
+    loadPlatformTypes()
+    loadProductTypes()
+
     $("#productModal").removeClass("hidden").addClass("flex")
   })
 
@@ -75,6 +122,10 @@ $(document).ready(() => {
   $(document).on("click", ".edit-product", function () {
     const productId = $(this).data("id")
     isEditMode = true
+
+    // Load dropdowns first
+    loadPlatformTypes()
+    loadProductTypes()
 
     $.ajax({
       url: `${API_BASE_URL}/products/${productId}`,
@@ -89,21 +140,27 @@ $(document).ready(() => {
           $("#title").val(product.title)
           $("#description").val(product.description)
           $("#price").val(product.price)
-          $("#platId").val(product.plat_id)
-          $("#ptypeId").val(product.ptype_id)
           $("#quantity").val(product.quantity)
           $("#developer").val(product.developer)
           $("#publisher").val(product.publisher)
           $("#releaseDate").val(product.release_date ? product.release_date.split("T")[0] : "")
+
+          // Set platform and product type after a short delay to ensure options are loaded
+          setTimeout(() => {
+            $("#platId").val(product.plat_id)
+            $("#ptypeId").val(product.ptype_id)
+          }, 200)
+
           $("#productModal").removeClass("hidden").addClass("flex")
         }
       },
       error: (xhr) => {
         console.error("Error loading product:", xhr)
+        const response = xhr.responseJSON
         window.Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Failed to load product data",
+          text: response?.error || "Failed to load product data",
         })
       },
     })
@@ -140,11 +197,22 @@ $(document).ready(() => {
           }
         },
         error: (xhr) => {
+          console.error("Product form error:", xhr)
           const response = xhr.responseJSON
+          let errorMessage = "An error occurred"
+
+          if (response) {
+            errorMessage = response.error || response.message || errorMessage
+            if (response.details) {
+              console.error("Error details:", response.details)
+              errorMessage += ": " + (response.details.message || response.details)
+            }
+          }
+
           window.Swal.fire({
             icon: "error",
             title: "Error",
-            text: response?.error || "An error occurred",
+            text: errorMessage,
           })
         },
       })

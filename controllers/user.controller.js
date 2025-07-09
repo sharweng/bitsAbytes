@@ -130,7 +130,7 @@ const loginUser = (req, res) => {
 }
 
 const updateUser = (req, res) => {
-  const { first_name, last_name, contact_number } = req.body
+  const { first_name, last_name, contact_number, role_id } = req.body
   const { user_id } = req.params
   let image_url = null
 
@@ -151,11 +151,12 @@ const updateUser = (req, res) => {
         last_name = COALESCE(?, last_name),
         contact_number = COALESCE(?, contact_number),
         image_url = COALESCE(?, image_url),
+        role_id = COALESCE(?, role_id),
         updated_at = CURRENT_TIMESTAMP
     WHERE user_id = ?
   `
 
-  const params = [first_name, last_name, contact_number, image_url, user_id]
+  const params = [first_name, last_name, contact_number, image_url, role_id, user_id]
 
   try {
     connection.execute(userSql, params, (err, result) => {
@@ -374,6 +375,27 @@ const getAllUsers = (req, res) => {
   }
 }
 
+// Get all roles
+const getAllRoles = (req, res) => {
+  const sql = "SELECT role_id, description FROM roles ORDER BY role_id"
+
+  connection.execute(sql, [], (err, results) => {
+    if (err) {
+      console.log(err)
+      return res.status(500).json({
+        success: false,
+        message: "Error fetching roles",
+        error: err.message,
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      roles: results,
+    })
+  })
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -382,4 +404,5 @@ module.exports = {
   reactivateUser,
   getUserProfile,
   getAllUsers,
+  getAllRoles,
 }

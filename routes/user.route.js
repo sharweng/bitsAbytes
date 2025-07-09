@@ -9,6 +9,7 @@ const {
   reactivateUser,
   getUserProfile,
   getAllUsers,
+  getAllRoles,
 } = require("../controllers/user.controller.js")
 
 const { isAuthenticatedUser } = require("../middlewares/auth.js")
@@ -22,6 +23,7 @@ router.get("/profile/:user_id", isAuthenticatedUser, getUserProfile)
 router.put("/profile/:user_id", isAuthenticatedUser, upload.single("image"), updateUser)
 router.put("/deactivate/:user_id", isAuthenticatedUser, deactivateUser)
 router.put("/reactivate/:user_id", isAuthenticatedUser, reactivateUser)
+router.get("/roles", getAllRoles)
 router.get("/", isAuthenticatedUser, getAllUsers)
 
 module.exports = router
