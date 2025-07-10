@@ -9,8 +9,20 @@ $(document).ready(() => {
   function initializeProductsTable() {
     productsTable = $("#productsTable").DataTable({
       ajax: {
-        url: `${API_BASE_URL}/products`,
-        dataSrc: "rows",
+        url: `${API_BASE_URL}/products?limit=1000&page=1`, // Get all products for admin dashboard
+        headers: window.getAuthHeaders ? window.getAuthHeaders() : {},
+        dataSrc: (json) => {
+          console.log("DataTable received:", json)
+          // Handle both old and new API response formats
+          if (json.success && json.products) {
+            return json.products // New format
+          } else if (json.rows) {
+            return json.rows // Old format (fallback)
+          } else if (json.success && json.rows) {
+            return json.rows // Another possible format
+          }
+          return [] // Empty array if no data
+        },
         error: (xhr, error, code) => {
           console.error("DataTable AJAX error:", xhr, error, code)
           console.error("Response:", xhr.responseText)
@@ -364,4 +376,7 @@ $(document).ready(() => {
   } else {
     console.error("checkAuth function not available")
   }
+
+  // Make openImageModal globally available
+  window.openImageModal = openImageModal
 })

@@ -3,6 +3,7 @@ $(document).ready(() => {
   let currentPage = 1
   let isLoading = false
   let hasMoreProducts = true
+  let totalProducts = 0
   const currentFilters = {
     search: "",
     platform: null,
@@ -77,9 +78,9 @@ $(document).ready(() => {
     })
   }
 
-  // Search functionality
+  // Search functionality (for autocomplete dropdown)
   function handleSearchInput() {
-    const query = $(this).val().trim()
+    const query = $("#searchInput").val().trim()
 
     if (searchTimeout) {
       clearTimeout(searchTimeout)
@@ -87,27 +88,21 @@ $(document).ready(() => {
 
     if (query.length >= 2) {
       searchTimeout = setTimeout(() => {
-        searchProducts(query)
+        searchProductsForDropdown(query)
       }, 300)
     } else {
       hideSearchDropdown()
     }
   }
 
-  function searchProducts(query) {
+  function searchProductsForDropdown(query) {
+    // For dropdown, we still get a small sample of all products
     $.ajax({
-      url: `${API_BASE_URL}/products`,
+      url: `${API_BASE_URL}/products?search=${encodeURIComponent(query)}&limit=5&page=1`,
       method: "GET",
       success: (response) => {
-        if (response.success && response.rows) {
-          const filteredProducts = response.rows.filter(
-            (product) =>
-              product.title.toLowerCase().includes(query.toLowerCase()) ||
-              (product.developer && product.developer.toLowerCase().includes(query.toLowerCase())) ||
-              (product.publisher && product.publisher.toLowerCase().includes(query.toLowerCase())) ||
-              (product.description && product.description.toLowerCase().includes(query.toLowerCase())),
-          )
-          displaySearchResults(filteredProducts.slice(0, 5))
+        if (response.success && response.products) {
+          displaySearchResults(response.products)
         }
       },
       error: (xhr) => {
@@ -211,106 +206,114 @@ $(document).ready(() => {
     resetAndLoadProducts()
   }
 
-  // Product loading
+  // TRUE INFINITE SCROLL - Server-side pagination
   function loadProducts(append = false) {
     if (isLoading || (!hasMoreProducts && append)) return
 
     isLoading = true
     $("#loadingIndicator").removeClass("hidden")
 
-    const url = `${API_BASE_URL}/products`
+    // Build query parameters
+    const params = new URLSearchParams({
+      page: currentPage,
+      limit: 12,
+    })
+
+    if (currentFilters.search) {
+      params.append("search", currentFilters.search)
+    }
+    if (currentFilters.platform) {
+      params.append("platform", currentFilters.platform)
+    }
+    if (currentFilters.type) {
+      params.append("type", currentFilters.type)
+    }
+    if (currentFilters.sort) {
+      params.append("sort", currentFilters.sort)
+    }
+
+    const url = `${API_BASE_URL}/products?${params.toString()}`
+
+    console.log(`Loading page ${currentPage} with filters:`, currentFilters)
 
     $.ajax({
       url: url,
       method: "GET",
       success: (response) => {
-        if (response.success && response.rows) {
-          let products = response.rows
+        if (response.success && response.products) {
+          const products = response.products
+          const pagination = response.pagination
 
-          // Apply filters
-          products = applyFilters(products)
+          console.log(`Received ${products.length} products for page ${currentPage}`)
+          console.log("Pagination info:", pagination)
 
-          // Apply sorting
-          products = applySorting(products)
-
-          // Pagination simulation for infinite scroll
-          const itemsPerPage = 12
-          const startIndex = (currentPage - 1) * itemsPerPage
-          const endIndex = startIndex + itemsPerPage
-          const pageProducts = products.slice(startIndex, endIndex)
-
-          if (pageProducts.length === 0) {
+          if (products.length === 0 && currentPage === 1) {
+            // No products found
+            $("#productsGrid").html(`
+              <div class="col-span-full text-center py-12">
+                <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">No games found</h3>
+                <p class="text-gray-500">Try adjusting your search or filters</p>
+              </div>
+            `)
             hasMoreProducts = false
-            $("#noMoreProducts").removeClass("hidden")
-          } else {
-            displayProducts(pageProducts, append)
+          } else if (products.length > 0) {
+            displayProducts(products, append)
+
+            // Update pagination state
+            hasMoreProducts = pagination.hasMore
+            totalProducts = pagination.totalProducts
             currentPage++
 
-            // Check if there are more products
-            if (endIndex >= products.length) {
-              hasMoreProducts = false
+            // Update UI indicators
+            if (!hasMoreProducts) {
               $("#noMoreProducts").removeClass("hidden")
             }
+          } else {
+            // No more products to load
+            hasMoreProducts = false
+            $("#noMoreProducts").removeClass("hidden")
           }
         } else {
-          console.error("Failed to load products")
+          console.error("Failed to load products:", response)
+          if (currentPage === 1) {
+            $("#productsGrid").html(`
+              <div class="col-span-full text-center py-12">
+                <i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">Error loading games</h3>
+                <p class="text-gray-500">Try again later</p>
+              </div>
+            `)
+          }
         }
       },
       error: (xhr) => {
         console.error("Error loading products:", xhr)
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Failed to load products. Please try again.",
-        })
+        if (currentPage === 1) {
+          $("#productsGrid").html(`
+            <div class="col-span-full text-center py-12">
+              <i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-4"></i>
+              <h3 class="text-xl font-semibold text-gray-600 mb-2">Error loading games</h3>
+              <p class="text-gray-500">Check your connection and try again</p>
+            </div>
+          `)
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to load more products. Try again.",
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+          })
+        }
       },
       complete: () => {
         isLoading = false
         $("#loadingIndicator").addClass("hidden")
       },
     })
-  }
-
-  function applyFilters(products) {
-    let filtered = products
-
-    // Search filter
-    if (currentFilters.search) {
-      const query = currentFilters.search.toLowerCase()
-      filtered = filtered.filter(
-        (product) =>
-          product.title.toLowerCase().includes(query) ||
-          (product.developer && product.developer.toLowerCase().includes(query)) ||
-          (product.publisher && product.publisher.toLowerCase().includes(query)) ||
-          (product.description && product.description.toLowerCase().includes(query)),
-      )
-    }
-
-    // Platform filter
-    if (currentFilters.platform) {
-      filtered = filtered.filter((product) => product.plat_id == currentFilters.platform)
-    }
-
-    // Type filter
-    if (currentFilters.type) {
-      filtered = filtered.filter((product) => product.ptype_id == currentFilters.type)
-    }
-
-    return filtered
-  }
-
-  function applySorting(products) {
-    switch (currentFilters.sort) {
-      case "price_low":
-        return products.sort((a, b) => Number.parseFloat(a.price) - Number.parseFloat(b.price))
-      case "price_high":
-        return products.sort((a, b) => Number.parseFloat(b.price) - Number.parseFloat(a.price))
-      case "title":
-        return products.sort((a, b) => a.title.localeCompare(b.title))
-      case "newest":
-      default:
-        return products.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    }
   }
 
   function displayProducts(products, append = false) {
@@ -327,6 +330,10 @@ $(document).ready(() => {
       const productId = $(this).data("product-id")
       viewProductDetails(productId)
     })
+
+    // Update products count display
+    const currentCount = $("#productsGrid .product-card").length
+    console.log(`Now showing ${currentCount} of ${totalProducts} total products`)
   }
 
   function createProductCard(product) {
@@ -371,14 +378,23 @@ $(document).ready(() => {
   function resetAndLoadProducts() {
     currentPage = 1
     hasMoreProducts = true
+    totalProducts = 0
     $("#noMoreProducts").addClass("hidden")
     loadProducts(false)
   }
 
-  // Infinite scroll
+  // TRUE INFINITE SCROLL - Trigger when near bottom
   function handleScroll() {
-    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 1000) {
-      loadProducts(true)
+    const scrollTop = $(window).scrollTop()
+    const windowHeight = $(window).height()
+    const documentHeight = $(document).height()
+
+    // Trigger when user is 1000px from bottom
+    if (scrollTop + windowHeight >= documentHeight - 1000) {
+      if (hasMoreProducts && !isLoading) {
+        console.log(`Infinite scroll triggered - loading page ${currentPage}`)
+        loadProducts(true)
+      }
     }
   }
 
@@ -397,7 +413,7 @@ $(document).ready(() => {
         console.error("Error loading product details:", xhr)
         Swal.fire({
           icon: "error",
-          title: "Login Failed",
+          title: "Error",
           text: "Failed to load product details",
         })
       },

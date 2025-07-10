@@ -1,40 +1,132 @@
 const connection = require("../config/database")
 
 const getAllProducts = (req, res) => {
+  // Extract pagination and filter parameters
+  const page = Number.parseInt(req.query.page) || 1
+  const limit = Number.parseInt(req.query.limit) || 12
+  const offset = (page - 1) * limit
+
+  // Extract filter parameters
+  const { search, platform, type, sort = "newest" } = req.query
+
+  // Build WHERE clause
+  const whereConditions = []
+  const queryParams = []
+
+  if (search) {
+    whereConditions.push(`(
+      p.title LIKE ? OR 
+      p.developer LIKE ? OR 
+      p.publisher LIKE ? OR 
+      p.description LIKE ?
+    )`)
+    const searchTerm = `%${search}%`
+    queryParams.push(searchTerm, searchTerm, searchTerm, searchTerm)
+  }
+
+  if (platform) {
+    whereConditions.push("p.plat_id = ?")
+    queryParams.push(platform)
+  }
+
+  if (type) {
+    whereConditions.push("p.ptype_id = ?")
+    queryParams.push(type)
+  }
+
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
+
+  // Build ORDER BY clause
+  let orderBy = "ORDER BY p.created_at DESC" // default
+  switch (sort) {
+    case "price_low":
+      orderBy = "ORDER BY p.price ASC"
+      break
+    case "price_high":
+      orderBy = "ORDER BY p.price DESC"
+      break
+    case "title":
+      orderBy = "ORDER BY p.title ASC"
+      break
+    case "newest":
+    default:
+      orderBy = "ORDER BY p.created_at DESC"
+      break
+  }
+
+  // First, get the total count for pagination info
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM products p 
+    LEFT JOIN stock s ON p.product_id = s.product_id
+    LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+    LEFT JOIN platform_types plt ON p.plat_id = plt.plat_id
+    ${whereClause}
+  `
+
+  // Main query with pagination
   const sql = `
-        SELECT 
-            p.*,
-            s.quantity,
-            pt.description as product_type,
-            plt.description as platform_type,
-            GROUP_CONCAT(pi.image_url) as images
-        FROM products p 
-        LEFT JOIN stock s ON p.product_id = s.product_id
-        LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
-        LEFT JOIN platform_types plt ON p.plat_id = plt.plat_id
-        LEFT JOIN product_images pi ON p.product_id = pi.product_id
-        GROUP BY p.product_id
-        ORDER BY p.created_at DESC
-    `
+    SELECT 
+      p.*,
+      s.quantity,
+      pt.description as product_type,
+      plt.description as platform_type,
+      GROUP_CONCAT(pi.image_url) as images
+    FROM products p 
+    LEFT JOIN stock s ON p.product_id = s.product_id
+    LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+    LEFT JOIN platform_types plt ON p.plat_id = plt.plat_id
+    LEFT JOIN product_images pi ON p.product_id = pi.product_id
+    ${whereClause}
+    GROUP BY p.product_id
+    ${orderBy}
+    LIMIT ? OFFSET ?
+  `
 
   try {
-    connection.query(sql, (err, rows, fields) => {
-      if (err instanceof Error) {
+    // Get total count first
+    connection.execute(countSql, queryParams, (err, countResult) => {
+      if (err) {
         console.log("Database error:", err)
         return res.status(500).json({ error: "Database error", details: err.message })
       }
 
-      // Process the images for each product
-      const processedRows = rows.map((row) => ({
-        ...row,
-        images: row.images ? row.images.split(",") : [],
-      }))
+      const totalProducts = countResult[0].total
+      const totalPages = Math.ceil(totalProducts / limit)
+      const hasMore = page < totalPages
 
-      console.log(`Found ${processedRows.length} products`)
-      return res.status(200).json({
-        success: true,
-        rows: processedRows,
-        total: processedRows.length,
+      // Add pagination parameters to query
+      const paginationParams = [...queryParams, limit, offset]
+
+      // Get paginated results
+      connection.execute(sql, paginationParams, (err, rows) => {
+        if (err) {
+          console.log("Database error:", err)
+          return res.status(500).json({ error: "Database error", details: err.message })
+        }
+
+        // Process the images for each product
+        const processedRows = rows.map((row) => ({
+          ...row,
+          images: row.images ? row.images.split(",") : [],
+        }))
+
+        console.log(`Page ${page}: Found ${processedRows.length} products (${totalProducts} total)`)
+
+        // Return response in format that works for both infinite scroll and DataTable
+        return res.status(200).json({
+          success: true,
+          products: processedRows, // New format for infinite scroll
+          rows: processedRows, // Legacy format for DataTable compatibility
+          total: processedRows.length,
+          pagination: {
+            currentPage: page,
+            totalPages: totalPages,
+            totalProducts: totalProducts,
+            hasMore: hasMore,
+            limit: limit,
+          },
+        })
       })
     })
   } catch (error) {
