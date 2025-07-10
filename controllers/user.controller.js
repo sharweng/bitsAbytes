@@ -151,7 +151,9 @@ const updateUser = (req, res) => {
   }
 
   if (req.file) {
-    image_url = req.file.path.replace(/\\/g, "/")
+    // Store the path with forward slashes and include /images/ prefix
+    image_url = `/images/${req.file.filename}`
+    console.log("Image uploaded:", image_url)
   }
 
   const userSql = `
@@ -189,6 +191,7 @@ const updateUser = (req, res) => {
         success: true,
         message: "Profile updated successfully",
         affected_rows: result.affectedRows,
+        image_url: image_url,
       })
     })
   } catch (error) {

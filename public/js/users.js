@@ -17,6 +17,15 @@ $(document).ready(() => {
       },
       columns: [
         { data: "user_id" },
+        {
+          data: "image_url",
+          render: (data) => {
+            if (data) {
+              return `<img src="${data}" alt="User" class="w-12 h-12 object-cover rounded-full">`
+            }
+            return '<div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center"><i class="fas fa-user text-gray-400"></i></div>'
+          },
+        },
         { data: "email" },
         {
           data: null,
@@ -45,19 +54,23 @@ $(document).ready(() => {
         {
           data: null,
           render: (data) => {
+            const viewBtn = `<button class="text-green-600 hover:text-green-800 mr-2 view-user" data-id="${data.user_id}" title="View Details">
+                        <i class="fas fa-eye"></i>
+                      </button>`
+
             const editBtn = `<button class="text-blue-600 hover:text-blue-800 mr-2 edit-user" data-id="${data.user_id}">
-                            <i class="fas fa-edit"></i>
-                        </button>`
+                        <i class="fas fa-edit"></i>
+                      </button>`
 
             const toggleBtn = data.deleted
               ? `<button class="text-green-600 hover:text-green-800 reactivate-user" data-id="${data.user_id}">
-                                <i class="fas fa-user-check"></i>
-                            </button>`
+                          <i class="fas fa-user-check"></i>
+                      </button>`
               : `<button class="text-red-600 hover:text-red-800 deactivate-user" data-id="${data.user_id}">
-                                <i class="fas fa-user-slash"></i>
-                            </button>`
+                          <i class="fas fa-user-slash"></i>
+                      </button>`
 
-            return editBtn + toggleBtn
+            return viewBtn + editBtn + toggleBtn
           },
         },
       ],
@@ -102,6 +115,75 @@ $(document).ready(() => {
       },
     })
   }
+
+  // View user details
+  $(document).on("click", ".view-user", function () {
+    const userId = $(this).data("id")
+
+    window.makeAuthenticatedRequest({
+      url: `${API_BASE_URL}/users/profile/${userId}`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          const user = response.user
+
+          // Create user image
+          let imageHtml = ""
+          if (user.image_url) {
+            imageHtml = `
+            <div class="mb-4 text-center">
+              <img src="${user.image_url}" alt="Profile" class="w-32 h-32 object-cover rounded-full mx-auto border-4 border-gray-200">
+            </div>
+          `
+          } else {
+            imageHtml = `
+            <div class="mb-4 text-center">
+              <div class="w-32 h-32 bg-gray-200 rounded-full mx-auto flex items-center justify-center border-4 border-gray-200">
+                <i class="fas fa-user text-4xl text-gray-400"></i>
+              </div>
+            </div>
+          `
+          }
+
+          const content = `
+          <div class="space-y-4">
+            ${imageHtml}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><strong>User ID:</strong> ${user.user_id}</div>
+              <div><strong>Email:</strong> ${user.email}</div>
+              <div><strong>First Name:</strong> ${user.first_name || "N/A"}</div>
+              <div><strong>Last Name:</strong> ${user.last_name || "N/A"}</div>
+              <div><strong>Contact Number:</strong> ${user.contact_number || "N/A"}</div>
+              <div><strong>Role:</strong> ${user.role}</div>
+              <div><strong>Account Created:</strong> ${new Date(user.created_at).toLocaleDateString()}</div>
+              <div><strong>Status:</strong> 
+                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>
+              </div>
+            </div>
+          </div>
+        `
+
+          Swal.fire({
+            title: "User Details",
+            html: content,
+            width: "600px",
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+              popup: "text-left",
+            },
+          })
+        }
+      },
+      error: (xhr) => {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to load user details",
+        })
+      },
+    })
+  })
 
   // Edit user
   $(document).on("click", ".edit-user", function () {
@@ -177,7 +259,7 @@ $(document).ready(() => {
         const response = xhr.responseJSON
         Swal.fire({
           icon: "error",
-          title: "Update Failed",
+          title: "Error",
           text: response.message || "An error occurred",
         })
       },

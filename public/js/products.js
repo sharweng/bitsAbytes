@@ -26,7 +26,7 @@ $(document).ready(() => {
               const firstImage = `<img src="${API_BASE_URL.replace("/api", "")}/${data[0]}" alt="Product" class="w-12 h-12 object-cover rounded">`
 
               if (imageCount > 1) {
-                return `<div class="relative">${firstImage}<span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full px-1">+${imageCount - 1}</span></div>`
+                return `<div class="relative inline-block">${firstImage}<span class="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">+${imageCount - 1}</span></div>`
               }
               return firstImage
             }
