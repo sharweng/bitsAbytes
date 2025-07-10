@@ -1,0 +1,1 @@
+this is to upload this folder to git, it is essential for images to work.
