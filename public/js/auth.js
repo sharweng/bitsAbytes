@@ -87,6 +87,27 @@ $(document).ready(() => {
 
     const email = $("#email").val()
     const password = $("#password").val()
+    const confirmPassword = $("#confirmPassword").val()
+
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+      Swal.fire({
+        icon: "error",
+        title: "Password Mismatch",
+        text: "Passwords do not match. Please try again.",
+      })
+      return
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      Swal.fire({
+        icon: "error",
+        title: "Password Too Short",
+        text: "Password must be at least 6 characters long.",
+      })
+      return
+    }
 
     $.ajax({
       url: `${API_BASE_URL}/users/register`,

@@ -22,7 +22,13 @@ $(document).ready(() => {
           data: "images",
           render: (data) => {
             if (data && data.length > 0) {
-              return `<img src="${API_BASE_URL.replace("/api", "")}/${data[0]}" alt="Product" class="w-12 h-12 object-cover rounded">`
+              const imageCount = data.length
+              const firstImage = `<img src="${API_BASE_URL.replace("/api", "")}/${data[0]}" alt="Product" class="w-12 h-12 object-cover rounded">`
+
+              if (imageCount > 1) {
+                return `<div class="relative">${firstImage}<span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full px-1">+${imageCount - 1}</span></div>`
+              }
+              return firstImage
             }
             return '<div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center"><i class="fas fa-image text-gray-400"></i></div>'
           },
@@ -47,17 +53,102 @@ $(document).ready(() => {
         {
           data: null,
           render: (data) => `
-                            <button class="text-blue-600 hover:text-blue-800 mr-2 edit-product" data-id="${data.product_id}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="text-red-600 hover:text-red-800 delete-product" data-id="${data.product_id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        `,
+          <button class="text-green-600 hover:text-green-800 mr-2 view-product" data-id="${data.product_id}" title="View Details">
+            <i class="fas fa-eye"></i>
+          </button>
+          <button class="text-blue-600 hover:text-blue-800 mr-2 edit-product" data-id="${data.product_id}" title="Edit">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="text-red-600 hover:text-red-800 delete-product" data-id="${data.product_id}" title="Delete">
+            <i class="fas fa-trash"></i>
+          </button>
+        `,
         },
       ],
       responsive: true,
       pageLength: 25,
+    })
+  }
+
+  // View product details
+  $(document).on("click", ".view-product", function () {
+    const productId = $(this).data("id")
+
+    $.ajax({
+      url: `${API_BASE_URL}/products/${productId}`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          const product = response.result
+
+          // Create images gallery
+          let imagesHtml = ""
+          if (product.images && product.images.length > 0) {
+            imagesHtml = `
+              <div class="mb-4">
+                <h4 class="font-semibold mb-2">Product Images:</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  ${product.images
+                    .map(
+                      (img) =>
+                        `<img src="${API_BASE_URL.replace("/api", "")}/${img}" alt="Product image" class="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-75" onclick="openImageModal('${API_BASE_URL.replace("/api", "")}/${img}')">`,
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `
+          }
+
+          const content = `
+            <div class="space-y-4">
+              ${imagesHtml}
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><strong>Product ID:</strong> ${product.product_id}</div>
+                <div><strong>Title:</strong> ${product.title}</div>
+                <div><strong>Price:</strong> $${Number.parseFloat(product.price).toFixed(2)}</div>
+                <div><strong>Platform:</strong> ${product.platform_type || "N/A"}</div>
+                <div><strong>Type:</strong> ${product.product_type || "N/A"}</div>
+                <div><strong>Stock:</strong> ${product.quantity || 0}</div>
+                <div><strong>Developer:</strong> ${product.developer || "N/A"}</div>
+                <div><strong>Publisher:</strong> ${product.publisher || "N/A"}</div>
+                <div><strong>Release Date:</strong> ${product.release_date ? new Date(product.release_date).toLocaleDateString() : "N/A"}</div>
+                <div class="md:col-span-2"><strong>Description:</strong> ${product.description || "No description available"}</div>
+              </div>
+            </div>
+          `
+
+          window.Swal.fire({
+            title: "Product Details",
+            html: content,
+            width: "800px",
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+              popup: "text-left",
+            },
+          })
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading product:", xhr)
+        window.Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to load product details",
+        })
+      },
+    })
+  })
+
+  // Function to open image in modal
+  function openImageModal(imageSrc) {
+    window.Swal.fire({
+      imageUrl: imageSrc,
+      imageAlt: "Product Image",
+      showConfirmButton: false,
+      showCloseButton: true,
+      width: "auto",
+      padding: "1rem",
     })
   }
 

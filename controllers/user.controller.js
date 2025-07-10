@@ -64,10 +64,10 @@ const loginUser = (req, res) => {
 
   const sql = `
     SELECT u.user_id, u.email, u.password_hash, u.first_name, u.last_name, 
-           u.contact_number, u.image_url, r.description as role
+           u.contact_number, u.image_url, u.deleted, r.description as role
     FROM users u 
     JOIN roles r ON u.role_id = r.role_id 
-    WHERE u.email = ? AND u.deleted = 0
+    WHERE u.email = ?
   `
 
   connection.execute(sql, [email], async (err, results) => {
@@ -89,6 +89,14 @@ const loginUser = (req, res) => {
 
     const user = results[0]
 
+    // Check if user is deactivated
+    if (user.deleted) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been deactivated. Please contact support for assistance.",
+      })
+    }
+
     try {
       const match = await bcrypt.compare(password, user.password_hash)
 
@@ -99,8 +107,9 @@ const loginUser = (req, res) => {
         })
       }
 
-      // Remove password from response
+      // Remove password and deleted fields from response
       delete user.password_hash
+      delete user.deleted
 
       const token = jwt.sign(
         {
