@@ -1,0 +1,707 @@
+$(document).ready(() => {
+  const API_BASE_URL = "http://localhost:4000/api"
+  const $ = window.$
+  const Swal = window.Swal
+
+  let currentProduct = null
+  let currentImageIndex = 0
+  let productImages = []
+  let currentUser = null
+  let selectedRating = 0
+
+  // Get product ID from URL
+  const urlParams = new URLSearchParams(window.location.search)
+  const productId = urlParams.get("id")
+
+  if (!productId) {
+    window.location.href = "index.html"
+    return
+  }
+
+  // Initialize page
+  initializePage()
+
+  function initializePage() {
+    checkAuthStatus()
+    loadProduct()
+    initializeEventListeners()
+    updateCartCount()
+  }
+
+  function checkAuthStatus() {
+    const token = localStorage.getItem("token")
+    const user = JSON.parse(localStorage.getItem("user") || "{}")
+
+    if (token && user.email) {
+      currentUser = user
+      showAuthenticatedState(user)
+    } else {
+      showUnauthenticatedState()
+    }
+  }
+
+  function showAuthenticatedState(user) {
+    $("#loginBtn").addClass("hidden")
+    $("#logoutBtn").removeClass("hidden")
+    $("#userInfo").removeClass("hidden")
+    $("#userName").text(user.first_name || user.email)
+  }
+
+  function showUnauthenticatedState() {
+    $("#loginBtn").removeClass("hidden")
+    $("#logoutBtn").addClass("hidden")
+    $("#userInfo").addClass("hidden")
+  }
+
+  function initializeEventListeners() {
+    // Auth buttons
+    $("#loginBtn").click(() => $("#loginModal").removeClass("hidden"))
+    $("#logoutBtn").click(logout)
+    $(".close-modal").click(() => {
+      $("#loginModal").addClass("hidden")
+      $("#reviewModal").addClass("hidden")
+    })
+
+    // Login form
+    $("#loginForm").submit(handleLogin)
+
+    // Review form
+    $("#reviewForm").submit(handleReviewSubmit)
+
+    // Star rating
+    $(".star-btn").click(function () {
+      selectedRating = Number.parseInt($(this).data("rating"))
+      $("#selectedRating").val(selectedRating)
+      updateStarDisplay()
+    })
+
+    // Cart button
+    $("#cartBtn").click(() => {
+      window.location.href = "cart.html"
+    })
+
+    // Modal clicks
+    $("#loginModal, #reviewModal").click(function (e) {
+      if (e.target === this) {
+        $(this).addClass("hidden")
+      }
+    })
+  }
+
+  function loadProduct() {
+    $.ajax({
+      url: `${API_BASE_URL}/products/${productId}`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          currentProduct = response.result
+          displayProduct(currentProduct)
+          loadProductReviews()
+        } else {
+          showError("Product not found")
+          setTimeout(() => (window.location.href = "index.html"), 2000)
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading product:", xhr)
+        showError("Failed to load product")
+        setTimeout(() => (window.location.href = "index.html"), 2000)
+      },
+    })
+  }
+
+  function displayProduct(product) {
+    productImages = product.images || []
+    const price = Number.parseFloat(product.price)
+    const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
+
+    // Generate star rating display
+    const avgRating = Number.parseFloat(product.average_rating) || 0
+    const reviewCount = Number.parseInt(product.review_count) || 0
+    const starsHtml = generateStarRating(avgRating)
+
+    const productHtml = `
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
+        <!-- Product Images -->
+        <div class="space-y-4">
+          ${
+            productImages.length > 0
+              ? `
+            <div class="image-carousel bg-gray-100 rounded-lg overflow-hidden">
+              <div class="carousel-container" id="carouselContainer">
+                ${productImages
+                  .map(
+                    (img, index) => `
+                  <div class="carousel-slide">
+                    <img src="${API_BASE_URL.replace("/api", "")}/${img}" alt="${product.title}" class="w-full h-96 object-cover">
+                  </div>
+                `,
+                  )
+                  .join("")}
+              </div>
+              ${
+                productImages.length > 1
+                  ? `
+                <button class="carousel-nav prev" onclick="previousImage()">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-nav next" onclick="nextImage()">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              `
+                  : ""
+              }
+            </div>
+            ${
+              productImages.length > 1
+                ? `
+              <div class="carousel-indicators">
+                ${productImages
+                  .map(
+                    (_, index) => `
+                  <div class="indicator ${index === 0 ? "active" : ""}" onclick="goToImage(${index})"></div>
+                `,
+                  )
+                  .join("")}
+              </div>
+            `
+                : ""
+            }
+          `
+              : `
+            <div class="bg-gray-200 rounded-lg h-96 flex items-center justify-center">
+              <i class="fas fa-gamepad text-6xl text-gray-400"></i>
+            </div>
+          `
+          }
+        </div>
+
+        <!-- Product Info -->
+        <div class="space-y-6">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">${product.title}</h1>
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="flex items-center space-x-1">
+                ${starsHtml}
+                <span class="text-sm text-gray-600 ml-2">(${reviewCount} reviews)</span>
+              </div>
+              <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                ${product.platform_type || "Unknown Platform"}
+              </span>
+            </div>
+            <div class="text-3xl font-bold text-blue-600 mb-4">${priceDisplay}</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div><strong>Developer:</strong> ${product.developer || "Unknown"}</div>
+            <div><strong>Publisher:</strong> ${product.publisher || "Unknown"}</div>
+            <div><strong>Platform:</strong> ${product.platform_type || "Unknown"}</div>
+            <div><strong>Type:</strong> ${product.product_type || "Digital"}</div>
+            <div><strong>Stock:</strong> ${product.quantity || 0} available</div>
+            ${product.release_date ? `<div><strong>Release Date:</strong> ${new Date(product.release_date).toLocaleDateString()}</div>` : ""}
+          </div>
+
+          ${
+            product.description
+              ? `
+            <div>
+              <h3 class="text-lg font-semibold mb-2">Description</h3>
+              <p class="text-gray-600 leading-relaxed">${product.description}</p>
+            </div>
+          `
+              : ""
+          }
+
+          <!-- Action Buttons -->
+          <div class="space-y-3">
+            <div class="flex space-x-3">
+              <button id="addToCartBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition duration-200">
+                <i class="fas fa-cart-plus mr-2"></i>Add to Cart
+              </button>
+              <button id="buyNowBtn" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-lg font-semibold transition duration-200">
+                <i class="fas fa-bolt mr-2"></i>Buy Now
+              </button>
+            </div>
+            <div class="text-center">
+              <button id="writeReviewBtn" class="text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-star mr-1"></i>Write a Review
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviews Section -->
+      <div class="border-t bg-gray-50 p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Customer Reviews</h2>
+        <div id="reviewsContainer">
+          <!-- Reviews will be loaded here -->
+        </div>
+      </div>
+    `
+
+    $("#productDetail").html(productHtml)
+
+    // Add event listeners for action buttons
+    $("#addToCartBtn").click(function () {
+      const $btn = $(this)
+      $btn.prop("disabled", true) // Disable button
+      addToCart(currentProduct, () => $btn.prop("disabled", false)) // Re-enable in callback
+    })
+
+    $("#buyNowBtn").click(function () {
+      const $btn = $(this)
+      $btn.prop("disabled", true) // Disable button
+      buyNow(currentProduct, () => $btn.prop("disabled", false)) // Re-enable in callback
+    })
+    $("#writeReviewBtn").click(() => openReviewModal())
+  }
+
+  function generateStarRating(rating, size = "text-sm") {
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 >= 0.5
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0)
+
+    let starsHtml = ""
+
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+      starsHtml += `<i class="fas fa-star text-yellow-400 ${size}"></i>`
+    }
+
+    // Half star
+    if (hasHalfStar) {
+      starsHtml += `<i class="fas fa-star-half-alt text-yellow-400 ${size}"></i>`
+    }
+
+    // Empty stars
+    for (let i = 0; i < emptyStars; i++) {
+      starsHtml += `<i class="far fa-star text-gray-300 ${size}"></i>`
+    }
+
+    return starsHtml
+  }
+
+  // Image carousel functions
+  window.nextImage = () => {
+    if (currentImageIndex < productImages.length - 1) {
+      currentImageIndex++
+      updateCarousel()
+    }
+  }
+
+  window.previousImage = () => {
+    if (currentImageIndex > 0) {
+      currentImageIndex--
+      updateCarousel()
+    }
+  }
+
+  window.goToImage = (index) => {
+    currentImageIndex = index
+    updateCarousel()
+  }
+
+  function updateCarousel() {
+    const container = $("#carouselContainer")
+    const translateX = -currentImageIndex * 100
+    container.css("transform", `translateX(${translateX}%)`)
+
+    // Update indicators
+    $(".indicator").removeClass("active")
+    $(`.indicator:eq(${currentImageIndex})`).addClass("active")
+  }
+
+  // Cart functions
+  function addToCart(product, callback) {
+    if (!currentUser) {
+      $("#loginModal").removeClass("hidden")
+      if (callback) callback()
+      return
+    }
+
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const existingItem = cart.find((item) => item.product_id === product.product_id)
+
+    if (existingItem) {
+      existingItem.quantity += 1
+    } else {
+      cart.push({
+        product_id: product.product_id,
+        title: product.title,
+        price: product.price,
+        image: product.images && product.images.length > 0 ? product.images[0] : null,
+        platform_type: product.platform_type,
+        quantity: 1,
+      })
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart))
+    updateCartCount()
+
+    Swal.fire({
+      icon: "success",
+      title: "Added to Cart!",
+      text: `${product.title} has been added to your cart.`,
+      timer: 1500,
+      showConfirmButton: false,
+    }).then(() => {
+      if (callback) callback()
+    })
+  }
+
+  function buyNow(product, callback) {
+    if (!currentUser) {
+      $("#loginModal").removeClass("hidden")
+      if (callback) callback()
+      return
+    }
+
+    addToCart(product, () => {
+      window.location.href = "cart.html"
+      if (callback) callback()
+    })
+  }
+
+  function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+
+    if (totalItems > 0) {
+      $("#cartCount").text(totalItems).removeClass("hidden")
+    } else {
+      $("#cartCount").addClass("hidden")
+    }
+  }
+
+  // Review functions
+  function loadProductReviews() {
+    $.ajax({
+      url: `${API_BASE_URL}/reviews?product_id=${productId}`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          displayReviews(response.reviews)
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading reviews:", xhr)
+      },
+    })
+  }
+
+  function displayReviews(reviews) {
+    if (reviews.length === 0) {
+      $("#reviewsContainer").html(`
+        <div class="text-center py-8">
+          <i class="fas fa-star text-4xl text-gray-300 mb-4"></i>
+          <p class="text-gray-500">No reviews yet. Be the first to review this game!</p>
+        </div>
+      `)
+      return
+    }
+
+    const reviewsHtml = reviews
+      .map((review) => {
+        const starsHtml = generateStarRating(review.rating)
+        const isUserReview = currentUser && currentUser.user_id === review.user_id
+
+        return `
+        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="flex items-center space-x-2 mb-1">
+                <span class="font-semibold">${review.first_name} ${review.last_name}</span>
+                <div class="flex items-center space-x-1">
+                  ${starsHtml}
+                </div>
+              </div>
+              ${review.review_title ? `<h4 class="font-medium text-gray-800">${review.review_title}</h4>` : ""}
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-500">${new Date(review.created_at).toLocaleDateString()}</span>
+              ${
+                isUserReview
+                  ? `
+                <button class="text-blue-600 hover:text-blue-800 text-sm edit-review" data-review-id="${review.review_id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="text-red-600 hover:text-red-800 text-sm delete-review" data-review-id="${review.review_id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+          ${review.review_text ? `<p class="text-gray-600">${review.review_text}</p>` : ""}
+        </div>
+      `
+      })
+      .join("")
+
+    $("#reviewsContainer").html(reviewsHtml)
+
+    // Add event listeners for edit/delete buttons
+    $(".edit-review").click(function () {
+      const reviewId = $(this).data("review-id")
+      editReview(reviewId)
+    })
+
+    $(".delete-review").click(function () {
+      const reviewId = $(this).data("review-id")
+      deleteReview(reviewId)
+    })
+  }
+
+  function openReviewModal() {
+    if (!currentUser) {
+      $("#loginModal").removeClass("hidden")
+      return
+    }
+
+    // Check if user purchased this product
+    $.ajax({
+      url: `${API_BASE_URL}/reviews/check-purchase?user_id=${currentUser.user_id}&product_id=${productId}`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          if (!response.has_purchased) {
+            Swal.fire({
+              icon: "warning",
+              title: "Purchase Required",
+              text: "You can only review products you have purchased.",
+            })
+            return
+          }
+
+          // Reset form
+          $("#reviewForm")[0].reset()
+          $("#reviewId").val("")
+          $("#reviewProductId").val(productId)
+          $("#reviewUserId").val(currentUser.user_id)
+          selectedRating = 0
+          updateStarDisplay()
+
+          if (response.existing_review) {
+            // Edit mode
+            const review = response.existing_review
+            $("#reviewModalTitle").text("Edit Your Review")
+            $("#reviewId").val(review.review_id)
+            $("#reviewTitle").val(review.review_title || "")
+            $("#reviewText").val(review.review_text || "")
+            selectedRating = review.rating
+            $("#selectedRating").val(selectedRating)
+            updateStarDisplay()
+          } else {
+            // New review mode
+            $("#reviewModalTitle").text("Write a Review")
+          }
+
+          $("#reviewModal").removeClass("hidden")
+        }
+      },
+      error: (xhr) => {
+        console.error("Error checking purchase:", xhr)
+        showError("Failed to verify purchase status")
+      },
+    })
+  }
+
+  function updateStarDisplay() {
+    $(".star-btn").each(function (index) {
+      const starRating = index + 1
+      if (starRating <= selectedRating) {
+        $(this).removeClass("text-gray-300").addClass("text-yellow-400")
+      } else {
+        $(this).removeClass("text-yellow-400").addClass("text-gray-300")
+      }
+    })
+  }
+
+  function handleReviewSubmit(e) {
+    e.preventDefault()
+
+    if (selectedRating === 0) {
+      showError("Please select a rating")
+      return
+    }
+
+    const formData = new FormData(e.target)
+    const reviewData = {
+      user_id: Number.parseInt(formData.get("user_id")),
+      product_id: Number.parseInt(formData.get("product_id")),
+      rating: selectedRating,
+      review_title: formData.get("review_title"),
+      review_text: formData.get("review_text"),
+    }
+
+    const reviewId = formData.get("review_id")
+    const isEdit = reviewId && reviewId !== ""
+    const url = isEdit ? `${API_BASE_URL}/reviews/${reviewId}` : `${API_BASE_URL}/reviews`
+    const method = isEdit ? "PUT" : "POST"
+
+    $.ajax({
+      url: url,
+      method: method,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json",
+      },
+      data: JSON.stringify(reviewData),
+      success: (response) => {
+        if (response.success) {
+          $("#reviewModal").addClass("hidden")
+          loadProductReviews()
+          loadProduct() // Reload to update average rating
+          Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: isEdit ? "Review updated successfully!" : "Review submitted successfully!",
+            timer: 1500,
+            showConfirmButton: false,
+          })
+        }
+      },
+      error: (xhr) => {
+        const error = xhr.responseJSON?.message || "Failed to submit review"
+        showError(error)
+      },
+    })
+  }
+
+  function editReview(reviewId) {
+    $.ajax({
+      url: `${API_BASE_URL}/reviews/${reviewId}`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          const review = response.review
+          $("#reviewModalTitle").text("Edit Your Review")
+          $("#reviewId").val(review.review_id)
+          $("#reviewProductId").val(review.product_id)
+          $("#reviewUserId").val(review.user_id)
+          $("#reviewTitle").val(review.review_title || "")
+          $("#reviewText").val(review.review_text || "")
+          selectedRating = review.rating
+          $("#selectedRating").val(selectedRating)
+          updateStarDisplay()
+          $("#reviewModal").removeClass("hidden")
+        }
+      },
+      error: (xhr) => {
+        showError("Failed to load review data")
+      },
+    })
+  }
+
+  function deleteReview(reviewId) {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: `${API_BASE_URL}/reviews/${reviewId}`,
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          success: (response) => {
+            if (response.success) {
+              loadProductReviews()
+              loadProduct() // Reload to update average rating
+              Swal.fire({
+                icon: "success",
+                title: "Deleted!",
+                text: "Your review has been deleted.",
+                timer: 1500,
+                showConfirmButton: false,
+              })
+            }
+          },
+          error: (xhr) => {
+            const error = xhr.responseJSON?.message || "Failed to delete review"
+            showError(error)
+          },
+        })
+      }
+    })
+  }
+
+  // Auth functions
+  function handleLogin(e) {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    const loginData = {
+      email: formData.get("email"),
+      password: formData.get("password"),
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/users/login`,
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(loginData),
+      success: (response) => {
+        if (response.success) {
+          localStorage.setItem("token", response.token)
+          localStorage.setItem("user", JSON.stringify(response.user))
+          currentUser = response.user
+          showAuthenticatedState(response.user)
+          $("#loginModal").addClass("hidden")
+          Swal.fire({
+            icon: "success",
+            title: "Welcome!",
+            text: "Login successful",
+            timer: 1500,
+            showConfirmButton: false,
+          })
+        }
+      },
+      error: (xhr) => {
+        const error = xhr.responseJSON?.message || "Login failed"
+        showError(error)
+      },
+    })
+  }
+
+  function logout() {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out of your account",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, logout",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+        currentUser = null
+        showUnauthenticatedState()
+        Swal.fire({
+          icon: "success",
+          title: "Logged out",
+          text: "You have been successfully logged out",
+          timer: 1500,
+          showConfirmButton: false,
+        })
+      }
+    })
+  }
+
+  function showError(message) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: message,
+    })
+  }
+})

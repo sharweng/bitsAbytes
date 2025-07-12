@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="navbar"></div>
+    
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">Order Management</h1>
+                <div class="flex space-x-2">
+                    <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="">All Orders</option>
+                        <option value="1">Pending</option>
+                        <option value="2">Processing</option>
+                        <option value="3">Shipped</option>
+                        <option value="4">Delivered</option>
+                        <option value="5">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table id="ordersTable" class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-2 text-left">Order ID</th>
+                            <th class="px-4 py-2 text-left">Customer</th>
+                            <th class="px-4 py-2 text-left">Items</th>
+                            <th class="px-4 py-2 text-left">Total</th>
+                            <th class="px-4 py-2 text-left">Status</th>
+                            <th class="px-4 py-2 text-left">Order Date</th>
+                            <th class="px-4 py-2 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="orderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center p-6 border-b">
+                <h3 id="orderModalTitle" class="text-lg font-semibold">Order Details</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="orderModalContent" class="p-6">
+                <!-- Order details will be loaded here -->
+            </div>
+            
+            <div class="flex justify-end space-x-3 p-6 border-t">
+                <button id="cancelBtn" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+                    Close
+                </button>
+                <button id="updateShippedBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                    Update Shipped Date
+                </button>
+                <button id="updateDeliveredBtn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                    Update Delivered Date
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/admin-orders.js"></script>
+</body>
+</html>

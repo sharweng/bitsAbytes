@@ -66,22 +66,25 @@ const getAllProducts = (req, res) => {
 
   // Main query with pagination
   const sql = `
-    SELECT 
-      p.*,
-      s.quantity,
-      pt.description as product_type,
-      plt.description as platform_type,
-      GROUP_CONCAT(pi.image_url) as images
-    FROM products p 
-    LEFT JOIN stock s ON p.product_id = s.product_id
-    LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
-    LEFT JOIN platform_types plt ON p.plat_id = plt.plat_id
-    LEFT JOIN product_images pi ON p.product_id = pi.product_id
-    ${whereClause}
-    GROUP BY p.product_id
-    ${orderBy}
-    LIMIT ? OFFSET ?
-  `
+  SELECT 
+    p.*,
+    s.quantity,
+    pt.description as product_type,
+    plt.description as platform_type,
+    GROUP_CONCAT(pi.image_url) as images,
+    COALESCE(AVG(r.rating), 0) as average_rating,
+    COUNT(r.review_id) as review_count
+  FROM products p 
+  LEFT JOIN stock s ON p.product_id = s.product_id
+  LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+  LEFT JOIN platform_types plt ON p.plat_id = plt.plat_id
+  LEFT JOIN product_images pi ON p.product_id = pi.product_id
+  LEFT JOIN reviews r ON p.product_id = r.product_id
+  ${whereClause}
+  GROUP BY p.product_id
+  ${orderBy}
+  LIMIT ? OFFSET ?
+`
 
   try {
     // Get total count first
@@ -137,17 +140,21 @@ const getAllProducts = (req, res) => {
 
 const getProduct = (req, res) => {
   const sql = `
-        SELECT 
-            p.*,
-            s.quantity,
-            pt.description as product_type,
-            plt.description as platform_type
-        FROM products p 
-        LEFT JOIN stock s ON p.product_id = s.product_id
-        LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
-        LEFT JOIN platform_types plt ON p.plat_id = plt.plat_id
-        WHERE p.product_id = ?
-    `
+  SELECT 
+    p.*,
+    s.quantity,
+    pt.description as product_type,
+    plt.description as platform_type,
+    COALESCE(AVG(r.rating), 0) as average_rating,
+    COUNT(r.review_id) as review_count
+  FROM products p 
+  LEFT JOIN stock s ON p.product_id = s.product_id
+  LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+  LEFT JOIN platform_types plt ON p.plat_id = plt.plat_id
+  LEFT JOIN reviews r ON p.product_id = r.product_id
+  WHERE p.product_id = ?
+  GROUP BY p.product_id
+`
 
   const imagesSql = "SELECT image_url FROM product_images WHERE product_id = ?"
   const values = [Number.parseInt(req.params.id)]

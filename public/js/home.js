@@ -76,6 +76,14 @@ $(document).ready(() => {
         $(this).addClass("hidden")
       }
     })
+
+    // Add cart button click handler
+    $("#cartBtn").click(() => {
+      window.location.href = "cart.html"
+    })
+
+    // Initialize cart count on page load
+    updateCartCount()
   }
 
   // Search functionality (for autocomplete dropdown)
@@ -325,10 +333,63 @@ $(document).ready(() => {
       $("#productsGrid").html(productsHtml)
     }
 
+    // Store products data for cart functionality
+    window.currentProducts = window.currentProducts || []
+    if (append) {
+      window.currentProducts = window.currentProducts.concat(products)
+    } else {
+      window.currentProducts = products
+    }
+
+    // Remove existing event handlers to prevent duplicates
+    $(document).off("click", ".add-to-cart-btn")
+    $(document).off("click", ".buy-now-btn")
+    $(document).off("click", ".product-image, .product-title")
+
     // Add click handlers for product cards
-    $(".product-card").click(function () {
+    $(document).on("click", ".product-image, .product-title", function () {
       const productId = $(this).data("product-id")
-      viewProductDetails(productId)
+      window.location.href = `product-detail.html?id=${productId}`
+    })
+
+    // Add to cart buttons - prevent duplicate event handlers
+    $(document).on("click", ".add-to-cart-btn", function (e) {
+      e.stopPropagation()
+      const $btn = $(this)
+
+      // Disable the button immediately
+      $btn.prop("disabled", true)
+
+      const productId = Number.parseInt($btn.data("product-id"))
+      const product = window.currentProducts.find((p) => p.product_id === productId)
+
+      if (product) {
+        addToCart(product, () => {
+          $btn.prop("disabled", false) // Re-enable button after operation
+        })
+      } else {
+        $btn.prop("disabled", false) // Re-enable button if product not found
+      }
+    })
+
+    // Buy now buttons
+    $(document).on("click", ".buy-now-btn", function (e) {
+      e.stopPropagation()
+      const $btn = $(this)
+
+      // Disable the button immediately
+      $btn.prop("disabled", true)
+
+      const productId = Number.parseInt($btn.data("product-id"))
+      const product = window.currentProducts.find((p) => p.product_id === productId)
+
+      if (product) {
+        buyNow(product, () => {
+          $btn.prop("disabled", false) // Re-enable button after operation
+        })
+      } else {
+        $btn.prop("disabled", false) // Re-enable button if product not found
+      }
     })
 
     // Update products count display
@@ -345,34 +406,86 @@ $(document).ready(() => {
     const price = Number.parseFloat(product.price)
     const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
 
+    // Generate star rating
+    const avgRating = Number.parseFloat(product.average_rating) || 0
+    const reviewCount = Number.parseInt(product.review_count) || 0
+    const starsHtml = generateStarRating(avgRating)
+
     return `
-            <div class="product-card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer" data-product-id="${product.product_id}">
-                <div class="relative">
-                    <img src="${imageUrl}" alt="${product.title}" class="w-full h-48 object-cover">
-                    <div class="absolute top-2 right-2">
-                        <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-xs">
-                            ${product.platform_type || "Unknown"}
-                        </span>
-                    </div>
-                    ${price === 0 ? '<div class="absolute top-2 left-2"><span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">FREE</span></div>' : ""}
-                </div>
-                <div class="p-4">
-                    <h3 class="font-semibold text-lg mb-2 line-clamp-2">${product.title}</h3>
-                    <p class="text-gray-600 text-sm mb-2 line-clamp-2">${product.description || "No description available"}</p>
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm text-gray-500">${product.developer || "Unknown Developer"}</span>
-                        <span class="text-sm text-gray-500">${product.product_type || "Digital"}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-2xl font-bold text-blue-600">${priceDisplay}</span>
-                        <div class="flex items-center space-x-1">
-                            <i class="fas fa-box text-gray-400"></i>
-                            <span class="text-sm text-gray-500">${product.quantity || 0} in stock</span>
-                        </div>
-                    </div>
-                </div>
+      <div class="product-card bg-white rounded-lg shadow-md overflow-hidden" data-product-id="${product.product_id}">
+        <div class="relative cursor-pointer product-image" data-product-id="${product.product_id}">
+          <img src="${imageUrl}" alt="${product.title}" class="w-full h-48 object-cover">
+          <div class="absolute top-2 right-2">
+            <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-xs">
+              ${product.platform_type || "Unknown"}
+            </span>
+          </div>
+          ${price === 0 ? '<div class="absolute top-2 left-2"><span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">FREE</span></div>' : ""}
+        </div>
+        <div class="p-4">
+          <h3 class="font-semibold text-lg mb-2 line-clamp-2 cursor-pointer product-title" data-product-id="${product.product_id}">${product.title}</h3>
+          <p class="text-gray-600 text-sm mb-2 line-clamp-2">${product.description || "No description available"}</p>
+          
+          <!-- Rating and Reviews -->
+          <div class="flex items-center space-x-2 mb-2">
+            <div class="flex items-center space-x-1">
+              ${starsHtml}
             </div>
-        `
+            <span class="text-sm text-gray-500">(${reviewCount})</span>
+          </div>
+          
+          <div class="flex justify-between items-center mb-3">
+            <span class="text-sm text-gray-500">${product.developer || "Unknown Developer"}</span>
+            <span class="text-sm text-gray-500">${product.product_type || "Digital"}</span>
+          </div>
+          
+          <div class="flex justify-between items-center mb-3">
+            <span class="text-2xl font-bold text-blue-600">${priceDisplay}</span>
+            <div class="flex items-center space-x-1">
+              <i class="fas fa-box text-gray-400"></i>
+              <span class="text-sm text-gray-500">${product.quantity || 0} in stock</span>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="space-y-2">
+            <div class="flex space-x-2">
+              <button class="add-to-cart-btn flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm font-medium transition duration-200" data-product-id="${product.product_id}">
+                <i class="fas fa-cart-plus mr-1"></i>Add to Cart
+              </button>
+              <button class="buy-now-btn flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded text-sm font-medium transition duration-200" data-product-id="${product.product_id}">
+                <i class="fas fa-bolt mr-1"></i>Buy Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  function generateStarRating(rating) {
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 >= 0.5
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0)
+
+    let starsHtml = ""
+
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+      starsHtml += '<i class="fas fa-star text-yellow-400 text-xs"></i>'
+    }
+
+    // Half star
+    if (hasHalfStar) {
+      starsHtml += '<i class="fas fa-star-half-alt text-yellow-400 text-xs"></i>'
+    }
+
+    // Empty stars
+    for (let i = 0; i < emptyStars; i++) {
+      starsHtml += '<i class="far fa-star text-gray-300 text-xs"></i>'
+    }
+
+    return starsHtml
   }
 
   function resetAndLoadProducts() {
@@ -527,6 +640,96 @@ $(document).ready(() => {
           showConfirmButton: false,
         })
       }
+    })
+  }
+
+  function addToCart(product, callback) {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      $("#loginModal").removeClass("hidden")
+      if (callback) callback()
+      return
+    }
+
+    if (!product || !product.product_id) {
+      showError("Product data not available")
+      if (callback) callback()
+      return
+    }
+
+    // Get current cart
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const existingItemIndex = cart.findIndex((item) => item.product_id === product.product_id)
+
+    if (existingItemIndex !== -1) {
+      // Item already exists, increase quantity
+      cart[existingItemIndex].quantity += 1
+    } else {
+      // Add new item to cart
+      cart.push({
+        product_id: product.product_id,
+        title: product.title,
+        price: product.price,
+        image: product.images && product.images.length > 0 ? product.images[0] : null,
+        platform_type: product.platform_type,
+        product_type: product.product_type || "digital",
+        quantity: 1,
+      })
+    }
+
+    // Save cart
+    localStorage.setItem("cart", JSON.stringify(cart))
+    updateCartCount()
+
+    Swal.fire({
+      icon: "success",
+      title: "Added to Cart!",
+      text: `${product.title} has been added to your cart.`,
+      timer: 1500,
+      showConfirmButton: false,
+    })
+
+    if (callback) callback()
+  }
+
+  function buyNow(product, callback) {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      $("#loginModal").removeClass("hidden")
+      if (callback) callback()
+      return
+    }
+
+    if (!product || !product.product_id) {
+      showError("Product data not available")
+      if (callback) callback()
+      return
+    }
+
+    // Add to cart first
+    addToCart(product, () => {
+      // Then redirect to cart
+      window.location.href = "cart.html"
+      if (callback) callback()
+    })
+  }
+
+  function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+
+    if (totalItems > 0) {
+      $("#cartCount").text(totalItems).removeClass("hidden")
+    } else {
+      $("#cartCount").addClass("hidden")
+    }
+  }
+
+  function showError(message) {
+    Swal.fire({
+      icon: "error",
+      title: "Error!",
+      text: message,
     })
   }
 })

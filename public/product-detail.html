@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - BITS & BYTES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        .image-carousel {
+            position: relative;
+            overflow: hidden;
+        }
+        .carousel-container {
+            display: flex;
+            transition: transform 0.3s ease;
+        }
+        .carousel-slide {
+            min-width: 100%;
+            flex-shrink: 0;
+        }
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+        .carousel-nav:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        .carousel-nav.prev {
+            left: 10px;
+        }
+        .carousel-nav.next {
+            right: 10px;
+        }
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .indicator.active {
+            background: #3b82f6;
+        }
+        .star-rating {
+            color: #fbbf24;
+        }
+        .star-rating .empty {
+            color: #d1d5db;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-2xl font-bold text-blue-600">
+                        <i class="fas fa-gamepad mr-2"></i>BITS & BYTES
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-700 hover:text-blue-600 transition duration-200">Home</a>
+                    <a href="index.html#products" class="text-gray-700 hover:text-blue-600 transition duration-200">Games</a>
+                    <a href="index.html#about" class="text-gray-700 hover:text-blue-600 transition duration-200">About</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div id="userInfo" class="hidden flex items-center space-x-2">
+                        <span class="text-gray-700">Welcome, <span id="userName"></span></span>
+                        <a href="dashboard.html" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </div>
+                    <button id="cartBtn" class="relative bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-shopping-cart mr-1"></i>Cart
+                        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    <button id="loginBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-sign-in-alt mr-1"></i>Login
+                    </button>
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200 hidden">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Product Detail Section -->
+    <section class="py-8">
+        <div class="container mx-auto px-4">
+            <!-- Back Button -->
+            <div class="mb-6">
+                <button onclick="history.back()" class="text-blue-600 hover:text-blue-800 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Games
+                </button>
+            </div>
+
+            <div id="productDetail" class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <!-- Product content will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="reviewModalTitle" class="text-lg font-semibold">Write a Review</h3>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="reviewForm">
+                    <input type="hidden" id="reviewId" name="review_id">
+                    <input type="hidden" id="reviewProductId" name="product_id">
+                    <input type="hidden" id="reviewUserId" name="user_id">
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Rating *</label>
+                        <div class="flex space-x-1">
+                            <button type="button" class="star-btn text-2xl text-gray-300 hover:text-yellow-400" data-rating="1">★</button>
+                            <button type="button" class="star-btn text-2xl text-gray-300 hover:text-yellow-400" data-rating="2">★</button>
+                            <button type="button" class="star-btn text-2xl text-gray-300 hover:text-yellow-400" data-rating="3">★</button>
+                            <button type="button" class="star-btn text-2xl text-gray-300 hover:text-yellow-400" data-rating="4">★</button>
+                            <button type="button" class="star-btn text-2xl text-gray-300 hover:text-yellow-400" data-rating="5">★</button>
+                        </div>
+                        <input type="hidden" id="selectedRating" name="rating" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Review Title</label>
+                        <input type="text" id="reviewTitle" name="review_title" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Review Text</label>
+                        <textarea id="reviewText" name="review_text" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" class="close-modal bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Submit Review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Login</h3>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" name="password" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <a href="register.html" class="text-blue-500 hover:text-blue-600 text-sm">Need an account?</a>
+                        <div class="space-x-2">
+                            <button type="button" class="close-modal bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Login</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/product-detail.js"></script>
+</body>
+</html>

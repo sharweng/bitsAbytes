@@ -6,6 +6,7 @@ const {
   addReview,
   updateReview,
   deleteReview,
+  checkUserPurchase,
 } = require("../controllers/review.controller.js")
 
 const { isAuthenticatedUser } = require("../middlewares/auth.js")
@@ -13,6 +14,7 @@ const { isAuthenticatedUser } = require("../middlewares/auth.js")
 // Public routes
 router.get("/", getAllReviews)
 router.get("/:id", getReview)
+router.get("/check-purchase", checkUserPurchase)
 
 // Protected routes (require authentication)
 router.post("/", isAuthenticatedUser, addReview)

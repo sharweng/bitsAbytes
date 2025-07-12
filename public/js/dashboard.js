@@ -1,3 +1,6 @@
+// Import jQuery
+const $ = window.jQuery
+
 $(document).ready(() => {
   const API_BASE_URL = window.API_BASE_URL || "http://localhost:4000/api"
 
@@ -11,7 +14,6 @@ $(document).ready(() => {
         console.log("Users response:", response)
         if (response.success) {
           $("#totalUsers").text(response.total_users || 0)
-          $("#deactivatedUsers").text(response.deactivated_users || 0)
         }
       },
       error: (xhr) => {
@@ -46,6 +48,21 @@ $(document).ready(() => {
       },
       error: (xhr) => {
         console.error("Error loading reviews stats:", xhr)
+      },
+    })
+
+    // Load orders count
+    window.makeAuthenticatedRequest({
+      url: `${API_BASE_URL}/orders`,
+      method: "GET",
+      success: (response) => {
+        console.log("Orders response:", response)
+        if (response.success) {
+          $("#totalOrders").text(response.orders.length || 0)
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading orders stats:", xhr)
       },
     })
   }

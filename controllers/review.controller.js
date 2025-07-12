@@ -286,10 +286,75 @@ const deleteReview = (req, res) => {
   }
 }
 
+const checkUserPurchase = (req, res) => {
+  const { user_id, product_id } = req.query
+
+  if (!user_id || !product_id) {
+    return res.status(400).json({
+      success: false,
+      message: "User ID and Product ID are required",
+    })
+  }
+
+  // Check if user purchased this product
+  const purchaseCheckSql = `
+    SELECT COUNT(*) as purchase_count
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    WHERE o.user_id = ? AND oi.product_id = ?
+  `
+
+  // Get user's existing review if any
+  const reviewCheckSql = `
+    SELECT * FROM reviews 
+    WHERE user_id = ? AND product_id = ?
+  `
+
+  try {
+    connection.execute(purchaseCheckSql, [user_id, product_id], (err, purchaseResult) => {
+      if (err) {
+        console.log(err)
+        return res.status(500).json({
+          success: false,
+          message: "Error checking purchase history",
+          error: err.message,
+        })
+      }
+
+      const hasPurchased = purchaseResult[0].purchase_count > 0
+
+      connection.execute(reviewCheckSql, [user_id, product_id], (err, reviewResult) => {
+        if (err) {
+          console.log(err)
+          return res.status(500).json({
+            success: false,
+            message: "Error checking existing review",
+            error: err.message,
+          })
+        }
+
+        return res.status(200).json({
+          success: true,
+          has_purchased: hasPurchased,
+          existing_review: reviewResult.length > 0 ? reviewResult[0] : null,
+        })
+      })
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    })
+  }
+}
+
 module.exports = {
   getAllReviews,
   getReview,
   addReview,
   updateReview,
-  deleteReview
+  deleteReview,
+  checkUserPurchase,
 }

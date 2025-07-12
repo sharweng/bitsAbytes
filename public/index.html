@@ -67,10 +67,17 @@
                 <div class="flex items-center space-x-4">
                     <div id="userInfo" class="hidden flex items-center space-x-2">
                         <span class="text-gray-700">Welcome, <span id="userName"></span></span>
+                        <a href="orders.html" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-shopping-bag"></i> My Orders
+                        </a>
                         <a href="dashboard.html" class="text-blue-600 hover:text-blue-800">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                     </div>
+                    <button id="cartBtn" class="relative bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-shopping-cart mr-1"></i>Cart
+                        <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </button>
                     <button id="loginBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
                         <i class="fas fa-sign-in-alt mr-1"></i>Login
                     </button>
