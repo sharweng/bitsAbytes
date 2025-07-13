@@ -21,7 +21,6 @@ $(document).ready(() => {
 
     if (token && user.email && user.role === "admin") {
       currentUser = user
-      $("#userName").text(user.first_name || user.email)
     } else {
       // Redirect to login if not admin
       window.location.href = "login.html"
@@ -29,7 +28,6 @@ $(document).ready(() => {
   }
 
   function initializeEventListeners() {
-    $("#logoutBtn").click(logout)
     $("#closeOrderModal").click(() => $("#orderModal").addClass("hidden"))
     $("#closeStatusModal").click(() => $("#updateStatusModal").addClass("hidden"))
     $("#cancelStatusUpdate").click(() => $("#updateStatusModal").addClass("hidden"))
@@ -286,7 +284,7 @@ $(document).ready(() => {
 
           <!-- Shipping Info -->
           ${
-            order.user_shipping_address // Use user_shipping_address from the joined user table
+            order.user_shipping_address
               ? `
             <div class="bg-gray-50 p-4 rounded-lg">
               <h4 class="font-semibold mb-2">Shipping Address</h4>
@@ -482,24 +480,6 @@ $(document).ready(() => {
             showError(error)
           },
         })
-      }
-    })
-  }
-
-  function logout() {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You will be logged out of your account",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, logout",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        window.location.href = "login.html"
       }
     })
   }

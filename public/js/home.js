@@ -50,12 +50,6 @@ $(document).ready(() => {
 
   // Event listeners
   function initializeEventListeners() {
-    // Login/Logout
-    $("#loginBtn").click(() => $("#loginModal").removeClass("hidden"))
-    $("#logoutBtn").click(logout)
-    $(".close-modal").click(() => $("#loginModal").addClass("hidden"))
-    $("#loginForm").submit(handleLogin)
-
     // Search functionality
     $("#searchInput").on("input", handleSearchInput)
     $("#searchBtn").click(performSearch)
@@ -70,13 +64,6 @@ $(document).ready(() => {
     // Infinite scroll
     $(window).scroll(handleScroll)
 
-    // Click outside modal to close
-    $("#loginModal").click(function (e) {
-      if (e.target === this) {
-        $(this).addClass("hidden")
-      }
-    })
-
     // Add cart button click handler
     $("#cartBtn").click(() => {
       window.location.href = "cart.html"
@@ -84,6 +71,15 @@ $(document).ready(() => {
 
     // Initialize cart count on page load
     updateCartCount()
+
+    // Listen for auth state changes
+    $(document).on('authStateChanged', (event, isAuthenticated, user) => {
+      if (isAuthenticated) {
+        showAuthenticatedState(user)
+      } else {
+        showUnauthenticatedState()
+      }
+    })
   }
 
   // Search functionality (for autocomplete dropdown)
@@ -575,71 +571,6 @@ $(document).ready(() => {
       customClass: {
         popup: "text-left",
       },
-    })
-  }
-
-  // Authentication
-  function handleLogin(e) {
-    e.preventDefault()
-    const formData = new FormData(e.target)
-    const loginData = {
-      email: formData.get("email"),
-      password: formData.get("password"),
-    }
-
-    $.ajax({
-      url: `${API_BASE_URL}/users/login`,
-      method: "POST",
-      contentType: "application/json",
-      data: JSON.stringify(loginData),
-      success: (response) => {
-        if (response.success) {
-          localStorage.setItem("token", response.token)
-          localStorage.setItem("user", JSON.stringify(response.user))
-          showAuthenticatedState(response.user)
-          $("#loginModal").addClass("hidden")
-          Swal.fire({
-            icon: "success",
-            title: "Welcome!",
-            text: "Login successful",
-            timer: 1500,
-            showConfirmButton: false,
-          })
-        }
-      },
-      error: (xhr) => {
-        const error = xhr.responseJSON?.message || "Login failed"
-        Swal.fire({
-          icon: "error",
-          title: "Login Failed",
-          text: error,
-        })
-      },
-    })
-  }
-
-  function logout() {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You will be logged out of your account",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, logout",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        showUnauthenticatedState()
-        Swal.fire({
-          icon: "success",
-          title: "Logged out",
-          text: "You have been successfully logged out",
-          timer: 1500,
-          showConfirmButton: false,
-        })
-      }
     })
   }
 

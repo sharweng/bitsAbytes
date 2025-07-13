@@ -57,25 +57,25 @@ $(document).ready(() => {
   }
 
   function initializeEventListeners() {
-    // Auth buttons
-    $("#loginBtn").click(() => $("#loginModal").removeClass("hidden"))
-    $("#logoutBtn").click(logout)
-    $(".close-modal").click(() => $("#loginModal").addClass("hidden"))
     $("#closeOrderModal").click(() => $("#orderModal").addClass("hidden"))
 
-    // Login form
-    $("#loginForm").submit(handleLogin)
-
     // Modal clicks
-    $("#loginModal").click(function (e) {
+    $("#orderModal").click(function (e) {
       if (e.target === this) {
         $(this).addClass("hidden")
       }
     })
 
-    $("#orderModal").click(function (e) {
-      if (e.target === this) {
-        $(this).addClass("hidden")
+    // Listen for auth state changes
+    $(document).on('authStateChanged', (event, isAuthenticated, user) => {
+      if (isAuthenticated) {
+        currentUser = user
+        showAuthenticatedState(user)
+        loadOrders()
+      } else {
+        currentUser = null
+        showUnauthenticatedState()
+        showLoginRequired()
       }
     })
   }
@@ -116,7 +116,7 @@ $(document).ready(() => {
         const orderDate = new Date(order.order_date).toLocaleDateString()
         const totalAmount = Number.parseFloat(order.total_amount || 0)
         const statusColor = getStatusColor(order.status)
-        const shippingInfo = order.shipping_address ? "Required" : "Digital Only" // Use order.shipping_address from user's profile
+        const shippingInfo = order.shipping_address ? "Required" : "Digital Only"
 
         return `
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-300">
@@ -281,7 +281,7 @@ $(document).ready(() => {
 
         <!-- Shipping Info -->
         ${
-          order.user_shipping_address // Use user_shipping_address from the joined user table
+          order.user_shipping_address
             ? `
           <div class="bg-gray-50 p-4 rounded-lg">
             <h4 class="font-semibold mb-2">Shipping Address</h4>
@@ -344,71 +344,6 @@ $(document).ready(() => {
         </div>
       </div>
     `)
-  }
-
-  // Auth functions
-  function handleLogin(e) {
-    e.preventDefault()
-    const formData = new FormData(e.target)
-    const loginData = {
-      email: formData.get("email"),
-      password: formData.get("password"),
-    }
-
-    $.ajax({
-      url: `${API_BASE_URL}/users/login`,
-      method: "POST",
-      contentType: "application/json",
-      data: JSON.stringify(loginData),
-      success: (response) => {
-        if (response.success) {
-          localStorage.setItem("token", response.token)
-          localStorage.setItem("user", JSON.stringify(response.user))
-          currentUser = response.user
-          showAuthenticatedState(response.user)
-          $("#loginModal").addClass("hidden")
-          loadOrders()
-          Swal.fire({
-            icon: "success",
-            title: "Welcome!",
-            text: "Login successful",
-            timer: 1500,
-            showConfirmButton: false,
-          })
-        }
-      },
-      error: (xhr) => {
-        const error = xhr.responseJSON?.message || "Login failed"
-        showError(error)
-      },
-    })
-  }
-
-  function logout() {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You will be logged out of your account",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, logout",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        currentUser = null
-        showUnauthenticatedState()
-        showLoginRequired()
-        Swal.fire({
-          icon: "success",
-          title: "Logged out",
-          text: "You have been successfully logged out",
-          timer: 1500,
-          showConfirmButton: false,
-        })
-      }
-    })
   }
 
   function showError(message) {

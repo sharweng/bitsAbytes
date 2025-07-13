@@ -1,27 +1,312 @@
-<nav class="bg-blue-600 shadow-lg">
-    <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center py-4">
-            <div class="flex items-center space-x-4">
-                <a href="dashboard.html" class="text-white text-xl font-bold">Admin Panel</a>
-                <div class="hidden md:flex space-x-4">
-                    <a href="dashboard.html" class="text-white hover:text-blue-200 transition duration-200">Dashboard</a>
-                    <a href="users.html" class="text-white hover:text-blue-200 transition duration-200">Users</a>
-                    <a href="products.html" class="text-white hover:text-blue-200 transition duration-200">Products</a>
-                    <a href="reviews.html" class="text-white hover:text-blue-200 transition duration-200">Reviews</a>
-                    <a href="admin-orders.html" class="text-white hover:text-blue-200 transition duration-200">Orders</a>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-4">
-                <!-- Home Website Button for Admin -->
-                <a href="index.html" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-200">
-                    <i class="fas fa-home mr-2"></i>Home Website
-                </a>
-                <span class="text-white" id="userEmail"></span>
-                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition duration-200">
-                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                </button>
-            </div>
+<nav class="bg-white shadow-lg border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16">
+      <!-- Logo and Brand -->
+      <div class="flex items-center">
+        <a href="index.html" class="flex items-center space-x-2">
+          <i class="fas fa-gamepad text-2xl text-blue-600"></i>
+          <span class="text-xl font-bold text-gray-800">BitsAbytes</span>
+        </a>
+      </div>
+
+      <!-- Navigation Links -->
+      <div class="hidden md:flex items-center space-x-8" id="navLinks">
+        <!-- Customer Navigation (default) -->
+        <div id="customerNav" class="flex items-center space-x-8">
+          <a href="index.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+            <i class="fas fa-home mr-1"></i>Home
+          </a>
+          <a href="products.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+            <i class="fas fa-gamepad mr-1"></i>Games
+          </a>
+          <a href="reviews.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+            <i class="fas fa-star mr-1"></i>Reviews
+          </a>
+          <a href="orders.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+            <i class="fas fa-box mr-1"></i>My Orders
+          </a>
         </div>
+
+        <!-- Admin Navigation -->
+        <div id="adminNav" class="hidden flex items-center space-x-8">
+          <a href="dashboard.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+            <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+          </a>
+          <a href="admin-orders.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+            <i class="fas fa-shopping-cart mr-1"></i>Orders
+          </a>
+          <a href="users.html" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+            <i class="fas fa-users mr-1"></i>Users
+          </a>
+        </div>
+      </div>
+
+      <!-- Right side buttons -->
+      <div class="flex items-center space-x-4">
+        <!-- Cart Button (customer only) -->
+        <button id="cartBtn" class="relative text-gray-700 hover:text-blue-600 transition duration-200 customer-only">
+          <i class="fas fa-shopping-cart text-xl"></i>
+          <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+        </button>
+
+        <!-- User Info -->
+        <div id="userInfo" class="hidden flex items-center space-x-2">
+          <i class="fas fa-user text-gray-600"></i>
+          <span id="userName" class="text-gray-700 font-medium"></span>
+        </div>
+
+        <!-- Auth Buttons -->
+        <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+          <i class="fas fa-sign-in-alt mr-1"></i>Login
+        </button>
+        <button id="logoutBtn" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300">
+          <i class="fas fa-sign-out-alt mr-1"></i>Logout
+        </button>
+      </div>
     </div>
+  </div>
 </nav>
+
+<!-- Login Modal -->
+<div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Login</h2>
+        <button class="close-modal text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <form id="loginForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+          <input type="email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+          <input type="password" name="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+          Login
+        </button>
+      </form>
+      <div class="mt-4 text-center">
+        <a href="register.html" class="text-blue-600 hover:text-blue-800 text-sm">Don't have an account? Register here</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-load navbar functionality
+$(document).ready(() => {
+  // Initialize navbar after it's loaded
+  initializeNavbar()
+})
+
+function initializeNavbar() {
+  // Check if we're on an admin page
+  const isAdminPage = window.location.pathname.includes('admin-') || 
+                     window.location.pathname.includes('dashboard.html') ||
+                     window.location.pathname.includes('users.html')
+  
+  // Show appropriate navigation
+  if (isAdminPage) {
+    $('#customerNav').addClass('hidden')
+    $('#adminNav').removeClass('hidden').addClass('flex')
+    $('.customer-only').addClass('hidden')
+  } else {
+    $('#adminNav').addClass('hidden')
+    $('#customerNav').removeClass('hidden').addClass('flex')
+    $('.customer-only').removeClass('hidden')
+  }
+
+  // Initialize auth state
+  checkAuthStatus()
+  
+  // Initialize event listeners
+  initializeNavbarEvents()
+  
+  // Update cart count if on customer pages
+  if (!isAdminPage) {
+    updateCartCount()
+  }
+}
+
+function initializeNavbarEvents() {
+  // Login/Logout buttons
+  $('#loginBtn').off('click').on('click', () => $('#loginModal').removeClass('hidden'))
+  $('#logoutBtn').off('click').on('click', logout)
+  $('.close-modal').off('click').on('click', () => $('#loginModal').addClass('hidden'))
+  
+  // Login form
+  $('#loginForm').off('submit').on('submit', handleLogin)
+  
+  // Cart button
+  $('#cartBtn').off('click').on('click', () => {
+    window.location.href = 'cart.html'
+  })
+  
+  // Modal clicks
+  $('#loginModal').off('click').on('click', function(e) {
+    if (e.target === this) {
+      $(this).addClass('hidden')
+    }
+  })
+}
+
+function checkAuthStatus() {
+  const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  
+  if (token && user.email) {
+    showAuthenticatedState(user)
+  } else {
+    showUnauthenticatedState()
+  }
+}
+
+function showAuthenticatedState(user) {
+  $('#loginBtn').addClass('hidden')
+  $('#logoutBtn').removeClass('hidden')
+  $('#userInfo').removeClass('hidden')
+  $('#userName').text(user.first_name || user.email)
+}
+
+function showUnauthenticatedState() {
+  $('#loginBtn').removeClass('hidden')
+  $('#logoutBtn').addClass('hidden')
+  $('#userInfo').addClass('hidden')
+}
+
+function handleLogin(e) {
+  e.preventDefault()
+  const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api'
+  const formData = new FormData(e.target)
+  const loginData = {
+    email: formData.get('email'),
+    password: formData.get('password')
+  }
+  
+  $.ajax({
+    url: `${API_BASE_URL}/users/login`,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(loginData),
+    success: (response) => {
+      if (response.success) {
+        localStorage.setItem('token', response.token)
+        localStorage.setItem('user', JSON.stringify(response.user))
+        showAuthenticatedState(response.user)
+        $('#loginModal').addClass('hidden')
+        
+        // Show success message
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Welcome!',
+            text: 'Login successful',
+            timer: 1500,
+            showConfirmButton: false
+          })
+        }
+        
+        // Reload page if admin status changed
+        const isAdminPage = window.location.pathname.includes('admin-') || 
+                           window.location.pathname.includes('dashboard.html') ||
+                           window.location.pathname.includes('users.html')
+        
+        if (response.user.role === 'admin' && !isAdminPage) {
+          window.location.href = 'dashboard.html'
+        } else if (response.user.role !== 'admin' && isAdminPage) {
+          window.location.href = 'index.html'
+        } else {
+          // Trigger custom event for other scripts to listen to
+          $(document).trigger('userLoggedIn', [response.user])
+        }
+      }
+    },
+    error: (xhr) => {
+      const error = xhr.responseJSON?.message || 'Login failed'
+      if (window.Swal) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Login Failed',
+          text: error
+        })
+      } else {
+        alert(error)
+      }
+    }
+  })
+}
+
+function logout() {
+  if (window.Swal) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will be logged out of your account',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, logout'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        performLogout()
+      }
+    })
+  } else {
+    if (confirm('Are you sure you want to logout?')) {
+      performLogout()
+    }
+  }
+}
+
+function performLogout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  localStorage.removeItem('cart') // Clear cart on logout
+  showUnauthenticatedState()
+  
+  // Trigger custom event for other scripts to listen to
+  $(document).trigger('userLoggedOut')
+  
+  if (window.Swal) {
+    Swal.fire({
+      icon: 'success',
+      title: 'Logged out',
+      text: 'You have been successfully logged out',
+      timer: 1500,
+      showConfirmButton: false
+    })
+  }
+  
+  // Redirect admin users to home page
+  const isAdminPage = window.location.pathname.includes('admin-') || 
+                     window.location.pathname.includes('dashboard.html') ||
+                     window.location.pathname.includes('users.html')
+  
+  if (isAdminPage) {
+    setTimeout(() => {
+      window.location.href = 'index.html'
+    }, 1500)
+  }
+}
+
+function updateCartCount() {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]')
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+  
+  if (totalItems > 0) {
+    $('#cartCount').text(totalItems).removeClass('hidden')
+  } else {
+    $('#cartCount').addClass('hidden')
+  }
+}
+
+// Make functions globally available
+window.logout = logout
+window.checkAuthStatus = checkAuthStatus
+window.updateCartCount = updateCartCount
+</script>
