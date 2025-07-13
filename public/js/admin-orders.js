@@ -33,8 +33,8 @@ $(document).ready(() => {
     $("#closeOrderModal").click(() => $("#orderModal").addClass("hidden"))
     $("#closeStatusModal").click(() => $("#updateStatusModal").addClass("hidden"))
     $("#cancelStatusUpdate").click(() => $("#updateStatusModal").addClass("hidden"))
-    $("#applyFilters").click(applyFilters)
     $("#updateStatusForm").submit(handleStatusUpdate)
+    $("#clearDates").click(clearDates)
 
     // Modal clicks
     $("#orderModal").click(function (e) {
@@ -63,7 +63,6 @@ $(document).ready(() => {
             )
             .join("")
 
-          $("#statusFilter").append(statusOptions)
           $("#newStatus").html(statusOptions)
         }
       },
@@ -189,23 +188,6 @@ $(document).ready(() => {
       default:
         return "bg-gray-100 text-gray-800"
     }
-  }
-
-  function applyFilters() {
-    const statusFilter = $("#statusFilter").val()
-    const dateFrom = $("#dateFrom").val()
-    const dateTo = $("#dateTo").val()
-
-    let url = `${API_BASE_URL}/orders?`
-    const params = []
-
-    if (statusFilter) params.push(`status_filter=${statusFilter}`)
-    if (dateFrom) params.push(`date_from=${dateFrom}`)
-    if (dateTo) params.push(`date_to=${dateTo}`)
-
-    url += params.join("&")
-
-    ordersTable.ajax.url(url).load()
   }
 
   function viewOrderDetails(orderId) {
@@ -370,10 +352,47 @@ $(document).ready(() => {
   }
 
   function showUpdateStatusModal(orderId) {
-    $("#updateOrderId").val(orderId)
+    // First, get the current order details to populate the form
+    $.ajax({
+      url: `${API_BASE_URL}/orders/${orderId}`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      success: (response) => {
+        if (response.success) {
+          const order = response.order
+
+          $("#updateOrderId").val(orderId)
+
+          // Set current shipped and delivered dates if they exist
+          if (order.shipped_date) {
+            const shippedDate = new Date(order.shipped_date).toISOString().split("T")[0]
+            $("#shippedDate").val(shippedDate)
+          } else {
+            $("#shippedDate").val("")
+          }
+
+          if (order.delivered_date) {
+            const deliveredDate = new Date(order.delivered_date).toISOString().split("T")[0]
+            $("#deliveredDate").val(deliveredDate)
+          } else {
+            $("#deliveredDate").val("")
+          }
+
+          $("#updateStatusModal").removeClass("hidden")
+        }
+      },
+      error: (xhr) => {
+        const error = xhr.responseJSON?.message || "Failed to load order details"
+        showError(error)
+      },
+    })
+  }
+
+  function clearDates() {
     $("#shippedDate").val("")
     $("#deliveredDate").val("")
-    $("#updateStatusModal").removeClass("hidden")
   }
 
   function handleStatusUpdate(e) {
@@ -388,12 +407,17 @@ $(document).ready(() => {
       stat_id: statusId,
     }
 
+    // Only include dates if they have values, otherwise they'll be set to null
     if (shippedDate) {
       updateData.shipped_date = shippedDate
+    } else {
+      updateData.shipped_date = null
     }
 
     if (deliveredDate) {
       updateData.delivered_date = deliveredDate
+    } else {
+      updateData.delivered_date = null
     }
 
     $.ajax({
