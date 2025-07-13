@@ -20,6 +20,7 @@ $(document).ready(() => {
   function initializePage() {
     checkAuthStatus()
     loadProducts()
+    loadFilterOptions() // Add this line
     initializeEventListeners()
   }
 
@@ -73,7 +74,7 @@ $(document).ready(() => {
     updateCartCount()
 
     // Listen for auth state changes
-    $(document).on('authStateChanged', (event, isAuthenticated, user) => {
+    $(document).on("authStateChanged", (event, isAuthenticated, user) => {
       if (isAuthenticated) {
         showAuthenticatedState(user)
       } else {
@@ -232,8 +233,30 @@ $(document).ready(() => {
     if (currentFilters.type) {
       params.append("type", currentFilters.type)
     }
+    // Fix sorting parameter mapping
     if (currentFilters.sort) {
-      params.append("sort", currentFilters.sort)
+      let sortParam = currentFilters.sort
+      switch (currentFilters.sort) {
+        case "newest":
+          sortParam = "created_at_desc"
+          break
+        case "oldest":
+          sortParam = "created_at_asc"
+          break
+        case "price_low":
+          sortParam = "price_asc"
+          break
+        case "price_high":
+          sortParam = "price_desc"
+          break
+        case "name_asc":
+          sortParam = "title_asc"
+          break
+        case "name_desc":
+          sortParam = "title_desc"
+          break
+      }
+      params.append("sort", sortParam)
     }
 
     const url = `${API_BASE_URL}/products?${params.toString()}`
@@ -663,4 +686,59 @@ $(document).ready(() => {
       text: message,
     })
   }
+
+  // Add this function after the showError function
+  function loadFilterOptions() {
+    $.ajax({
+      url: `${API_BASE_URL}/products/filters`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          const { platforms, types } = response.data
+
+          // Create platform filter chips
+          const platformChips = platforms
+            .map(
+              (platform) =>
+                `<button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="${platform}">
+              ${platform}
+            </button>`,
+            )
+            .join("")
+          $("#platformFilters").html(platformChips)
+
+          // Create type filter chips
+          const typeChips = types
+            .map(
+              (type) =>
+                `<button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="type" data-value="${type}">
+              ${type.charAt(0).toUpperCase() + type.slice(1)}
+            </button>`,
+            )
+            .join("")
+          $("#typeFilters").html(typeChips)
+
+          // Re-initialize filter click handlers for new buttons
+          $(".filter-chip").off("click").on("click", handleFilterClick)
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading filter options:", xhr)
+        // Fallback to default filters if API fails - Updated with Mobile and Console instead of PlayStation, Xbox, Nintendo
+        $("#platformFilters").html(`
+          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="PC">PC</button>
+          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="Mobile">Mobile</button>
+          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="Console">Console</button>
+        `)
+        $("#typeFilters").html(`
+          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="type" data-value="digital">Digital</button>
+          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="type" data-value="physical">Physical</button>
+        `)
+        $(".filter-chip").off("click").on("click", handleFilterClick)
+      },
+    })
+  }
+
+  // Make loadFilterOptions available globally
+  window.loadFilterOptions = loadFilterOptions
 })

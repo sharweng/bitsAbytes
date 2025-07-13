@@ -25,12 +25,12 @@ const getAllProducts = (req, res) => {
   }
 
   if (platform) {
-    whereConditions.push("p.plat_id = ?")
+    whereConditions.push("plt.description = ?")
     queryParams.push(platform)
   }
 
   if (type) {
-    whereConditions.push("p.ptype_id = ?")
+    whereConditions.push("pt.description = ?")
     queryParams.push(type)
   }
 
@@ -40,14 +40,26 @@ const getAllProducts = (req, res) => {
   let orderBy = "ORDER BY p.created_at DESC" // default
   switch (sort) {
     case "price_low":
+    case "price_asc":
       orderBy = "ORDER BY p.price ASC"
       break
     case "price_high":
+    case "price_desc":
       orderBy = "ORDER BY p.price DESC"
       break
-    case "title":
+    case "title_asc":
+    case "name_asc":
       orderBy = "ORDER BY p.title ASC"
       break
+    case "title_desc":
+    case "name_desc":
+      orderBy = "ORDER BY p.title DESC"
+      break
+    case "created_at_asc":
+    case "oldest":
+      orderBy = "ORDER BY p.created_at ASC"
+      break
+    case "created_at_desc":
     case "newest":
     default:
       orderBy = "ORDER BY p.created_at DESC"
@@ -229,6 +241,42 @@ const getProductTypes = (req, res) => {
     return res.status(200).json({
       success: true,
       productTypes: results,
+    })
+  })
+}
+
+// Get filter options for frontend
+const getFilterOptions = (req, res) => {
+  const platformSql = "SELECT DISTINCT description FROM platform_types ORDER BY description"
+  const typeSql = "SELECT DISTINCT description FROM product_types ORDER BY description"
+
+  connection.execute(platformSql, [], (err, platformResults) => {
+    if (err) {
+      console.log(err)
+      return res.status(500).json({
+        success: false,
+        message: "Error fetching platform types",
+        error: err.message,
+      })
+    }
+
+    connection.execute(typeSql, [], (err, typeResults) => {
+      if (err) {
+        console.log(err)
+        return res.status(500).json({
+          success: false,
+          message: "Error fetching product types",
+          error: err.message,
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          platforms: platformResults.map((row) => row.description),
+          types: typeResults.map((row) => row.description),
+        },
+      })
     })
   })
 }
@@ -433,6 +481,7 @@ module.exports = {
   getProduct,
   getPlatformTypes,
   getProductTypes,
+  getFilterOptions,
   addProduct,
   updateProduct,
   deleteProduct,
