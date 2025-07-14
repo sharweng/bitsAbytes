@@ -11,14 +11,15 @@ const {
   deleteProduct,
 } = require("../controllers/product.controller.js")
 
-const { isAuthenticatedUser } = require("../middlewares/auth.js")
+const { isAuthenticatedUser, isAdmin } = require("../middlewares/auth.js")
 
 router.get("/", getAllProducts)
 router.get("/platforms", getPlatformTypes)
 router.get("/types", getProductTypes)
 router.get("/:id", getProduct)
-router.post("/", isAuthenticatedUser, upload.any("image"), addProduct)
-router.put("/:id", isAuthenticatedUser, upload.any("image"), updateProduct)
-router.delete("/:id", isAuthenticatedUser, deleteProduct)
+
+router.post("/", isAuthenticatedUser, isAdmin, upload.any("image"), addProduct)
+router.put("/:id", isAuthenticatedUser, isAdmin, upload.any("image"), updateProduct)
+router.delete("/:id", isAuthenticatedUser, isAdmin, deleteProduct)
 
 module.exports = router
