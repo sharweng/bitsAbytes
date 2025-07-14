@@ -20,7 +20,6 @@ $(document).ready(() => {
   function initializePage() {
     checkAuthStatus()
     loadProducts()
-    loadFilterOptions() // Add this line
     initializeEventListeners()
   }
 
@@ -51,6 +50,12 @@ $(document).ready(() => {
 
   // Event listeners
   function initializeEventListeners() {
+    // Login/Logout
+    $("#loginBtn").click(() => $("#loginModal").removeClass("hidden"))
+    $("#logoutBtn").click(logout)
+    $(".close-modal").click(() => $("#loginModal").addClass("hidden"))
+    $("#loginForm").submit(handleLogin)
+
     // Search functionality
     $("#searchInput").on("input", handleSearchInput)
     $("#searchBtn").click(performSearch)
@@ -65,6 +70,13 @@ $(document).ready(() => {
     // Infinite scroll
     $(window).scroll(handleScroll)
 
+    // Click outside modal to close
+    $("#loginModal").click(function (e) {
+      if (e.target === this) {
+        $(this).addClass("hidden")
+      }
+    })
+
     // Add cart button click handler
     $("#cartBtn").click(() => {
       window.location.href = "cart.html"
@@ -72,15 +84,6 @@ $(document).ready(() => {
 
     // Initialize cart count on page load
     updateCartCount()
-
-    // Listen for auth state changes
-    $(document).on("authStateChanged", (event, isAuthenticated, user) => {
-      if (isAuthenticated) {
-        showAuthenticatedState(user)
-      } else {
-        showUnauthenticatedState()
-      }
-    })
   }
 
   // Search functionality (for autocomplete dropdown)
@@ -233,30 +236,8 @@ $(document).ready(() => {
     if (currentFilters.type) {
       params.append("type", currentFilters.type)
     }
-    // Fix sorting parameter mapping
     if (currentFilters.sort) {
-      let sortParam = currentFilters.sort
-      switch (currentFilters.sort) {
-        case "newest":
-          sortParam = "created_at_desc"
-          break
-        case "oldest":
-          sortParam = "created_at_asc"
-          break
-        case "price_low":
-          sortParam = "price_asc"
-          break
-        case "price_high":
-          sortParam = "price_desc"
-          break
-        case "name_asc":
-          sortParam = "title_asc"
-          break
-        case "name_desc":
-          sortParam = "title_desc"
-          break
-      }
-      params.append("sort", sortParam)
+      params.append("sort", currentFilters.sort)
     }
 
     const url = `${API_BASE_URL}/products?${params.toString()}`
@@ -597,6 +578,71 @@ $(document).ready(() => {
     })
   }
 
+  // Authentication
+  function handleLogin(e) {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    const loginData = {
+      email: formData.get("email"),
+      password: formData.get("password"),
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/users/login`,
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(loginData),
+      success: (response) => {
+        if (response.success) {
+          localStorage.setItem("token", response.token)
+          localStorage.setItem("user", JSON.stringify(response.user))
+          showAuthenticatedState(response.user)
+          $("#loginModal").addClass("hidden")
+          Swal.fire({
+            icon: "success",
+            title: "Welcome!",
+            text: "Login successful",
+            timer: 1500,
+            showConfirmButton: false,
+          })
+        }
+      },
+      error: (xhr) => {
+        const error = xhr.responseJSON?.message || "Login failed"
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: error,
+        })
+      },
+    })
+  }
+
+  function logout() {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out of your account",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, logout",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+        showUnauthenticatedState()
+        Swal.fire({
+          icon: "success",
+          title: "Logged out",
+          text: "You have been successfully logged out",
+          timer: 1500,
+          showConfirmButton: false,
+        })
+      }
+    })
+  }
+
   function addToCart(product, callback) {
     const token = localStorage.getItem("token")
     if (!token) {
@@ -686,59 +732,4 @@ $(document).ready(() => {
       text: message,
     })
   }
-
-  // Add this function after the showError function
-  function loadFilterOptions() {
-    $.ajax({
-      url: `${API_BASE_URL}/products/filters`,
-      method: "GET",
-      success: (response) => {
-        if (response.success) {
-          const { platforms, types } = response.data
-
-          // Create platform filter chips
-          const platformChips = platforms
-            .map(
-              (platform) =>
-                `<button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="${platform}">
-              ${platform}
-            </button>`,
-            )
-            .join("")
-          $("#platformFilters").html(platformChips)
-
-          // Create type filter chips
-          const typeChips = types
-            .map(
-              (type) =>
-                `<button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="type" data-value="${type}">
-              ${type.charAt(0).toUpperCase() + type.slice(1)}
-            </button>`,
-            )
-            .join("")
-          $("#typeFilters").html(typeChips)
-
-          // Re-initialize filter click handlers for new buttons
-          $(".filter-chip").off("click").on("click", handleFilterClick)
-        }
-      },
-      error: (xhr) => {
-        console.error("Error loading filter options:", xhr)
-        // Fallback to default filters if API fails - Updated with Mobile and Console instead of PlayStation, Xbox, Nintendo
-        $("#platformFilters").html(`
-          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="PC">PC</button>
-          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="Mobile">Mobile</button>
-          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="platform" data-value="Console">Console</button>
-        `)
-        $("#typeFilters").html(`
-          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="type" data-value="digital">Digital</button>
-          <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="type" data-value="physical">Physical</button>
-        `)
-        $(".filter-chip").off("click").on("click", handleFilterClick)
-      },
-    })
-  }
-
-  // Make loadFilterOptions available globally
-  window.loadFilterOptions = loadFilterOptions
 })

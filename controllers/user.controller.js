@@ -139,7 +139,7 @@ const loginUser = (req, res) => {
 }
 
 const updateUser = (req, res) => {
-  const { first_name, last_name, contact_number, shipping_address, role_id } = req.body
+  const { first_name, last_name, contact_number, role_id } = req.body
   const { user_id } = req.params
   let image_url = null
 
@@ -161,14 +161,13 @@ const updateUser = (req, res) => {
     SET first_name = COALESCE(?, first_name),
         last_name = COALESCE(?, last_name),
         contact_number = COALESCE(?, contact_number),
-        shipping_address = COALESCE(?, shipping_address),
         image_url = COALESCE(?, image_url),
         role_id = COALESCE(?, role_id),
         updated_at = CURRENT_TIMESTAMP
     WHERE user_id = ?
   `
 
-  const params = [first_name, last_name, contact_number, shipping_address, image_url, role_id, user_id]
+  const params = [first_name, last_name, contact_number, image_url, role_id, user_id]
 
   try {
     connection.execute(userSql, params, (err, result) => {

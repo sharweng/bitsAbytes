@@ -3,25 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BitsAbytes - Gaming Store</title>
+    <title>BITS & BYTES - Your Ultimate Gaming Destination</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
-        .filter-chip.active {
-            background-color: #3B82F6;
-            color: white;
-            border-color: #3B82F6;
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .search-dropdown {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         .hero-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .filter-chip {
+            transition: all 0.3s ease;
+        }
+        .filter-chip.active {
+            background-color: #3b82f6;
+            color: white;
         }
     </style>
 </head>
@@ -31,111 +53,211 @@
 
     <!-- Hero Section -->
     <section class="hero-bg text-white py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-5xl font-bold mb-6">Welcome to BitsAbytes</h1>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">Discover the latest games, reviews, and gaming gear. Your ultimate gaming destination.</p>
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6">
+                Your Ultimate Gaming Destination
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 opacity-90">
+                Discover amazing games across PC, Console, and Mobile platforms
+            </p>
             
             <!-- Search Bar -->
             <div class="max-w-2xl mx-auto relative">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Search for games, developers, or publishers..." 
-                           class="w-full px-6 py-4 text-gray-900 rounded-full text-lg focus:outline-none focus:ring-4 focus:ring-blue-300">
-                    <button id="searchBtn" class="absolute right-2 top-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition duration-200">
+                    <input type="text" id="searchInput" placeholder="Search for games, developers, or genres..." 
+                           class="w-full px-6 py-4 text-lg text-gray-800 rounded-full focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-lg">
+                    <button id="searchBtn" class="absolute right-2 top-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full transition duration-200">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
                 
                 <!-- Search Dropdown -->
-                <div id="searchDropdown" class="hidden absolute top-full left-0 right-0 bg-white rounded-lg shadow-lg mt-2 max-h-96 overflow-y-auto z-50">
-                    <div id="searchResults"></div>
+                <div id="searchDropdown" class="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-2 hidden search-dropdown z-50">
+                    <div id="searchResults" class="py-2">
+                        <!-- Search results will be populated here -->
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Filters Section -->
-    <section class="bg-white py-8 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                <!-- Filter Chips -->
-                <div class="flex flex-wrap gap-3">
-                    <!-- All Filter -->
-                    <button class="filter-chip active px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition duration-200" data-filter="all">
+    <section class="bg-white py-6 shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-gray-700 font-medium">Filter by:</span>
+                    <button class="filter-chip active px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="all">
                         All Games
                     </button>
-                    
-                    <!-- Platform Filters (will be populated dynamically) -->
-                    <div id="platformFilters" class="flex flex-wrap gap-3">
-                        <!-- Dynamic platform chips will be inserted here -->
-                    </div>
-                    
-                    <!-- Type Filters (will be populated dynamically) -->
-                    <div id="typeFilters" class="flex flex-wrap gap-3">
-                        <!-- Dynamic type chips will be inserted here -->
-                    </div>
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="platform" data-value="1">
+                        Mobile
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="platform" data-value="2">
+                        PC
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="platform" data-value="3">
+                        Console
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="type" data-value="1">
+                        Digital
+                    </button>
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="type" data-value="2">
+                        Physical
+                    </button>
                 </div>
-
-                <!-- Sort Dropdown -->
-                <div class="flex items-center space-x-2">
-                    <label for="sortSelect" class="text-sm font-medium text-gray-700">Sort by:</label>
-                    <select id="sortSelect" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-700 text-sm">Sort by:</span>
+                    <select id="sortSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
                         <option value="price_low">Price: Low to High</option>
                         <option value="price_high">Price: High to Low</option>
-                        <option value="name_asc">Name: A to Z</option>
-                        <option value="name_desc">Name: Z to A</option>
+                        <option value="title">Title A-Z</option>
                     </select>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Products Grid -->
-    <section class="py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <!-- Products Section -->
+    <section id="products" class="py-12">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Featured Games</h2>
+                <p class="text-xl text-gray-600">Discover the latest and greatest games</p>
+            </div>
+            
+            <!-- Products Grid -->
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 <!-- Products will be loaded here -->
             </div>
-
+            
             <!-- Loading Indicator -->
-            <div id="loadingIndicator" class="hidden text-center py-8">
-                <div class="inline-flex items-center space-x-2">
-                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span class="text-gray-600">Loading more games...</span>
-                </div>
+            <div id="loadingIndicator" class="text-center py-8 hidden">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading more games...</p>
             </div>
-
-            <!-- No More Products Indicator -->
-            <div id="noMoreProducts" class="hidden text-center py-8">
-                <p class="text-gray-500">You've reached the end of our catalog!</p>
+            
+            <!-- No More Products -->
+            <div id="noMoreProducts" class="text-center py-8 hidden">
+                <p class="text-gray-600">You've seen all available games!</p>
             </div>
         </div>
     </section>
 
-    <!-- Login Modal (for unauthenticated users) -->
-    <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 class="text-2xl font-bold mb-4 text-center">Login Required</h2>
-            <p class="text-gray-600 mb-6 text-center">Please log in to add items to your cart or make purchases.</p>
-            <div class="flex space-x-4">
-                <button onclick="window.location.href='login.html'" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition duration-200">
-                    Login
-                </button>
-                <button onclick="$('#loginModal').addClass('hidden')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition duration-200">
-                    Cancel
-                </button>
+    <!-- About Section -->
+    <section id="about" class="bg-gray-100 py-16">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-4xl font-bold text-gray-800 mb-8">About BITS & BYTES</h2>
+                <p class="text-lg text-gray-600 mb-8">
+                    BITS & BYTES is your ultimate destination for video games across all platforms. We specialize in offering 
+                    a wide range of games including popular AAA titles, indie gems, and classic favorites. Whether you're 
+                    gaming on PC, console, or mobile, we have something for every type of gamer.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <i class="fas fa-gamepad text-4xl text-blue-500 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">Wide Selection</h3>
+                        <p class="text-gray-600">Thousands of games across all platforms and genres</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <i class="fas fa-shield-alt text-4xl text-green-500 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">Secure Transactions</h3>
+                        <p class="text-gray-600">Safe and secure payment processing for all purchases</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <i class="fas fa-shipping-fast text-4xl text-purple-500 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
+                        <p class="text-gray-600">Quick digital downloads and fast physical shipping</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">
+                        <i class="fas fa-gamepad mr-2"></i>BITS & BYTES
+                    </h3>
+                    <p class="text-gray-400">Your ultimate gaming destination for all platforms.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
+                        <li><a href="#products" class="text-gray-400 hover:text-white transition duration-200">Games</a></li>
+                        <li><a href="#about" class="text-gray-400 hover:text-white transition duration-200">About</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Platforms</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">PC Games</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Console Games</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Mobile Games</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-2">
+                        <li class="text-gray-400"><i class="fas fa-envelope mr-2"></i>info@bitsandbytes.com</li>
+                        <li class="text-gray-400"><i class="fas fa-phone mr-2"></i>+1 (555) 123-4567</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center">
+                <p class="text-gray-400">&copy;
+                    <span id="copyright">
+                        <script>document.getElementById('copyright').appendChild(document.createTextNode(new Date().getFullYear()))</script>
+                    </span> BITS & BYTES. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Login</h3>
+                    <button class="close-modal text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" name="password" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <a href="register.html" class="text-blue-500 hover:text-blue-600 text-sm">Need an account?</a>
+                        <div class="space-x-2">
+                            <button type="button" class="close-modal bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Login</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <script src="js/home.js"></script>
     <script>
         // Load navbar
         $(document).ready(function() {
             $('#navbar-container').load('navbar.html');
         });
     </script>
-    <script src="js/home.js"></script>
 </body>
 </html>

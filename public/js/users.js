@@ -131,38 +131,37 @@ $(document).ready(() => {
           let imageHtml = ""
           if (user.image_url) {
             imageHtml = `
-          <div class="mb-4 text-center">
-            <img src="${user.image_url}" alt="Profile" class="w-32 h-32 object-cover rounded-full mx-auto border-4 border-gray-200">
-          </div>
-        `
+            <div class="mb-4 text-center">
+              <img src="${user.image_url}" alt="Profile" class="w-32 h-32 object-cover rounded-full mx-auto border-4 border-gray-200">
+            </div>
+          `
           } else {
             imageHtml = `
-          <div class="mb-4 text-center">
-            <div class="w-32 h-32 bg-gray-200 rounded-full mx-auto flex items-center justify-center border-4 border-gray-200">
-              <i class="fas fa-user text-4xl text-gray-400"></i>
+            <div class="mb-4 text-center">
+              <div class="w-32 h-32 bg-gray-200 rounded-full mx-auto flex items-center justify-center border-4 border-gray-200">
+                <i class="fas fa-user text-4xl text-gray-400"></i>
+              </div>
             </div>
-          </div>
-        `
+          `
           }
 
           const content = `
-        <div class="space-y-4">
-          ${imageHtml}
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><strong>User ID:</strong> ${user.user_id}</div>
-            <div><strong>Email:</strong> ${user.email}</div>
-            <div><strong>First Name:</strong> ${user.first_name || "N/A"}</div>
-            <div><strong>Last Name:</strong> ${user.last_name || "N/A"}</div>
-            <div><strong>Contact Number:</strong> ${user.contact_number || "N/A"}</div>
-            <div><strong>Role:</strong> ${user.role}</div>
-            <div><strong>Account Created:</strong> ${new Date(user.created_at).toLocaleDateString()}</div>
-            <div><strong>Status:</strong> 
-              <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>
+          <div class="space-y-4">
+            ${imageHtml}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><strong>User ID:</strong> ${user.user_id}</div>
+              <div><strong>Email:</strong> ${user.email}</div>
+              <div><strong>First Name:</strong> ${user.first_name || "N/A"}</div>
+              <div><strong>Last Name:</strong> ${user.last_name || "N/A"}</div>
+              <div><strong>Contact Number:</strong> ${user.contact_number || "N/A"}</div>
+              <div><strong>Role:</strong> ${user.role}</div>
+              <div><strong>Account Created:</strong> ${new Date(user.created_at).toLocaleDateString()}</div>
+              <div><strong>Status:</strong> 
+                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>
+              </div>
             </div>
-            <div class="md:col-span-2"><strong>Shipping Address:</strong> ${user.shipping_address || "N/A"}</div>
           </div>
-        </div>
-      `
+        `
 
           Swal.fire({
             title: "User Details",
@@ -203,7 +202,6 @@ $(document).ready(() => {
           $("#firstName").val(user.first_name || "")
           $("#lastName").val(user.last_name || "")
           $("#contactNumber").val(user.contact_number || "")
-          $("#shippingAddress").val(user.shipping_address || "")
 
           // Set the role after a short delay to ensure options are loaded
           setTimeout(() => {
