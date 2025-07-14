@@ -12,7 +12,7 @@ const {
   getAllRoles,
 } = require("../controllers/user.controller.js")
 
-const { isAuthenticatedUser } = require("../middlewares/auth.js")
+const { isAuthenticatedUser, isAdmin } = require("../middlewares/auth.js")
 
 // Public routes
 router.post("/register", registerUser)
@@ -21,9 +21,10 @@ router.post("/login", loginUser)
 // Protected routes
 router.get("/profile/:user_id", isAuthenticatedUser, getUserProfile)
 router.put("/profile/:user_id", isAuthenticatedUser, upload.single("image"), updateUser)
-router.put("/deactivate/:user_id", isAuthenticatedUser, deactivateUser)
-router.put("/reactivate/:user_id", isAuthenticatedUser, reactivateUser)
+
+router.put("/deactivate/:user_id", isAuthenticatedUser, isAdmin, deactivateUser)
+router.put("/reactivate/:user_id", isAuthenticatedUser, isAdmin, reactivateUser)
 router.get("/roles", getAllRoles)
-router.get("/", isAuthenticatedUser, getAllUsers)
+router.get("/", isAuthenticatedUser, isAdmin, getAllUsers)
 
 module.exports = router

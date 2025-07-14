@@ -109,13 +109,13 @@ const loginUser = (req, res) => {
 
       // Remove password and deleted fields from response
       delete user.password_hash
-      delete user.deleted
 
       const token = jwt.sign(
         {
           user_id: user.user_id,
           email: user.email,
           role: user.role,
+          deleted: user.deleted,
         },
         process.env.JWT_SECRET,
         { expiresIn: "24h" },
@@ -241,10 +241,10 @@ const getUserProfile = (req, res) => {
 
   const sql = `
     SELECT u.user_id, u.email, u.first_name, u.last_name, 
-           u.contact_number, u.image_url, u.created_at, r.description as role
+           u.contact_number, u.image_url, u.deleted, u.created_at, r.description as role
     FROM users u 
     JOIN roles r ON u.role_id = r.role_id 
-    WHERE u.user_id = ? AND u.deleted = 0
+    WHERE u.user_id = ?
   `
 
   connection.execute(sql, [user_id], (err, results) => {
