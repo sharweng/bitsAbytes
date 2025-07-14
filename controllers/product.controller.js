@@ -71,7 +71,7 @@ const getAllProducts = (req, res) => {
     s.quantity,
     pt.description as product_type,
     plt.description as platform_type,
-    GROUP_CONCAT(pi.image_url) as images,
+    GROUP_CONCAT(DISTINCT pi.image_url) as images,
     COALESCE(AVG(r.rating), 0) as average_rating,
     COUNT(r.review_id) as review_count
   FROM products p 
