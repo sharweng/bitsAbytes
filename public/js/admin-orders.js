@@ -128,17 +128,16 @@ $(document).ready(() => {
         {
           data: null,
           render: (data) => `
-              <div class="flex space-x-2">
-                <button class="view-order bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" data-order-id="${data.order_id}">
-                  <i class="fas fa-eye mr-1"></i>View
-                </button>
-                <button class="update-status bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700" data-order-id="${data.order_id}">
-                  <i class="fas fa-edit mr-1"></i>Update
-                </button>
-                <button class="delete-order bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700" data-order-id="${data.order_id}">
-                  <i class="fas fa-trash mr-1"></i>Delete
-                </button>
-              </div>
+              
+              <button class="text-green-600 hover:text-green-800 mr-2 view-order" data-order-id="${data.order_id}"">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="text-blue-600 hover:text-blue-800 mr-2 update-status" data-order-id="${data.order_id}"">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="text-red-600 hover:text-red-800 delete-order" data-order-id="${data.order_id}"">
+                <i class="fas fa-trash"></i>
+              </button>
             `,
         },
       ],
@@ -221,133 +220,232 @@ $(document).ready(() => {
     })
   }
 
-  function displayOrderDetails(order) {
+  // function displayOrderDetails(order) {
+  //   const orderDate = new Date(order.order_date).toLocaleDateString()
+  //   const shippedDate = order.shipped_date ? new Date(order.shipped_date).toLocaleDateString() : null
+  //   const deliveredDate = order.delivered_date ? new Date(order.delivered_date).toLocaleDateString() : null
+  //   const statusClass = getStatusClass(order.status)
+
+  //   const itemsHtml = order.items
+  //     .map((item) => {
+  //       const price = Number.parseFloat(item.price)
+  //       const total = price * item.quantity
+  //       const imageUrl = item.image_url
+  //         ? `${API_BASE_URL.replace("/api", "")}/${item.image_url}`
+  //         : "/placeholder.svg?height=80&width=80"
+
+  //       const productTypeBadge =
+  //         item.product_type === "digital"
+  //           ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Digital</span>'
+  //           : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Physical</span>'
+
+  //       return `
+  //         <div class="flex items-center space-x-4 p-4 border-b border-gray-200">
+  //           <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded">
+  //           <div class="flex-1">
+  //             <h4 class="font-semibold">${item.title}</h4>
+  //             <div class="flex items-center space-x-2 mt-1">
+  //               <span class="text-sm text-gray-600">Qty: ${item.quantity}</span>
+  //               ${productTypeBadge}
+  //             </div>
+  //           </div>
+  //           <div class="text-right">
+  //             <p class="font-semibold">$${price.toFixed(2)} each</p>
+  //             <p class="text-sm text-gray-600">Total: $${total.toFixed(2)}</p>
+  //           </div>
+  //         </div>
+  //       `
+  //     })
+  //     .join("")
+
+  //   const totalAmount = order.items.reduce((sum, item) => sum + Number.parseFloat(item.price) * item.quantity, 0)
+
+  //   $("#orderDetails").html(`
+  //       <div class="space-y-6">
+  //         <!-- Order Header -->
+  //         <div class="flex justify-between items-start">
+  //           <div>
+  //             <h3 class="text-xl font-bold text-gray-800">Order #${order.order_id}</h3>
+  //             <p class="text-gray-600">Placed on ${orderDate}</p>
+  //           </div>
+  //           <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
+  //             ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+  //           </span>
+  //         </div>
+
+  //         <!-- Customer Info -->
+  //         <div class="bg-gray-50 p-4 rounded-lg">
+  //           <h4 class="font-semibold mb-2">Customer Information</h4>
+  //           <p class="text-sm text-gray-600">${order.first_name || ""} ${order.last_name || ""}</p>
+  //           <p class="text-sm text-gray-600">${order.email}</p>
+  //           ${order.user_shipping_address ? `<p class="text-sm text-gray-600 mt-1">Default Address: ${order.user_shipping_address}</p>` : ""}
+  //         </div>
+
+  //         <!-- Shipping Info -->
+  //         ${
+  //           order.user_shipping_address
+  //             ? `
+  //           <div class="bg-gray-50 p-4 rounded-lg">
+  //             <h4 class="font-semibold mb-2">Shipping Address</h4>
+  //             <p class="text-sm text-gray-600">${order.user_shipping_address}</p>
+  //           </div>
+  //         `
+  //             : `
+  //           <div class="bg-blue-50 p-4 rounded-lg">
+  //             <h4 class="font-semibold mb-2">Digital Order</h4>
+  //             <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
+  //           </div>
+  //         `
+  //         }
+
+  //         <!-- Order Timeline -->
+  //         <div class="bg-gray-50 p-4 rounded-lg">
+  //           <h4 class="font-semibold mb-2">Order Timeline</h4>
+  //           <div class="space-y-2 text-sm">
+  //             <div class="flex justify-between">
+  //               <span>Order Placed</span>
+  //               <span class="text-gray-600">${orderDate}</span>
+  //             </div>
+  //             ${
+  //               shippedDate
+  //                 ? `
+  //               <div class="flex justify-between">
+  //                 <span>Shipped</span>
+  //                 <span class="text-gray-600">${shippedDate}</span>
+  //               </div>
+  //             `
+  //                 : ""
+  //             }
+  //             ${
+  //               deliveredDate
+  //                 ? `
+  //               <div class="flex justify-between">
+  //                 <span>Delivered</span>
+  //                 <span class="text-gray-600">${deliveredDate}</span>
+  //               </div>
+  //             `
+  //                 : ""
+  //             }
+  //           </div>
+  //         </div>
+
+  //         <!-- Order Items -->
+  //         <div>
+  //           <h4 class="font-semibold mb-4">Order Items</h4>
+  //           <div class="border border-gray-200 rounded-lg">
+  //             ${itemsHtml}
+  //           </div>
+  //         </div>
+
+  //         <!-- Order Total -->
+  //         <div class="bg-gray-50 p-4 rounded-lg">
+  //           <div class="flex justify-between items-center">
+  //             <span class="font-semibold">Total Amount</span>
+  //             <span class="text-xl font-bold text-blue-600">$${totalAmount.toFixed(2)}</span>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     `)
+  // }
+
+  function viewOrderDetails(orderId) {
+    $.ajax({
+      url: `${API_BASE_URL}/orders/${orderId}`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      success: (response) => {
+        if (response.success) {
+          Swal.fire({
+            title: `Order #${response.order.order_id}`,
+            width: '80%',
+            showConfirmButton: false,
+            showCloseButton: true,
+            html: generateOrderHtml(response.order),
+            scrollbarPadding: false,
+            customClass: {
+              popup: 'text-left max-h-[80vh] overflow-y-auto',
+            }
+          })
+        }
+      },
+      error: (xhr) => {
+        const error = xhr.responseJSON?.message || "Failed to load order details"
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error,
+        })
+      }
+    })
+  }
+
+
+  function generateOrderHtml(order) {
     const orderDate = new Date(order.order_date).toLocaleDateString()
     const shippedDate = order.shipped_date ? new Date(order.shipped_date).toLocaleDateString() : null
     const deliveredDate = order.delivered_date ? new Date(order.delivered_date).toLocaleDateString() : null
-    const statusClass = getStatusClass(order.status)
 
-    const itemsHtml = order.items
-      .map((item) => {
-        const price = Number.parseFloat(item.price)
-        const total = price * item.quantity
-        const imageUrl = item.image_url
-          ? `${API_BASE_URL.replace("/api", "")}/${item.image_url}`
-          : "/placeholder.svg?height=80&width=80"
+    const itemsHtml = order.items.map(item => {
+      const price = parseFloat(item.price)
+      const total = price * item.quantity
+      const productTypeBadge = item.product_type === 'digital'
+        ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Digital</span>'
+        : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Physical</span>'
+      const imageUrl = item.image_url
+        ? `${window.API_BASE_URL.replace("/api", "")}/${item.image_url}`
+        : "/placeholder.svg"
 
-        const productTypeBadge =
-          item.product_type === "digital"
-            ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Digital</span>'
-            : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Physical</span>'
-
-        return `
-          <div class="flex items-center space-x-4 p-4 border-b border-gray-200">
-            <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded">
-            <div class="flex-1">
-              <h4 class="font-semibold">${item.title}</h4>
-              <div class="flex items-center space-x-2 mt-1">
-                <span class="text-sm text-gray-600">Qty: ${item.quantity}</span>
-                ${productTypeBadge}
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="font-semibold">$${price.toFixed(2)} each</p>
-              <p class="text-sm text-gray-600">Total: $${total.toFixed(2)}</p>
-            </div>
+      return `
+        <div class="flex items-center gap-4 border-b py-3">
+          <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded">
+          <div class="flex-1">
+            <p class="font-semibold">${item.title}</p>
+            <div class="text-sm text-gray-600">Qty: ${item.quantity} | $${price.toFixed(2)} each</div>
+            ${productTypeBadge}
           </div>
-        `
-      })
-      .join("")
-
-    const totalAmount = order.items.reduce((sum, item) => sum + Number.parseFloat(item.price) * item.quantity, 0)
-
-    $("#orderDetails").html(`
-        <div class="space-y-6">
-          <!-- Order Header -->
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-xl font-bold text-gray-800">Order #${order.order_id}</h3>
-              <p class="text-gray-600">Placed on ${orderDate}</p>
-            </div>
-            <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
-              ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-            </span>
-          </div>
-
-          <!-- Customer Info -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Customer Information</h4>
-            <p class="text-sm text-gray-600">${order.first_name || ""} ${order.last_name || ""}</p>
-            <p class="text-sm text-gray-600">${order.email}</p>
-            ${order.user_shipping_address ? `<p class="text-sm text-gray-600 mt-1">Default Address: ${order.user_shipping_address}</p>` : ""}
-          </div>
-
-          <!-- Shipping Info -->
-          ${
-            order.user_shipping_address
-              ? `
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <h4 class="font-semibold mb-2">Shipping Address</h4>
-              <p class="text-sm text-gray-600">${order.user_shipping_address}</p>
-            </div>
-          `
-              : `
-            <div class="bg-blue-50 p-4 rounded-lg">
-              <h4 class="font-semibold mb-2">Digital Order</h4>
-              <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
-            </div>
-          `
-          }
-
-          <!-- Order Timeline -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Order Timeline</h4>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span>Order Placed</span>
-                <span class="text-gray-600">${orderDate}</span>
-              </div>
-              ${
-                shippedDate
-                  ? `
-                <div class="flex justify-between">
-                  <span>Shipped</span>
-                  <span class="text-gray-600">${shippedDate}</span>
-                </div>
-              `
-                  : ""
-              }
-              ${
-                deliveredDate
-                  ? `
-                <div class="flex justify-between">
-                  <span>Delivered</span>
-                  <span class="text-gray-600">${deliveredDate}</span>
-                </div>
-              `
-                  : ""
-              }
-            </div>
-          </div>
-
-          <!-- Order Items -->
-          <div>
-            <h4 class="font-semibold mb-4">Order Items</h4>
-            <div class="border border-gray-200 rounded-lg">
-              ${itemsHtml}
-            </div>
-          </div>
-
-          <!-- Order Total -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <div class="flex justify-between items-center">
-              <span class="font-semibold">Total Amount</span>
-              <span class="text-xl font-bold text-blue-600">$${totalAmount.toFixed(2)}</span>
-            </div>
-          </div>
+          <div class="text-right text-sm font-medium">$${total.toFixed(2)}</div>
         </div>
-      `)
+      `
+    }).join("")
+
+    const totalAmount = order.items.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0)
+
+    return `
+      <div class="text-sm space-y-4">
+        <div>
+          <p class="font-semibold">Customer:</p>
+          <p>${order.first_name} ${order.last_name}</p>
+          <p class="text-gray-600">${order.email}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold">Status:</p>
+          <p class="capitalize">${order.status}</p>
+        </div>
+
+        <div>
+          <p class="font-semibold">Timeline:</p>
+          <ul class="text-gray-700 list-disc ml-5">
+            <li>Placed: ${orderDate}</li>
+            ${shippedDate ? `<li>Shipped: ${shippedDate}</li>` : ""}
+            ${deliveredDate ? `<li>Delivered: ${deliveredDate}</li>` : ""}
+          </ul>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-2">Items:</p>
+          ${itemsHtml}
+        </div>
+
+        <div class="pt-4 border-t">
+          <p class="text-right font-bold text-blue-700">Total: $${totalAmount.toFixed(2)}</p>
+        </div>
+      </div>
+    `
   }
+
 
   function showUpdateStatusModal(orderId) {
     // First, get the current order details to populate the form
