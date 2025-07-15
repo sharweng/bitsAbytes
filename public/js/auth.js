@@ -10,16 +10,16 @@ $(document).ready(() => {
 
     if (
       !token &&
-      !window.location.pathname.includes("login.html") &&
       !window.location.pathname.includes("register.html")
     ) {
-      window.location.href = "login.html"
+      localStorage.setItem('showLoginModal', 'true');
+      window.location.href = 'index.html';
       return false
     }
 
     if (
       token &&
-      (window.location.pathname.includes("login.html") || window.location.pathname.includes("register.html"))
+      window.location.pathname.includes("register.html")
     ) {
       window.location.href = "index.html"
       return false
@@ -87,8 +87,6 @@ $(document).ready(() => {
     })
   })
 
-
-
   // Get auth headers
   function getAuthHeaders() {
     const token = localStorage.getItem("token")
@@ -102,7 +100,8 @@ $(document).ready(() => {
   function makeAuthenticatedRequest(options) {
     const token = localStorage.getItem("token")
     if (!token) {
-      window.location.href = "login.html"
+      localStorage.setItem('showLoginModal', 'true');
+      window.location.href = 'index.html';
       return
     }
 
@@ -115,7 +114,8 @@ $(document).ready(() => {
       if (xhr.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
-        window.location.href = "login.html"
+        localStorage.setItem('showLoginModal', 'true');
+        window.location.href = 'index.html';
         return
       }
       if (originalError) {

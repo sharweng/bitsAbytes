@@ -23,7 +23,8 @@ $(document).ready(() => {
       currentUser = user
     } else {
       // Redirect to login if not admin
-      window.location.href = "login.html"
+      localStorage.setItem('showLoginModal', 'true');
+      window.location.href = 'index.html';
     }
   }
 
