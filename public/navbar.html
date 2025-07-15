@@ -83,6 +83,12 @@
 <script>
 // Auto-load navbar functionality
 $(document).ready(() => {
+  // Trigger login modal if coming from registration
+  if (localStorage.getItem('showLoginModal') === 'true') {
+    $('#loginModal').removeClass('hidden');
+    localStorage.removeItem('showLoginModal');
+  }
+  
   // Initialize navbar after it's loaded
   initializeNavbar()
   deactivated()

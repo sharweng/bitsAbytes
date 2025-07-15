@@ -28,59 +28,6 @@ $(document).ready(() => {
     return true
   }
 
-  // Load navbar
-  function loadNavbar() {
-    if (checkAuth() && localStorage.getItem("token")) {
-      $("#navbar").load("navbar.html", () => {
-        const user = JSON.parse(localStorage.getItem("user") || "{}")
-        $("#userEmail").text(user.email || "User")
-
-        $("#logoutBtn").on("click", () => {
-          logout()
-        })
-      })
-    }
-  }
-
-  // Login function
-  $("#loginForm").on("submit", (e) => {
-    e.preventDefault()
-
-    const email = $("#email").val()
-    const password = $("#password").val()
-
-    $.ajax({
-      url: `${API_BASE_URL}/users/login`,
-      method: "POST",
-      contentType: "application/json",
-      data: JSON.stringify({ email, password }),
-      success: (response) => {
-        if (response.success) {
-          localStorage.setItem("token", response.token)
-          localStorage.setItem("user", JSON.stringify(response.user))
-
-          Swal.fire({
-            icon: "success",
-            title: "Success!",
-            text: response.message,
-            timer: 1500,
-            showConfirmButton: false,
-          }).then(() => {
-            window.location.href = "index.html"
-          })
-        }
-      },
-      error: (xhr) => {
-        const response = xhr.responseJSON
-        Swal.fire({
-          icon: "error",
-          title: "Login Failed",
-          text: response.message || "An error occurred during login",
-        })
-      },
-    })
-  })
-
   // Register function
   $("#registerForm").on("submit", (e) => {
     e.preventDefault()
@@ -123,7 +70,9 @@ $(document).ready(() => {
             timer: 2000,
             showConfirmButton: false,
           }).then(() => {
-            window.location.href = "login.html"
+            // After successful registration
+            localStorage.setItem('showLoginModal', 'true');
+            window.location.href = 'index.html';
           })
         }
       },
@@ -138,24 +87,7 @@ $(document).ready(() => {
     })
   })
 
-  // Logout function
-  function logout() {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You will be logged out of your account",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, logout",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        window.location.href = "login.html"
-      }
-    })
-  }
+
 
   // Get auth headers
   function getAuthHeaders() {
@@ -196,7 +128,6 @@ $(document).ready(() => {
 
   // Initialize
   checkAuth()
-  loadNavbar()
 
   // Export functions for use in other scripts
   window.API_BASE_URL = API_BASE_URL
