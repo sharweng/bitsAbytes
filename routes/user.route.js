@@ -10,6 +10,7 @@ const {
   getUserProfile,
   getAllUsers,
   getAllRoles,
+  changePassword,
 } = require("../controllers/user.controller.js")
 
 const { isAuthenticatedUser, isAdmin } = require("../middlewares/auth.js")
@@ -21,6 +22,7 @@ router.post("/login", loginUser)
 // Protected routes
 router.get("/profile/:user_id", isAuthenticatedUser, getUserProfile)
 router.put("/profile/:user_id", isAuthenticatedUser, upload.single("image"), updateUser)
+router.put("/change-password/:user_id", isAuthenticatedUser, changePassword)
 
 router.put("/deactivate/:user_id", isAuthenticatedUser, isAdmin, deactivateUser)
 router.put("/reactivate/:user_id", isAuthenticatedUser, isAdmin, reactivateUser)

@@ -32,11 +32,11 @@
           <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
         </button>
 
-        <!-- User Info -->
-        <div id="userInfo" class="hidden flex items-center space-x-2">
+        <!-- User Info - Now clickable to go to profile page -->
+        <a href="profile.html" id="userInfo" class="hidden flex items-center space-x-2 cursor-pointer hover:text-blue-600 transition duration-200">
           <i class="fas fa-user text-gray-600"></i>
           <span id="userName" class="text-gray-700 font-medium"></span>
-        </div>
+        </a>
 
         <!-- Auth Buttons -->
         <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
@@ -95,8 +95,9 @@ $(document).ready(() => {
 })
 
 function initializeNavbar() {
-  // Check if we're on dashboard page
-  const isDashboardPage = window.location.pathname.includes('dashboard.html')
+  // Check if we're on dashboard page or profile page
+  const isDashboardPage = window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('users.html') || window.location.pathname.includes('products.html') || window.location.pathname.includes('reviews.html') || window.location.pathname.includes('admin-orders.html')
+  const isProfilePage = window.location.pathname.includes('profile.html')
   
   // Initialize auth state
   checkAuthStatus()
@@ -104,9 +105,9 @@ function initializeNavbar() {
   // Initialize event listeners
   initializeNavbarEvents()
   
-  // Update cart count if user is logged in and not on dashboard
+  // Update cart count if user is logged in and not on dashboard or profile
   const token = localStorage.getItem('token')
-  if (token && !isDashboardPage) {
+  if (token && !isDashboardPage && !isProfilePage) {
     updateCartCount()
   }
 }
@@ -152,15 +153,16 @@ function checkAuthStatus() {
   const token = localStorage.getItem('token')
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const isDashboardPage = window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('users.html') || window.location.pathname.includes('products.html') || window.location.pathname.includes('reviews.html') || window.location.pathname.includes('admin-orders.html')
+  const isProfilePage = window.location.pathname.includes('profile.html')
   
   if (token && user.email) {
-    showAuthenticatedState(user, isDashboardPage)
+    showAuthenticatedState(user, isDashboardPage, isProfilePage)
   } else {
-    showUnauthenticatedState(isDashboardPage)
+    showUnauthenticatedState(isDashboardPage, isProfilePage)
   }
 }
 
-function showAuthenticatedState(user, isDashboardPage) {
+function showAuthenticatedState(user, isDashboardPage, isProfilePage) {
   $('#loginBtn').addClass('hidden')
   $('#logoutBtn').removeClass('hidden')
   $('#userInfo').removeClass('hidden')
@@ -173,7 +175,17 @@ function showAuthenticatedState(user, isDashboardPage) {
     $('#myOrdersBtn').addClass('hidden')
     $('#dashboardBtn').addClass('hidden')
     $('#websiteBtn').removeClass('hidden')
-  } else {
+    $('#userInfo').addClass('hidden') // Hide profile link on dashboard
+  } else if (isProfilePage) {
+    // Profile page: only logo, website button, and logout
+    $('#navLinks').addClass('hidden')
+    $('#cartBtn').addClass('hidden')
+    $('#myOrdersBtn').addClass('hidden')
+    $('#dashboardBtn').addClass('hidden')
+    $('#websiteBtn').removeClass('hidden') // Show website button on profile
+    $('#userInfo').removeClass('hidden') // Keep profile link visible on profile page
+  }
+  else {
     // Regular pages: show navigation and user-specific buttons
     $('#customerNav').removeClass('hidden').addClass('flex')
     $('#navLinks').removeClass('hidden')
@@ -190,7 +202,7 @@ function showAuthenticatedState(user, isDashboardPage) {
   }
 }
 
-function showUnauthenticatedState(isDashboardPage) {
+function showUnauthenticatedState(isDashboardPage, isProfilePage) {
   $('#loginBtn').removeClass('hidden')
   $('#logoutBtn').addClass('hidden')
   $('#userInfo').addClass('hidden')
@@ -201,8 +213,8 @@ function showUnauthenticatedState(isDashboardPage) {
   $('#dashboardBtn').addClass('hidden')
   $('#websiteBtn').addClass('hidden')
   
-  // Redirect to home if trying to access dashboard without auth
-  if (isDashboardPage) {
+  // Redirect to home if trying to access dashboard or profile without auth
+  if (isDashboardPage || isProfilePage) {
     window.location.href = 'index.html'
   }
 }
@@ -227,7 +239,8 @@ function handleLogin(e) {
         localStorage.setItem('user', JSON.stringify(response.user))
         
         const isDashboardPage = window.location.pathname.includes('dashboard.html')
-        showAuthenticatedState(response.user, isDashboardPage)
+        const isProfilePage = window.location.pathname.includes('profile.html')
+        showAuthenticatedState(response.user, isDashboardPage, isProfilePage)
         $('#loginModal').addClass('hidden')
         
         // Show success message
@@ -241,8 +254,8 @@ function handleLogin(e) {
           })
         }
         
-        // Update cart count if not on dashboard
-        if (!isDashboardPage) {
+        // Update cart count if not on dashboard or profile
+        if (!isDashboardPage && !isProfilePage) {
           updateCartCount()
         }
         
@@ -343,7 +356,8 @@ function performLogout() {
   localStorage.removeItem('cart') // Clear cart on logout
   
   const isDashboardPage = window.location.pathname.includes('dashboard.html')
-  showUnauthenticatedState(isDashboardPage)
+  const isProfilePage = window.location.pathname.includes('profile.html')
+  showUnauthenticatedState(isDashboardPage, isProfilePage)
   
   // Trigger custom event for other scripts to listen to
   $(document).trigger('authStateChanged', [false, null])

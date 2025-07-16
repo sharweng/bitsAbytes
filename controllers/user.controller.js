@@ -167,7 +167,15 @@ const updateUser = (req, res) => {
     WHERE user_id = ?
   `
 
-  const params = [first_name, last_name, contact_number, image_url, role_id, user_id]
+  // Convert undefined values to null for SQL parameters
+  const params = [
+    first_name === undefined ? null : first_name,
+    last_name === undefined ? null : last_name,
+    contact_number === undefined ? null : contact_number,
+    image_url, // image_url is already correctly initialized to null or a string
+    role_id === undefined ? null : role_id,
+    user_id,
+  ]
 
   try {
     connection.execute(userSql, params, (err, result) => {
@@ -408,6 +416,54 @@ const getAllRoles = (req, res) => {
   })
 }
 
+const changePassword = async (req, res) => {
+  const { user_id } = req.params
+  const { newPassword } = req.body
+
+  if (!user_id || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "User ID and new password are required",
+    })
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    const sql = "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?"
+    const params = [hashedPassword, user_id]
+
+    connection.execute(sql, params, (err, result) => {
+      if (err) {
+        console.log(err)
+        return res.status(500).json({
+          success: false,
+          message: "Error changing password",
+          error: err.message,
+        })
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found or password is the same",
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Password updated successfully",
+      })
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    })
+  }
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -417,4 +473,5 @@ module.exports = {
   getUserProfile,
   getAllUsers,
   getAllRoles,
+  changePassword,
 }
