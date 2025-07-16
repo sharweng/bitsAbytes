@@ -67,7 +67,7 @@ $(document).ready(() => {
     })
 
     // Listen for auth state changes
-    $(document).on('authStateChanged', (event, isAuthenticated, user) => {
+    $(document).on("authStateChanged", (event, isAuthenticated, user) => {
       if (isAuthenticated) {
         currentUser = user
         showAuthenticatedState(user)
@@ -113,17 +113,22 @@ $(document).ready(() => {
 
     const ordersHtml = orders
       .map((order) => {
-        const orderDate = new Date(order.order_date).toLocaleDateString()
+        const orderDate = new Date(order.order_date)
+        const now = new Date()
+        const oneDayInMs = 24 * 60 * 60 * 1000 // 1 day in milliseconds
+        const isCancellable = now - orderDate < oneDayInMs && order.status.toLowerCase() !== "cancelled"
+
+        const orderDateFormatted = orderDate.toLocaleDateString()
         const totalAmount = Number.parseFloat(order.total_amount || 0)
         const statusColor = getStatusColor(order.status)
-        const shippingInfo = order.shipping_address ? "Required" : "Digital Only"
+        const shippingInfo = order.user_shipping_address ? "Required" : "Digital Only"
 
         return `
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-300">
           <div class="flex justify-between items-start mb-4">
             <div>
               <h3 class="text-lg font-semibold text-gray-800">Order #${order.order_id}</h3>
-              <p class="text-gray-600 text-sm">Placed on ${orderDate}</p>
+              <p class="text-gray-600 text-sm">Placed on ${orderDateFormatted}</p>
             </div>
             <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">
               ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
@@ -150,10 +155,26 @@ $(document).ready(() => {
               ${order.shipped_date ? `Shipped: ${new Date(order.shipped_date).toLocaleDateString()}` : ""}
               ${order.delivered_date ? `Delivered: ${new Date(order.delivered_date).toLocaleDateString()}` : ""}
             </div>
-            <button class="view-order bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300" 
-                    data-order-id="${order.order_id}">
-              View Details
-            </button>
+            <div class="flex space-x-2">
+              <button class="view-order bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300" 
+                      data-order-id="${order.order_id}">
+                View Details
+              </button>
+              ${
+                isCancellable
+                  ? `
+              <button class="cancel-order-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
+                      data-order-id="${order.order_id}">
+                Cancel Order
+              </button>
+              `
+                  : `
+              <button class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled>
+                Cannot Cancel
+              </button>
+              `
+              }
+            </div>
           </div>
         </div>
       `
@@ -166,6 +187,11 @@ $(document).ready(() => {
     $(".view-order").click(function () {
       const orderId = $(this).data("order-id")
       viewOrderDetails(orderId)
+    })
+
+    $(".cancel-order-btn").click(function () {
+      const orderId = $(this).data("order-id")
+      cancelOrder(orderId)
     })
   }
 
@@ -344,6 +370,52 @@ $(document).ready(() => {
         </div>
       </div>
     `)
+  }
+
+  function cancelOrder(orderId) {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to cancel this order. This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, cancel it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Use window.makeAuthenticatedRequest if available, otherwise fallback to $.ajax
+        const requestFn = window.makeAuthenticatedRequest || $.ajax
+
+        requestFn({
+          url: `${API_BASE_URL}/orders/${orderId}`,
+          method: "PUT",
+          // Headers are handled by makeAuthenticatedRequest, but explicitly setting for direct $.ajax fallback
+          headers: window.makeAuthenticatedRequest
+            ? undefined
+            : {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+          data: JSON.stringify({ stat_id: 5 }), // Assuming 5 is the stat_id for 'cancelled'
+          success: (response) => {
+            if (response.success) {
+              Swal.fire({
+                icon: "success",
+                title: "Order Cancelled!",
+                text: "Your order has been successfully cancelled.",
+                timer: 1500,
+                showConfirmButton: false,
+              })
+              loadOrders() // Reload orders to reflect the change
+            }
+          },
+          error: (xhr) => {
+            const error = xhr.responseJSON?.message || "Failed to cancel order"
+            showError(error)
+          },
+        })
+      }
+    })
   }
 
   function showError(message) {
