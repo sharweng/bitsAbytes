@@ -261,7 +261,7 @@ const getOrderDetails = (req, res) => {
 `
 
   try {
-    connection.execute(orderSql, [orderId, user_id], (err, orderResult) => {
+    connection.execute(orderSql, [orderId], (err, orderResult) => {
       if (err) {
         console.log(err)
         return res.status(500).json({
@@ -465,29 +465,41 @@ const updateOrderStatus = (req, res) => {
   const orderId = req.params.id
   const { shipped_date, delivered_date, stat_id } = req.body
 
+  let finalStatId = stat_id // Start with the provided stat_id from frontend
+  let finalShippedDate = shipped_date === undefined ? null : shipped_date
+  let finalDeliveredDate = delivered_date === undefined ? null : delivered_date
+
+  // Logic for clearing dates based on requested status (Pending, Cancelled)
+  // If status is Pending (1) or Cancelled (5), clear dates.
+  // Processing (2) should allow dates to be set.
+  if (finalStatId === 1 || finalStatId === 5) {
+    finalShippedDate = null
+    finalDeliveredDate = null
+  }
+
+  // Logic for setting status based on dates (Shipped, Delivered)
+  // These override the stat_id if dates are provided.
+  // This should happen *after* any date clearing based on status.
+  if (finalDeliveredDate !== null) {
+    finalStatId = 4 // Delivered
+  } else if (finalShippedDate !== null) {
+    finalStatId = 3 // Shipped
+  }
+
   const updateFields = []
   const params = []
 
-  if (shipped_date !== undefined) {
-    updateFields.push("shipped_date = ?")
-    params.push(shipped_date || null)
-  }
+  updateFields.push("stat_id = ?")
+  params.push(finalStatId)
 
-  if (delivered_date !== undefined) {
-    updateFields.push("delivered_date = ?")
-    params.push(delivered_date || null)
-  }
+  updateFields.push("shipped_date = ?")
+  params.push(finalShippedDate)
 
-  if (stat_id !== undefined) {
-    updateFields.push("stat_id = ?")
-    params.push(stat_id)
-  }
+  updateFields.push("delivered_date = ?")
+  params.push(finalDeliveredDate)
 
   if (updateFields.length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "No fields to update",
-    })
+    return res.status(400).json({ success: false, message: "No fields to update" })
   }
 
   const sql = `UPDATE orders SET ${updateFields.join(", ")} WHERE order_id = ?`
@@ -496,33 +508,19 @@ const updateOrderStatus = (req, res) => {
   try {
     connection.execute(sql, params, (err, result) => {
       if (err) {
-        console.log(err)
-        return res.status(500).json({
-          success: false,
-          message: "Error updating order",
-          error: err.message,
-        })
+        console.error("Error updating order:", err)
+        return res.status(500).json({ success: false, message: "Error updating order", error: err.message })
       }
 
       if (result.affectedRows === 0) {
-        return res.status(404).json({
-          success: false,
-          message: "Order not found",
-        })
+        return res.status(404).json({ success: false, message: "Order not found" })
       }
 
-      return res.status(200).json({
-        success: true,
-        message: "Order updated successfully",
-      })
+      return res.status(200).json({ success: true, message: "Order updated successfully" })
     })
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    })
+    console.error("Server error:", error)
+    return res.status(500).json({ success: false, message: "Server error", error: error.message })
   }
 }
 

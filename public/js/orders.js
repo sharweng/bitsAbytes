@@ -124,11 +124,8 @@ $(document).ready(() => {
 
         let cancelButtonHtml = ""
         if (order.status.toLowerCase() === "cancelled") {
-          cancelButtonHtml = `
-            <button class="bg-red-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled title="Order has been cancelled">
-              Order Cancelled
-            </button>
-          `
+          // If order is cancelled, do not show any cancel button
+          cancelButtonHtml = ""
         } else if (isCancellable) {
           cancelButtonHtml = `
             <button class="cancel-order-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
@@ -140,6 +137,16 @@ $(document).ready(() => {
           cancelButtonHtml = `
             <button class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled title="Order cannot be cancelled if it's been a day">
               Cannot Cancel
+            </button>
+          `
+        }
+
+        let deliveredButtonHtml = ""
+        if (order.status.toLowerCase() === "shipped") {
+          deliveredButtonHtml = `
+            <button class="mark-delivered-btn bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300"
+                    data-order-id="${order.order_id}" title="Mark this order as delivered">
+              Delivered
             </button>
           `
         }
@@ -181,6 +188,7 @@ $(document).ready(() => {
                       data-order-id="${order.order_id}">
                 View Details
               </button>
+              ${deliveredButtonHtml}
               ${cancelButtonHtml}
             </div>
           </div>
@@ -200,6 +208,11 @@ $(document).ready(() => {
     $(".cancel-order-btn").click(function () {
       const orderId = $(this).data("order-id")
       cancelOrder(orderId)
+    })
+
+    $(".mark-delivered-btn").click(function () {
+      const orderId = $(this).data("order-id")
+      markOrderAsDelivered(orderId)
     })
   }
 
@@ -443,6 +456,51 @@ $(document).ready(() => {
           },
           error: (xhr) => {
             const error = xhr.responseJSON?.message || "Failed to cancel order"
+            showError(error)
+          },
+        })
+      }
+    })
+  }
+
+  function markOrderAsDelivered(orderId) {
+    Swal.fire({
+      title: "Mark as Delivered?",
+      text: "Are you sure you want to mark this order as delivered?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, mark as delivered!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const requestFn = window.makeAuthenticatedRequest || $.ajax
+        const deliveredDate = new Date().toISOString().split("T")[0] // Current date
+
+        requestFn({
+          url: `${API_BASE_URL}/orders/${orderId}`,
+          method: "PUT",
+          headers: window.makeAuthenticatedRequest
+            ? undefined
+            : {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+          data: JSON.stringify({ stat_id: 4, delivered_date: deliveredDate }), // Assuming 4 is the stat_id for 'delivered'
+          success: (response) => {
+            if (response.success) {
+              Swal.fire({
+                icon: "success",
+                title: "Order Delivered!",
+                text: "Your order has been successfully marked as delivered.",
+                timer: 1500,
+                showConfirmButton: false,
+              })
+              loadOrders() // Reload orders to reflect the change
+            }
+          },
+          error: (xhr) => {
+            const error = xhr.responseJSON?.message || "Failed to mark order as delivered"
             showError(error)
           },
         })
