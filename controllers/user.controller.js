@@ -18,9 +18,9 @@ const registerUser = async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10)
-    const userSql = "INSERT INTO users (email, password_hash, role_id) VALUES (?, ?, ?)"
+    const userSql = "INSERT INTO users (email, password_hash, image_url, role_id) VALUES (?, ?, ?, ?)"
 
-    connection.execute(userSql, [email, hashedPassword, 1], (err, result) => {
+    connection.execute(userSql, [email, hashedPassword, '/images/default-user.jpg', 1], (err, result) => {
       if (err) {
         console.log(err)
         if (err.code === "ER_DUP_ENTRY") {
