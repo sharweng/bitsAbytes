@@ -1,171 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Management</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-100">
-    <!-- Navigation -->
-    <div id="navbar-container"></div>
-    
-    <div class="container mx-auto px-4 py-8">
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <a href="users.html" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-users mr-2"></i>Manage Users
-                </a>
-                <a href="products.html" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-box mr-2"></i>Manage Products
-                </a>
-                <a href="reviews.html" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-star mr-2"></i>Manage Reviews
-                </a>
-                <a href="admin-orders.html" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-shopping-cart mr-2"></i>Manage Orders
-                </a>
-            </div>
-        </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">Product Management</h1>
-                <button id="addProductBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
-                    <i class="fas fa-plus mr-2"></i>Add Product
-                </button>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table id="productsTable" class="w-full">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-4 py-2 text-left">ID</th>
-                            <th class="px-4 py-2 text-left w-20">Image</th>
-                            <th class="px-4 py-2 text-left">Title</th>
-                            <th class="px-4 py-2 text-left">Price</th>
-                            <th class="px-4 py-2 text-left">Platform</th>
-                            <th class="px-4 py-2 text-left">Type</th>
-                            <th class="px-4 py-2 text-left">Stock</th>
-                            <th class="px-4 py-2 text-left">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+  <!-- Navigation -->
+  <div id="navbar-container"></div>
+  
+  <div class="container mx-auto px-4 py-8">
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <a href="users.html" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                  <i class="fas fa-users mr-2"></i>Manage Users
+              </a>
+              <a href="products.html" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                  <i class="fas fa-box mr-2"></i>Manage Products
+              </a>
+              <a href="reviews.html" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                  <i class="fas fa-star mr-2"></i>Manage Reviews
+              </a>
+              <a href="admin-orders.html" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                  <i class="fas fa-shopping-cart mr-2"></i>Manage Orders
+              </a>
+          </div>
+      </div>
+      <div class="bg-white rounded-lg shadow-md p-6">
+          <div class="flex justify-between items-center mb-6">
+              <h1 class="text-2xl font-bold text-gray-800">Product Management</h1>
+              <button id="addProductBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
+                  <i class="fas fa-plus mr-2"></i>Add Product
+              </button>
+          </div>
+          
+          <div class="overflow-x-auto">
+              <table id="productsTable" class="w-full">
+                  <thead>
+                      <tr class="bg-gray-50">
+                          <th class="px-4 py-2 text-left">ID</th>
+                          <th class="px-4 py-2 text-left w-20">Image</th>
+                          <th class="px-4 py-2 text-left">Title</th>
+                          <th class="px-4 py-2 text-left">Price</th>
+                          <th class="px-4 py-2 text-left">Platform</th>
+                          <th class="px-4 py-2 text-left">Type</th>
+                          <th class="px-4 py-2 text-left">Stock</th>
+                          <th class="px-4 py-2 text-left">Actions</th>
+                      </tr>
+                  </thead>
+                  <tbody></tbody>
+              </table>
+          </div>
+      </div>
+  </div>
 
-    <!-- Product Modal -->
-    <div id="productModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-4 max-h-screen overflow-y-auto">
-            <div class="flex justify-between items-center p-6 border-b">
-                <h3 class="text-lg font-semibold" id="modalTitle">Add Product</h3>
-                <button id="closeProductModal" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form id="productForm" class="p-6">
-                <input type="hidden" id="productId" name="product_id">
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
-                        <input type="text" id="title" name="title" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
-                        <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price *</label>
-                        <input type="number" id="price" name="price" step="0.01" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea id="description" name="description" rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label for="platId" class="block text-sm font-medium text-gray-700 mb-2">Platform *</label>
-                        <select id="platId" name="plat_id" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select Platform</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label for="ptypeId" class="block text-sm font-medium text-gray-700 mb-2">Product Type *</label>
-                        <select id="ptypeId" name="ptype_id" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select Type</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label for="quantity" class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                        <input type="number" id="quantity" name="quantity" value="0"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="developer" class="block text-sm font-medium text-gray-700 mb-2">Developer</label>
-                        <input type="text" id="developer" name="developer"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
-                        <label for="publisher" class="block text-sm font-medium text-gray-700 mb-2">Publisher</label>
-                        <input type="text" id="publisher" name="publisher"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="releaseDate" class="block text-sm font-medium text-gray-700 mb-2">Release Date</label>
-                    <input type="date" id="releaseDate" name="release_date"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div class="mb-6">
-                    <label for="productImages" class="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                    <input type="file" id="productImages" name="image" multiple accept="image/*"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancelProductBtn" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button type="submit" id="submitProductBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                        Save Product
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <script src="js/auth.js"></script>
-    <script src="js/products.js"></script>
-    <script>
-        // Load navbar
-        $(document).ready(function() {
-            $('#navbar-container').load('navbar.html');
-        });
-    </script>
+  <!-- Product Modal -->
+  <div id="productModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-4 max-h-screen overflow-y-auto">
+          <div class="flex justify-between items-center p-6 border-b">
+              <h3 class="text-lg font-semibold" id="modalTitle">Add Product</h3>
+              <button id="closeProductModal" class="text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-times"></i>
+              </button>
+          </div>
+          
+          <form id="productForm" class="p-6">
+              <input type="hidden" id="productId" name="product_id">
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                      <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                      <input type="text" id="title" name="title" required
+                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  </div>
+                  
+                  <div>
+                      <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price *</label>
+                      <input type="number" id="price" name="price" step="0.01" required
+                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  </div>
+              </div>
+              
+              <div class="mb-4">
+                  <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <textarea id="description" name="description" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                      <label for="platId" class="block text-sm font-medium text-gray-700 mb-2">Platform *</label>
+                      <select id="platId" name="plat_id" required
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select Platform</option>
+                      </select>
+                  </div>
+                  
+                  <div>
+                      <label for="ptypeId" class="block text-sm font-medium text-gray-700 mb-2">Product Type *</label>
+                      <select id="ptypeId" name="ptype_id" required
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select Type</option>
+                      </select>
+                  </div>
+                  
+                  <div id="quantityGroup">
+                      <label for="quantity" class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                      <input type="number" id="quantity" name="quantity" value="0"
+                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                      <label for="developer" class="block text-sm font-medium text-gray-700 mb-2">Developer</label>
+                      <input type="text" id="developer" name="developer"
+                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  </div>
+                  
+                  <div>
+                      <label for="publisher" class="block text-sm font-medium text-gray-700 mb-2">Publisher</label>
+                      <input type="text" id="publisher" name="publisher"
+                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  </div>
+              </div>
+              
+              <div class="mb-4">
+                  <label for="releaseDate" class="block text-sm font-medium text-gray-700 mb-2">Release Date</label>
+                  <input type="date" id="releaseDate" name="release_date"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              
+              <div class="mb-6">
+                  <label for="productImages" class="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+                  <input type="file" id="productImages" name="image" multiple accept="image/*"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              
+              <div class="flex justify-end space-x-3">
+                  <button type="button" id="cancelProductBtn" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+                      Cancel
+                  </button>
+                  <button type="submit" id="submitProductBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                      Save Product
+                  </button>
+              </div>
+          </form>
+      </div>
+  </div>
+  
+  <script src="js/auth.js"></script>
+  <script src="js/products.js"></script>
+  <script>
+      // Load navbar
+      $(document).ready(function() {
+          $('#navbar-container').load('navbar.html');
+      });
+  </script>
 </body>
 </html>
