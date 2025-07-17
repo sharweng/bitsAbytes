@@ -60,7 +60,13 @@ $(document).ready(() => {
         },
         {
           data: "quantity",
-          render: (data) => data || 0,
+          render: (data, type, row) => {
+            // Display N/A if product_type is 'digital'
+            if (row.product_type && row.product_type.toLowerCase() === "digital") {
+              return "N/A"
+            }
+            return data || 0
+          },
         },
         {
           data: null,
@@ -120,7 +126,7 @@ $(document).ready(() => {
                 <div><strong>Price:</strong> $${Number.parseFloat(product.price).toFixed(2)}</div>
                 <div><strong>Platform:</strong> ${product.platform_type || "N/A"}</div>
                 <div><strong>Type:</strong> ${product.product_type || "N/A"}</div>
-                <div><strong>Stock:</strong> ${product.quantity || 0}</div>
+                <div><strong>Stock:</strong> ${product.product_type && product.product_type.toLowerCase() === "digital" ? "N/A" : product.quantity || 0}</div>
                 <div><strong>Developer:</strong> ${product.developer || "N/A"}</div>
                 <div><strong>Publisher:</strong> ${product.publisher || "N/A"}</div>
                 <div><strong>Release Date:</strong> ${product.release_date ? new Date(product.release_date).toLocaleDateString() : "N/A"}</div>
