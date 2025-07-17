@@ -44,13 +44,13 @@ $(document).ready(() => {
     $("#loadingState").addClass("hidden")
     $("#noOrders").removeClass("hidden")
     $("#noOrders").html(`
-    <i class="fas fa-lock text-6xl text-gray-300 mb-4"></i>
-    <h3 class="text-xl font-semibold text-gray-700 mb-2">Login Required</h3>
-    <p class="text-gray-600 mb-6">Please login to view your orders.</p>
-    <button id="showLoginModal" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">
-      Login
-    </button>
-  `)
+  <i class="fas fa-lock text-6xl text-gray-300 mb-4"></i>
+  <h3 class="text-xl font-semibold text-gray-700 mb-2">Login Required</h3>
+  <p class="text-gray-600 mb-6">Please login to view your orders.</p>
+  <button id="showLoginModal" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">
+    Login
+  </button>
+`)
 
     $("#showLoginModal").click(() => $("#loginModal").removeClass("hidden"))
   }
@@ -113,9 +113,8 @@ $(document).ready(() => {
     const ordersHtml = orders
       .map((order) => {
         const orderDate = new Date(order.order_date)
-        const now = new Date()
-        const oneDayInMs = 24 * 60 * 60 * 1000 // 1 day in milliseconds
-        const isCancellable = now - orderDate < oneDayInMs && order.status.toLowerCase() !== "cancelled"
+        // Order is cancellable only if its status is 'pending'
+        const isCancellable = order.status.toLowerCase() === "pending"
 
         const orderDateFormatted = orderDate.toLocaleDateString()
         const totalAmount = Number.parseFloat(order.total_amount || 0)
@@ -123,10 +122,7 @@ $(document).ready(() => {
         const shippingInfo = order.user_shipping_address ? "Required" : "Digital Only"
 
         let cancelButtonHtml = ""
-        if (order.status.toLowerCase() === "cancelled") {
-          // If order is cancelled, do not show any cancel button
-          cancelButtonHtml = ""
-        } else if (isCancellable) {
+        if (isCancellable) {
           cancelButtonHtml = `
             <button class="cancel-order-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
                     data-order-id="${order.order_id}" title="Click to cancel this order">
@@ -135,7 +131,7 @@ $(document).ready(() => {
           `
         } else {
           cancelButtonHtml = `
-            <button class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled title="Order cannot be cancelled if it's been a day">
+            <button class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled title="Order cannot be cancelled if it's not pending">
               Cannot Cancel
             </button>
           `
@@ -236,11 +232,11 @@ $(document).ready(() => {
   function viewOrderDetails(orderId) {
     // Show loading in modal
     $("#orderDetails").html(`
-    <div class="text-center py-8">
-      <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mb-4"></i>
-      <p class="text-gray-600">Loading order details...</p>
-    </div>
-  `)
+  <div class="text-center py-8">
+    <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mb-4"></i>
+    <p class="text-gray-600">Loading order details...</p>
+  </div>
+`)
     $("#orderModal").removeClass("hidden")
 
     $.ajax({
@@ -257,11 +253,11 @@ $(document).ready(() => {
       error: (xhr) => {
         const error = xhr.responseJSON?.message || "Failed to load order details"
         $("#orderDetails").html(`
-        <div class="text-center py-8">
-          <i class="fas fa-exclamation-triangle text-2xl text-red-600 mb-4"></i>
-          <p class="text-red-600">${error}</p>
-        </div>
-      `)
+      <div class="text-center py-8">
+        <i class="fas fa-exclamation-triangle text-2xl text-red-600 mb-4"></i>
+        <p class="text-red-600">${error}</p>
+      </div>
+    `)
       },
     })
   }
@@ -279,35 +275,35 @@ $(document).ready(() => {
     let shippingInfoBlock = ""
     if (hasDigital && !hasPhysical) {
       shippingInfoBlock = `
-        <div class="bg-blue-50 p-4 rounded-lg">
-          <h4 class="font-semibold mb-2">Digital Order</h4>
-          <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
-        </div>
-      `
+      <div class="bg-blue-50 p-4 rounded-lg">
+        <h4 class="font-semibold mb-2">Digital Order</h4>
+        <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
+      </div>
+    `
     } else if (!hasDigital && hasPhysical) {
       shippingInfoBlock = `
-        <div class="bg-green-50 p-4 rounded-lg">
-          <h4 class="font-semibold mb-2">Physical Order</h4>
-          <p class="text-sm text-green-600">This order contains only physical products and will be shipped to your address.</p>
-          <p class="text-sm text-gray-600 mt-2">Shipping Address: ${order.user_shipping_address || "N/A"}</p>
-        </div>
-      `
+      <div class="bg-green-50 p-4 rounded-lg">
+        <h4 class="font-semibold mb-2">Physical Order</h4>
+        <p class="text-sm text-green-600">This order contains only physical products and will be shipped to your address.</p>
+        <p class="text-sm text-gray-600 mt-2">Shipping Address: ${order.user_shipping_address || "N/A"}</p>
+      </div>
+    `
     } else if (hasDigital && hasPhysical) {
       shippingInfoBlock = `
-        <div class="bg-yellow-50 p-4 rounded-lg">
-          <h4 class="font-semibold mb-2">Mixed Order (Digital & Physical)</h4>
-          <p class="text-sm text-yellow-800">This order contains both digital and physical products.</p>
-          <p class="text-sm text-gray-600 mt-2">Physical items will be shipped to: ${order.user_shipping_address || "N/A"}</p>
-        </div>
-      `
+      <div class="bg-yellow-50 p-4 rounded-lg">
+        <h4 class="font-semibold mb-2">Mixed Order (Digital & Physical)</h4>
+        <p class="text-sm text-yellow-800">This order contains both digital and physical products.</p>
+        <p class="text-sm text-gray-600 mt-2">Physical items will be shipped to: ${order.user_shipping_address || "N/A"}</p>
+      </div>
+    `
     } else {
       // Fallback for empty order or unknown types
       shippingInfoBlock = `
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <h4 class="font-semibold mb-2">Order Type</h4>
-          <p class="text-sm text-gray-600">No specific product type information available.</p>
-        </div>
-      `
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h4 class="font-semibold mb-2">Order Type</h4>
+        <p class="text-sm text-gray-600">No specific product type information available.</p>
+      </div>
+    `
     }
 
     const itemsHtml = order.items
@@ -324,97 +320,167 @@ $(document).ready(() => {
             : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Physical</span>'
 
         return `
-        <div class="flex items-center space-x-4 p-4 border-b border-gray-200">
-          <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded">
-          <div class="flex-1">
-            <h4 class="font-semibold">${item.title}</h4>
-            <div class="flex items-center space-x-2 mt-1">
-              <span class="text-sm text-gray-600">Qty: ${item.quantity}</span>
-              ${productTypeBadge}
-            </div>
-          </div>
-          <div class="text-right">
-            <p class="font-semibold">$${price.toFixed(2)} each</p>
-            <p class="text-sm text-gray-600">Total: $${total.toFixed(2)}</p>
+      <div class="flex items-center space-x-4 p-4 border-b border-gray-200">
+        <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded">
+        <div class="flex-1">
+          <h4 class="font-semibold">${item.title}</h4>
+          <div class="flex items-center space-x-2 mt-1">
+            <span class="text-sm text-gray-600">Qty: ${item.quantity}</span>
+            ${productTypeBadge}
           </div>
         </div>
-      `
+        <div class="text-right">
+          <p class="font-semibold">$${price.toFixed(2)} each</p>
+          <p class="text-sm text-gray-600">Total: $${total.toFixed(2)}</p>
+        </div>
+      </div>
+    `
       })
       .join("")
 
     const totalAmount = order.items.reduce((sum, item) => sum + Number.parseFloat(item.price) * item.quantity, 0)
 
     $("#orderDetails").html(`
-      <div class="space-y-6">
-        <!-- Order Header -->
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="text-xl font-bold text-gray-800">Order #${order.order_id}</h3>
-            <p class="text-gray-600">Placed on ${orderDate}</p>
-          </div>
-          <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">
-            ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-          </span>
-        </div>
-
-        <!-- Customer Info -->
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <h4 class="font-semibold mb-2">Customer Information</h4>
-          <p class="text-sm text-gray-600">${order.first_name || ""} ${order.last_name || ""}</p>
-          <p class="text-sm text-gray-600">${order.email}</p>
-        </div>
-
-        <!-- Shipping Info (Conditional) -->
-        ${shippingInfoBlock}
-
-        <!-- Order Timeline -->
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <h4 class="font-semibold mb-2">Order Timeline</h4>
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span>Order Placed</span>
-              <span class="text-gray-600">${orderDate}</span>
-            </div>
-            ${
-              shippedDate
-                ? `
-              <div class="flex justify-between">
-                <span>Shipped</span>
-                <span class="text-gray-600">${shippedDate}</span>
-              </div>
-            `
-                : ""
-            }
-            ${
-              deliveredDate
-                ? `
-              <div class="flex justify-between">
-                <span>Delivered</span>
-                <span class="text-gray-600">${deliveredDate}</span>
-              </div>
-            `
-                : ""
-            }
-          </div>
-        </div>
-
-        <!-- Order Items -->
+    <div class="space-y-6">
+      <!-- Order Header -->
+      <div class="flex justify-between items-start">
         <div>
-          <h4 class="font-semibold mb-4">Order Items</h4>
-          <div class="border border-gray-200 rounded-lg">
-            ${itemsHtml}
-          </div>
+          <h3 class="text-xl font-bold text-gray-800">Order #${order.order_id}</h3>
+          <p class="text-gray-600">Placed on ${orderDate}</p>
         </div>
+        <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">
+          ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+        </span>
+      </div>
 
-        <!-- Order Total -->
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <div class="flex justify-between items-center">
-            <span class="font-semibold">Total Amount</span>
-            <span class="text-xl font-bold text-blue-600">$${totalAmount.toFixed(2)}</span>
+      <!-- Customer Info -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h4 class="font-semibold mb-2">Customer Information</h4>
+        <p class="text-sm text-gray-600">${order.first_name || ""} ${order.last_name || ""}</p>
+        <p class="text-sm text-gray-600">${order.email}</p>
+      </div>
+
+      <!-- Shipping Info (Conditional) -->
+      ${shippingInfoBlock}
+
+      <!-- Order Timeline -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h4 class="font-semibold mb-2">Order Timeline</h4>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span>Order Placed</span>
+            <span class="text-gray-600">${orderDate}</span>
           </div>
+          ${
+            shippedDate
+              ? `
+            <div class="flex justify-between">
+              <span>Shipped</span>
+              <span class="text-gray-600">${shippedDate}</span>
+            </div>
+          `
+              : ""
+          }
+          ${
+            deliveredDate
+              ? `
+            <div class="flex justify-between">
+              <span>Delivered</span>
+              <span class="text-gray-600">${deliveredDate}</span>
+            </div>
+          `
+              : ""
+          }
         </div>
       </div>
-    `)
+
+      <!-- Order Items -->
+      <div>
+        <h4 class="font-semibold mb-4">Order Items</h4>
+        <div class="border border-gray-200 rounded-lg">
+          ${itemsHtml}
+        </div>
+      </div>
+
+      <!-- Order Total -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <div class="flex justify-between items-center">
+          <span class="font-semibold">Total Amount</span>
+          <span class="text-xl font-bold text-blue-600">$${totalAmount.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+  `)
+  }
+
+  async function markOrderAsDelivered(orderId) {
+    Swal.fire({
+      title: "Mark as Delivered?",
+      text: "Are you sure you want to mark this order as delivered?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, mark as delivered!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const requestFn = window.makeAuthenticatedRequest || $.ajax
+        const deliveredDate = new Date().toISOString().split("T")[0] // Current date
+
+        // Fetch current order details to get the existing shipped_date
+        let currentShippedDate = null
+        try {
+          const orderResponse = await $.ajax({
+            url: `${API_BASE_URL}/orders/my-orders/${orderId}`,
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          })
+          if (orderResponse.success && orderResponse.order) {
+            currentShippedDate = orderResponse.order.shipped_date
+              ? new Date(orderResponse.order.shipped_date).toISOString().split("T")[0]
+              : null
+          }
+        } catch (error) {
+          console.error("Error fetching current order details:", error)
+          showError("Failed to fetch current order details. Cannot mark as delivered.")
+          return
+        }
+
+        requestFn({
+          url: `${API_BASE_URL}/orders/${orderId}`,
+          method: "PUT",
+          headers: window.makeAuthenticatedRequest
+            ? undefined
+            : {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+          data: JSON.stringify({
+            stat_id: 4, // Assuming 4 is the stat_id for 'delivered'
+            shipped_date: currentShippedDate, // Preserve existing shipped date
+            delivered_date: deliveredDate,
+          }),
+          success: (response) => {
+            if (response.success) {
+              Swal.fire({
+                icon: "success",
+                title: "Order Delivered!",
+                text: "Your order has been successfully marked as delivered.",
+                timer: 1500,
+                showConfirmButton: false,
+              })
+              loadOrders() // Reload orders to reflect the change
+            }
+          },
+          error: (xhr) => {
+            const error = xhr.responseJSON?.message || "Failed to mark order as delivered"
+            showError(error)
+          },
+        })
+      }
+    })
   }
 
   function cancelOrder(orderId) {
@@ -456,51 +522,6 @@ $(document).ready(() => {
           },
           error: (xhr) => {
             const error = xhr.responseJSON?.message || "Failed to cancel order"
-            showError(error)
-          },
-        })
-      }
-    })
-  }
-
-  function markOrderAsDelivered(orderId) {
-    Swal.fire({
-      title: "Mark as Delivered?",
-      text: "Are you sure you want to mark this order as delivered?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, mark as delivered!",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        const requestFn = window.makeAuthenticatedRequest || $.ajax
-        const deliveredDate = new Date().toISOString().split("T")[0] // Current date
-
-        requestFn({
-          url: `${API_BASE_URL}/orders/${orderId}`,
-          method: "PUT",
-          headers: window.makeAuthenticatedRequest
-            ? undefined
-            : {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                "Content-Type": "application/json",
-              },
-          data: JSON.stringify({ stat_id: 4, delivered_date: deliveredDate }), // Assuming 4 is the stat_id for 'delivered'
-          success: (response) => {
-            if (response.success) {
-              Swal.fire({
-                icon: "success",
-                title: "Order Delivered!",
-                text: "Your order has been successfully marked as delivered.",
-                timer: 1500,
-                showConfirmButton: false,
-              })
-              loadOrders() // Reload orders to reflect the change
-            }
-          },
-          error: (xhr) => {
-            const error = xhr.responseJSON?.message || "Failed to mark order as delivered"
             showError(error)
           },
         })

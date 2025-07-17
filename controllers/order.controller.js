@@ -39,12 +39,12 @@ const createOrder = (req, res) => {
     // First, check if products exist and get their types
     const productIds = items.map((item) => item.product_id)
     const checkProductsSql = `
-    SELECT p.product_id, p.title, p.ptype_id, pt.description as product_type, s.quantity as stock_quantity
-    FROM products p
-    JOIN product_types pt ON p.ptype_id = pt.ptype_id
-    LEFT JOIN stock s ON p.product_id = s.product_id
-    WHERE p.product_id IN (${productIds.map(() => "?").join(",")})
-  `
+  SELECT p.product_id, p.title, p.ptype_id, pt.description as product_type, s.quantity as stock_quantity
+  FROM products p
+  JOIN product_types pt ON p.ptype_id = pt.ptype_id
+  LEFT JOIN stock s ON p.product_id = s.product_id
+  WHERE p.product_id IN (${productIds.map(() => "?").join(",")})
+`
 
     connection.execute(checkProductsSql, productIds, (err, products) => {
       if (err) {
@@ -179,23 +179,23 @@ const getUserOrders = (req, res) => {
   const user_id = req.user.id
 
   const sql = `
-  SELECT 
-    o.order_id,
-    u.shipping_address, -- Changed from o.shipping_address
-    o.order_date,
-    o.shipped_date,
-    o.delivered_date,
-    s.description as status,
-    COUNT(oi.product_id) as total_items,
-    SUM(p.price * oi.quantity) as total_amount
-  FROM orders o
-  JOIN status s ON o.stat_id = s.stat_id
-  LEFT JOIN order_items oi ON o.order_id = oi.order_id
-  LEFT JOIN products p ON oi.product_id = p.product_id
-  JOIN users u ON o.user_id = u.user_id -- Ensure user join for shipping_address
-  WHERE o.user_id = ?
-  GROUP BY o.order_id
-  ORDER BY o.order_date DESC
+SELECT 
+  o.order_id,
+  u.shipping_address, -- Changed from o.shipping_address
+  o.order_date,
+  o.shipped_date,
+  o.delivered_date,
+  s.description as status,
+  COUNT(oi.product_id) as total_items,
+  SUM(p.price * oi.quantity) as total_amount
+FROM orders o
+JOIN status s ON o.stat_id = s.stat_id
+LEFT JOIN order_items oi ON o.order_id = oi.order_id
+LEFT JOIN products p ON oi.product_id = p.product_id
+JOIN users u ON o.user_id = u.user_id -- Ensure user join for shipping_address
+WHERE o.user_id = ?
+GROUP BY o.order_id
+ORDER BY o.order_date DESC
 `
 
   try {
@@ -230,38 +230,39 @@ const getOrderDetails = (req, res) => {
 
   // Get order info
   const orderSql = `
-  SELECT 
-    o.*,
-    s.description as status,
-    u.first_name,
-    u.last_name,
-    u.email,
-    u.shipping_address as user_shipping_address -- Changed from o.shipping_address
-  FROM orders o
-  JOIN status s ON o.stat_id = s.stat_id
-  JOIN users u ON o.user_id = u.user_id
-  WHERE o.order_id = ? AND o.user_id = ?
+SELECT 
+  o.*,
+  s.description as status,
+  u.first_name,
+  u.last_name,
+  u.email,
+  u.shipping_address as user_shipping_address
+FROM orders o
+JOIN status s ON o.stat_id = s.stat_id
+JOIN users u ON o.user_id = u.user_id
+WHERE o.order_id = ? AND o.user_id = ?
 `
 
   // Get order items
   const itemsSql = `
-  SELECT 
-    oi.*,
-    p.title,
-    p.price,
-    p.description,
-    pt.description as product_type,
-    pi.image_url
-  FROM order_items oi
-  JOIN products p ON oi.product_id = p.product_id
-  JOIN product_types pt ON p.ptype_id = pt.ptype_id
-  LEFT JOIN product_images pi ON p.product_id = pi.product_id
-  WHERE oi.order_id = ?
-  GROUP BY oi.product_id
+SELECT 
+  oi.*,
+  p.title,
+  p.price,
+  p.description,
+  pt.description as product_type,
+  pi.image_url
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+JOIN product_types pt ON p.ptype_id = pt.ptype_id
+LEFT JOIN product_images pi ON p.product_id = pi.product_id
+WHERE oi.order_id = ?
+GROUP BY oi.product_id
 `
 
   try {
-    connection.execute(orderSql, [orderId], (err, orderResult) => {
+    // FIX: Pass both orderId and user_id to the execute function
+    connection.execute(orderSql, [orderId, user_id], (err, orderResult) => {
       if (err) {
         console.log(err)
         return res.status(500).json({
@@ -330,27 +331,27 @@ const getAllOrders = (req, res) => {
   }
 
   const sql = `
-  SELECT 
-    o.order_id,
-    o.user_id,
-    u.shipping_address as user_shipping_address, -- Changed from o.shipping_address
-    o.order_date,
-    o.shipped_date,
-    o.delivered_date,
-    s.description as status,
-    u.first_name,
-    u.last_name,
-    u.email,
-    COUNT(oi.product_id) as total_items,
-    SUM(p.price * oi.quantity) as total_amount
-  FROM orders o
-  JOIN status s ON o.stat_id = s.stat_id
-  JOIN users u ON o.user_id = u.user_id
-  LEFT JOIN order_items oi ON o.order_id = oi.order_id
-  LEFT JOIN products p ON oi.product_id = p.product_id
-  ${whereClause}
-  GROUP BY o.order_id
-  ORDER BY o.order_date DESC
+SELECT 
+  o.order_id,
+  o.user_id,
+  u.shipping_address as user_shipping_address, -- Changed from o.shipping_address
+  o.order_date,
+  o.shipped_date,
+  o.delivered_date,
+  s.description as status,
+  u.first_name,
+  u.last_name,
+  u.email,
+  COUNT(oi.product_id) as total_items,
+  SUM(p.price * oi.quantity) as total_amount
+FROM orders o
+JOIN status s ON o.stat_id = s.stat_id
+JOIN users u ON o.user_id = u.user_id
+LEFT JOIN order_items oi ON o.order_id = oi.order_id
+LEFT JOIN products p ON oi.product_id = p.product_id
+${whereClause}
+GROUP BY o.order_id
+ORDER BY o.order_date DESC
 `
 
   try {
@@ -384,34 +385,34 @@ const getOrderDetailsAdmin = (req, res) => {
 
   // Get order info
   const orderSql = `
-  SELECT 
-    o.*,
-    s.description as status,
-    u.first_name,
-    u.last_name,
-    u.email,
-    u.shipping_address as user_shipping_address -- Changed from o.shipping_address
-  FROM orders o
-  JOIN status s ON o.stat_id = s.stat_id
-  JOIN users u ON o.user_id = u.user_id
-  WHERE o.order_id = ?
+SELECT 
+  o.*,
+  s.description as status,
+  u.first_name,
+  u.last_name,
+  u.email,
+  u.shipping_address as user_shipping_address -- Changed from o.shipping_address
+FROM orders o
+JOIN status s ON o.stat_id = s.stat_id
+JOIN users u ON o.user_id = u.user_id
+WHERE o.order_id = ?
 `
 
   // Get order items
   const itemsSql = `
-  SELECT 
-    oi.*,
-    p.title,
-    p.price,
-    p.description,
-    pt.description as product_type,
-    pi.image_url
-  FROM order_items oi
-  JOIN products p ON oi.product_id = p.product_id
-  JOIN product_types pt ON p.ptype_id = pt.ptype_id
-  LEFT JOIN product_images pi ON p.product_id = pi.product_id
-  WHERE oi.order_id = ?
-  GROUP BY oi.product_id
+SELECT 
+  oi.*,
+  p.title,
+  p.price,
+  p.description,
+  pt.description as product_type,
+  pi.image_url
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+JOIN product_types pt ON p.ptype_id = pt.ptype_id
+LEFT JOIN product_images pi ON p.product_id = pi.product_id
+WHERE oi.order_id = ?
+GROUP BY oi.product_id
 `
 
   try {
@@ -465,63 +466,86 @@ const updateOrderStatus = (req, res) => {
   const orderId = req.params.id
   const { shipped_date, delivered_date, stat_id } = req.body
 
-  let finalStatId = stat_id // Start with the provided stat_id from frontend
-  let finalShippedDate = shipped_date === undefined ? null : shipped_date
-  let finalDeliveredDate = delivered_date === undefined ? null : delivered_date
+  // 1. Fetch current order details to get existing dates and status
+  const getCurrentOrderSql = "SELECT shipped_date, delivered_date, stat_id FROM orders WHERE order_id = ?"
+  connection.execute(getCurrentOrderSql, [orderId], (err, currentOrderResult) => {
+    if (err) {
+      console.error("Error fetching current order for update:", err)
+      return res.status(500).json({
+        success: false,
+        message: "Error fetching current order details",
+        error: err.message,
+      })
+    }
+    if (currentOrderResult.length === 0) {
+      return res.status(404).json({ success: false, message: "Order not found" })
+    }
 
-  // Logic for clearing dates based on requested status (Pending, Cancelled)
-  // If status is Pending (1) or Cancelled (5), clear dates.
-  // Processing (2) should allow dates to be set.
-  if (finalStatId === 1 || finalStatId === 5) {
-    finalShippedDate = null
-    finalDeliveredDate = null
-  }
+    const currentOrder = currentOrderResult[0]
 
-  // Logic for setting status based on dates (Shipped, Delivered)
-  // These override the stat_id if dates are provided.
-  // This should happen *after* any date clearing based on status.
-  if (finalDeliveredDate !== null) {
-    finalStatId = 4 // Delivered
-  } else if (finalShippedDate !== null) {
-    finalStatId = 3 // Shipped
-  }
+    // Initialize final values with existing values from DB, then override with provided values if they exist
+    let finalStatId = stat_id !== undefined ? stat_id : currentOrder.stat_id
+    let finalShippedDate = shipped_date !== undefined ? shipped_date : currentOrder.shipped_date
+    let finalDeliveredDate = delivered_date !== undefined ? delivered_date : currentOrder.delivered_date
 
-  const updateFields = []
-  const params = []
+    // Ensure null for empty strings from frontend (e.g., if a date input is cleared)
+    if (finalShippedDate === "") finalShippedDate = null
+    if (finalDeliveredDate === "") finalDeliveredDate = null
 
-  updateFields.push("stat_id = ?")
-  params.push(finalStatId)
+    // Logic for clearing dates based on requested status (Pending, Cancelled)
+    // This should override any provided dates if the status implies no shipping/delivery
+    if (finalStatId === 1 || finalStatId === 5) {
+      // Pending or Cancelled
+      finalShippedDate = null
+      finalDeliveredDate = null
+    }
 
-  updateFields.push("shipped_date = ?")
-  params.push(finalShippedDate)
+    // Logic for setting status based on dates (Shipped, Delivered)
+    // These override the stat_id if dates are provided.
+    // This should happen *after* any date clearing based on status.
+    if (finalDeliveredDate !== null) {
+      finalStatId = 4 // Delivered
+    } else if (finalShippedDate !== null) {
+      finalStatId = 3 // Shipped
+    }
 
-  updateFields.push("delivered_date = ?")
-  params.push(finalDeliveredDate)
+    const updateFields = []
+    const params = []
 
-  if (updateFields.length === 0) {
-    return res.status(400).json({ success: false, message: "No fields to update" })
-  }
+    updateFields.push("stat_id = ?")
+    params.push(finalStatId)
 
-  const sql = `UPDATE orders SET ${updateFields.join(", ")} WHERE order_id = ?`
-  params.push(orderId)
+    updateFields.push("shipped_date = ?")
+    params.push(finalShippedDate)
 
-  try {
-    connection.execute(sql, params, (err, result) => {
-      if (err) {
-        console.error("Error updating order:", err)
-        return res.status(500).json({ success: false, message: "Error updating order", error: err.message })
-      }
+    updateFields.push("delivered_date = ?")
+    params.push(finalDeliveredDate)
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, message: "Order not found" })
-      }
+    if (updateFields.length === 0) {
+      return res.status(400).json({ success: false, message: "No fields to update" })
+    }
 
-      return res.status(200).json({ success: true, message: "Order updated successfully" })
-    })
-  } catch (error) {
-    console.error("Server error:", error)
-    return res.status(500).json({ success: false, message: "Server error", error: error.message })
-  }
+    const sql = `UPDATE orders SET ${updateFields.join(", ")} WHERE order_id = ?`
+    params.push(orderId)
+
+    try {
+      connection.execute(sql, params, (err, result) => {
+        if (err) {
+          console.error("Error updating order:", err)
+          return res.status(500).json({ success: false, message: "Error updating order", error: err.message })
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ success: false, message: "Order not found" })
+        }
+
+        return res.status(200).json({ success: true, message: "Order updated successfully" })
+      })
+    } catch (error) {
+      console.error("Server error:", error)
+      return res.status(500).json({ success: false, message: "Server error", error: error.message })
+    }
+  })
 }
 
 const deleteOrder = (req, res) => {
@@ -540,12 +564,12 @@ const deleteOrder = (req, res) => {
 
     // Get order items to restore stock (only for physical products)
     const getItemsSql = `
-    SELECT oi.product_id, oi.quantity, pt.description as product_type
-    FROM order_items oi
-    JOIN products p ON oi.product_id = p.product_id
-    JOIN product_types pt ON p.ptype_id = pt.ptype_id
-    WHERE oi.order_id = ?
-  `
+  SELECT oi.product_id, oi.quantity, pt.description as product_type
+  FROM order_items oi
+  JOIN products p ON oi.product_id = p.product_id
+  JOIN product_types pt ON p.ptype_id = pt.ptype_id
+  WHERE oi.order_id = ?
+`
 
     connection.execute(getItemsSql, [orderId], (err, items) => {
       if (err) {
