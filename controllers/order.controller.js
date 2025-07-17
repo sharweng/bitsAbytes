@@ -177,11 +177,20 @@ const createOrder = (req, res) => {
 
 const getUserOrders = (req, res) => {
   const user_id = req.user.id
+  const { status_filter } = req.query // Get status_filter from query parameters
+
+  let whereClause = "WHERE o.user_id = ?"
+  const params = [user_id]
+
+  if (status_filter) {
+    whereClause += " AND o.stat_id = ?"
+    params.push(status_filter)
+  }
 
   const sql = `
 SELECT 
   o.order_id,
-  u.shipping_address, -- Changed from o.shipping_address
+  u.shipping_address,
   o.order_date,
   o.shipped_date,
   o.delivered_date,
@@ -192,14 +201,14 @@ FROM orders o
 JOIN status s ON o.stat_id = s.stat_id
 LEFT JOIN order_items oi ON o.order_id = oi.order_id
 LEFT JOIN products p ON oi.product_id = p.product_id
-JOIN users u ON o.user_id = u.user_id -- Ensure user join for shipping_address
-WHERE o.user_id = ?
+JOIN users u ON o.user_id = u.user_id
+${whereClause}
 GROUP BY o.order_id
 ORDER BY o.order_date DESC
 `
 
   try {
-    connection.execute(sql, [user_id], (err, results) => {
+    connection.execute(sql, params, (err, results) => {
       if (err) {
         console.log(err)
         return res.status(500).json({

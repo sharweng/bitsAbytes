@@ -11,6 +11,7 @@ $(document).ready(() => {
   function initializePage() {
     checkAuthStatus()
     initializeEventListeners()
+    loadOrderStatusesForFilter() // Load statuses for the filter dropdown
   }
 
   function checkAuthStatus() {
@@ -20,7 +21,7 @@ $(document).ready(() => {
     if (token && user.email) {
       currentUser = user
       showAuthenticatedState(user)
-      loadOrders()
+      loadOrders() // Load orders initially without filter
     } else {
       showUnauthenticatedState()
       showLoginRequired()
@@ -77,15 +78,44 @@ $(document).ready(() => {
         showLoginRequired()
       }
     })
+
+    // Filter dropdown change event
+    $("#statusFilter").on("change", function () {
+      const selectedStatusId = $(this).val()
+      loadOrders(selectedStatusId)
+    })
   }
 
-  function loadOrders() {
+  function loadOrderStatusesForFilter() {
+    $.ajax({
+      url: `${API_BASE_URL}/orders/statuses/all`,
+      method: "GET",
+      success: (response) => {
+        if (response.success) {
+          let statusOptions = '<option value="">All Orders</option>'
+          response.statuses.forEach((status) => {
+            statusOptions += `<option value="${status.stat_id}">${status.description.charAt(0).toUpperCase() + status.description.slice(1)}</option>`
+          })
+          $("#statusFilter").html(statusOptions)
+        }
+      },
+      error: (xhr) => {
+        console.error("Failed to load statuses for filter:", xhr)
+      },
+    })
+  }
+
+  function loadOrders(statusFilter = null) {
     $("#loadingState").removeClass("hidden")
     $("#noOrders").addClass("hidden")
     $("#ordersList").addClass("hidden")
 
+    const url = statusFilter
+      ? `${API_BASE_URL}/orders/my-orders?status_filter=${statusFilter}`
+      : `${API_BASE_URL}/orders/my-orders`
+
     $.ajax({
-      url: `${API_BASE_URL}/orders/my-orders`,
+      url: url,
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -97,6 +127,7 @@ $(document).ready(() => {
           displayOrders(response.orders)
         } else {
           $("#noOrders").removeClass("hidden")
+          $("#ordersList").addClass("hidden") // Ensure orders list is hidden if no orders
         }
       },
       error: (xhr) => {
@@ -109,6 +140,7 @@ $(document).ready(() => {
 
   function displayOrders(orders) {
     $("#ordersList").removeClass("hidden")
+    $("#noOrders").addClass("hidden") // Ensure no orders message is hidden
 
     const ordersHtml = orders
       .map((order) => {
@@ -196,20 +228,26 @@ $(document).ready(() => {
     $("#ordersList").html(ordersHtml)
 
     // Add event listeners
-    $(".view-order").click(function () {
-      const orderId = $(this).data("order-id")
-      viewOrderDetails(orderId)
-    })
+    $(".view-order")
+      .off("click")
+      .on("click", function () {
+        const orderId = $(this).data("order-id")
+        viewOrderDetails(orderId)
+      })
 
-    $(".cancel-order-btn").click(function () {
-      const orderId = $(this).data("order-id")
-      cancelOrder(orderId)
-    })
+    $(".cancel-order-btn")
+      .off("click")
+      .on("click", function () {
+        const orderId = $(this).data("order-id")
+        cancelOrder(orderId)
+      })
 
-    $(".mark-delivered-btn").click(function () {
-      const orderId = $(this).data("order-id")
-      markOrderAsDelivered(orderId)
-    })
+    $(".mark-delivered-btn")
+      .off("click")
+      .on("click", function () {
+        const orderId = $(this).data("order-id")
+        markOrderAsDelivered(orderId)
+      })
   }
 
   function getStatusColor(status) {
@@ -471,7 +509,7 @@ $(document).ready(() => {
                 timer: 1500,
                 showConfirmButton: false,
               })
-              loadOrders() // Reload orders to reflect the change
+              loadOrders($("#statusFilter").val()) // Reload orders to reflect the change, preserving current filter
             }
           },
           error: (xhr) => {
@@ -517,7 +555,7 @@ $(document).ready(() => {
                 timer: 1500,
                 showConfirmButton: false,
               })
-              loadOrders() // Reload orders to reflect the change
+              loadOrders($("#statusFilter").val()) // Reload orders to reflect the change, preserving current filter
             }
           },
           error: (xhr) => {
