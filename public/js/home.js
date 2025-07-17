@@ -411,6 +411,17 @@ $(document).ready(() => {
     const reviewCount = Number.parseInt(product.review_count) || 0
     const starsHtml = generateStarRating(avgRating)
 
+    // Conditionally display stock for physical products only
+    const stockDisplay =
+      product.product_type === "physical"
+        ? `
+      <div class="flex items-center space-x-1">
+        <i class="fas fa-box text-gray-400"></i>
+        <span class="text-sm text-gray-500">${product.quantity || 0} in stock</span>
+      </div>
+    `
+        : ""
+
     return `
       <div class="product-card bg-white rounded-lg shadow-md overflow-hidden" data-product-id="${product.product_id}">
         <div class="relative cursor-pointer product-image" data-product-id="${product.product_id}">
@@ -441,10 +452,7 @@ $(document).ready(() => {
           
           <div class="flex justify-between items-center mb-3">
             <span class="text-2xl font-bold text-blue-600">${priceDisplay}</span>
-            <div class="flex items-center space-x-1">
-              <i class="fas fa-box text-gray-400"></i>
-              <span class="text-sm text-gray-500">${product.quantity || 0} in stock</span>
-            </div>
+            ${stockDisplay}
           </div>
           
           <!-- Action Buttons -->

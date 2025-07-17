@@ -195,12 +195,14 @@ SELECT
   o.shipped_date,
   o.delivered_date,
   s.description as status,
-  COUNT(oi.product_id) as total_items,
-  SUM(p.price * oi.quantity) as total_amount
+  COUNT(DISTINCT oi.product_id) as total_items,
+  SUM(p.price * oi.quantity) as total_amount,
+  GROUP_CONCAT(DISTINCT pt.description) as product_types_in_order
 FROM orders o
 JOIN status s ON o.stat_id = s.stat_id
 LEFT JOIN order_items oi ON o.order_id = oi.order_id
 LEFT JOIN products p ON oi.product_id = p.product_id
+LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
 JOIN users u ON o.user_id = u.user_id
 ${whereClause}
 GROUP BY o.order_id
@@ -351,13 +353,15 @@ SELECT
   u.first_name,
   u.last_name,
   u.email,
-  COUNT(oi.product_id) as total_items,
-  SUM(p.price * oi.quantity) as total_amount
+  COUNT(DISTINCT oi.product_id) as total_items,
+  SUM(p.price * oi.quantity) as total_amount,
+  GROUP_CONCAT(DISTINCT pt.description) as product_types_in_order
 FROM orders o
 JOIN status s ON o.stat_id = s.stat_id
 JOIN users u ON o.user_id = u.user_id
 LEFT JOIN order_items oi ON o.order_id = oi.order_id
 LEFT JOIN products p ON oi.product_id = p.product_id
+LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
 ${whereClause}
 GROUP BY o.order_id
 ORDER BY o.order_date DESC

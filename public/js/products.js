@@ -198,12 +198,31 @@ $(document).ready(() => {
           response.productTypes.forEach((type) => {
             select.append(`<option value="${type.ptype_id}">${type.description}</option>`)
           })
+          // Trigger change to set initial quantity field visibility
+          handleProductTypeChange()
         }
       },
       error: (xhr) => {
         console.error("Error loading product types:", xhr)
       },
     })
+  }
+
+  // Handle product type change to show/hide quantity
+  function handleProductTypeChange() {
+    const selectedPtypeId = $("#ptypeId").val()
+    const $quantityGroup = $("#quantityGroup")
+    const $quantityInput = $("#quantity")
+
+    // ptype_id 2 is 'physical' based on schema.sql
+    if (selectedPtypeId === "2") {
+      $quantityGroup.removeClass("hidden")
+      $quantityInput.prop("required", true)
+    } else {
+      $quantityGroup.addClass("hidden")
+      $quantityInput.prop("required", false)
+      $quantityInput.val(0) // Reset quantity to 0 for digital products
+    }
   }
 
   // Add product button
@@ -214,9 +233,9 @@ $(document).ready(() => {
     $("#productForm")[0].reset()
     $("#productId").val("")
 
-    // Load dropdowns
+    // Load dropdowns and set initial quantity field visibility
     loadPlatformTypes()
-    loadProductTypes()
+    loadProductTypes() // This will call handleProductTypeChange
 
     $("#productModal").removeClass("hidden").addClass("flex")
   })
@@ -228,7 +247,7 @@ $(document).ready(() => {
 
     // Load dropdowns first
     loadPlatformTypes()
-    loadProductTypes()
+    loadProductTypes() // This will call handleProductTypeChange
 
     $.ajax({
       url: `${API_BASE_URL}/products/${productId}`,
@@ -252,6 +271,7 @@ $(document).ready(() => {
           setTimeout(() => {
             $("#platId").val(product.plat_id)
             $("#ptypeId").val(product.ptype_id)
+            handleProductTypeChange() // Re-evaluate quantity field visibility based on loaded type
           }, 200)
 
           $("#productModal").removeClass("hidden").addClass("flex")
@@ -269,12 +289,34 @@ $(document).ready(() => {
     })
   })
 
+  // Listen for changes on the product type dropdown
+  $("#ptypeId").on("change", handleProductTypeChange)
+
   // Submit product form
   $("#productForm").on("submit", function (e) {
     e.preventDefault()
 
     const formData = new FormData(this)
     const productId = $("#productId").val()
+    const selectedPtypeId = $("#ptypeId").val()
+
+    // If digital product, ensure quantity is not sent or is 0
+    if (selectedPtypeId === "1") {
+      // 1 is digital
+      formData.set("quantity", "0")
+    } else if (selectedPtypeId === "2") {
+      // 2 is physical
+      // Ensure quantity is a valid number for physical products
+      const quantityVal = formData.get("quantity")
+      if (quantityVal === "" || isNaN(Number(quantityVal)) || Number(quantityVal) < 0) {
+        window.Swal.fire({
+          icon: "error",
+          title: "Validation Error",
+          text: "Quantity is required and must be a non-negative number for physical products.",
+        })
+        return
+      }
+    }
 
     const url = isEditMode ? `${API_BASE_URL}/products/${productId}` : `${API_BASE_URL}/products`
     const method = isEditMode ? "PUT" : "POST"

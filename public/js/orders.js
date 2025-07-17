@@ -151,7 +151,22 @@ $(document).ready(() => {
         const orderDateFormatted = orderDate.toLocaleDateString()
         const totalAmount = Number.parseFloat(order.total_amount || 0)
         const statusColor = getStatusColor(order.status)
-        const shippingInfo = order.user_shipping_address ? "Required" : "Digital Only"
+
+        // Determine order type (Digital Only, Physical Only, Mixed)
+        let orderType = "N/A"
+        if (order.product_types_in_order) {
+          const types = order.product_types_in_order.split(",")
+          const hasDigital = types.includes("digital")
+          const hasPhysical = types.includes("physical")
+
+          if (hasDigital && !hasPhysical) {
+            orderType = "Digital Only"
+          } else if (!hasDigital && hasPhysical) {
+            orderType = "Physical Only"
+          } else if (hasDigital && hasPhysical) {
+            orderType = "Mixed"
+          }
+        }
 
         let cancelButtonHtml = ""
         if (isCancellable) {
@@ -196,8 +211,8 @@ $(document).ready(() => {
             <p class="font-semibold">$${totalAmount.toFixed(2)}</p>
           </div>
           <div>
-            <p class="text-sm text-gray-600">Shipping</p>
-            <p class="font-semibold">${shippingInfo}</p>
+            <p class="text-sm text-gray-600">Type</p>
+            <p class="font-semibold">${orderType}</p>
           </div>
         </div>
         
@@ -309,14 +324,14 @@ $(document).ready(() => {
     if (hasDigital && !hasPhysical) {
       shippingInfoBlock = `
     <div class="bg-blue-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Digital Order</h4>
+      <h4 class="font-semibold mb-2">Order Type: Digital Only</h4>
       <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
     </div>
   `
     } else if (!hasDigital && hasPhysical) {
       shippingInfoBlock = `
     <div class="bg-green-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Physical Order</h4>
+      <h4 class="font-semibold mb-2">Order Type: Physical Only</h4>
       <p class="text-sm text-green-600">This order contains only physical products and will be shipped to your address.</p>
       <p class="text-sm text-gray-600 mt-2">Shipping Address: ${order.user_shipping_address || "N/A"}</p>
     </div>
@@ -324,7 +339,7 @@ $(document).ready(() => {
     } else if (hasDigital && hasPhysical) {
       shippingInfoBlock = `
     <div class="bg-yellow-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Mixed Order (Digital & Physical)</h4>
+      <h4 class="font-semibold mb-2">Order Type: Mixed (Digital & Physical)</h4>
       <p class="text-sm text-yellow-800">This order contains both digital and physical products.</p>
       <p class="text-sm text-gray-600 mt-2">Physical items will be shipped to: ${order.user_shipping_address || "N/A"}</p>
     </div>

@@ -239,11 +239,11 @@ const addProduct = (req, res) => {
     description,
     plat_id,
     price,
-    ptype_id = 1,
+    ptype_id = 1, // Default to digital (1)
     release_date,
     developer,
     publisher,
-    quantity = 0,
+    quantity = 0, // Default quantity for physical products
   } = req.body
 
   // Handle multiple image files
@@ -258,65 +258,96 @@ const addProduct = (req, res) => {
     return res.status(400).json({ error: "Missing required fields: title and price" })
   }
 
-  const sql = `
+  // Validate quantity for physical products
+  if (Number.parseInt(ptype_id) === 2) {
+    // Physical product
+    if (quantity === undefined || quantity === null || Number.parseInt(quantity) < 0) {
+      return res.status(400).json({ error: "Quantity is required and must be non-negative for physical products" })
+    }
+  }
+
+  connection.beginTransaction((err) => {
+    if (err) {
+      console.error("Transaction start error:", err)
+      return res.status(500).json({ success: false, message: "Error starting transaction", error: err.message })
+    }
+
+    const sql = `
         INSERT INTO products (title, description, plat_id, price, ptype_id, release_date, developer, publisher) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `
-  const values = [title, description, plat_id, price, ptype_id, release_date, developer, publisher]
+    const values = [title, description, plat_id, price, ptype_id, release_date, developer, publisher]
 
-  connection.execute(sql, values, (err, result) => {
-    if (err) {
-      console.log(err)
-      return res.status(500).json({ error: "Error inserting product", details: err })
-    }
-
-    const productId = result.insertId
-
-    // Insert stock
-    const stockSql = "INSERT INTO stock (product_id, quantity) VALUES (?, ?)"
-    const stockValues = [productId, quantity]
-
-    connection.execute(stockSql, stockValues, (err, stockResult) => {
+    connection.execute(sql, values, (err, result) => {
       if (err) {
-        console.log(err)
-        return res.status(500).json({ error: "Error inserting stock", details: err })
+        return connection.rollback(() => {
+          console.error("Error inserting product:", err)
+          res.status(500).json({ error: "Error inserting product", details: err.message })
+        })
+      }
+
+      const productId = result.insertId
+      const promises = []
+
+      // Insert stock only if it's a physical product (ptype_id = 2)
+      if (Number.parseInt(ptype_id) === 2) {
+        promises.push(
+          new Promise((resolve, reject) => {
+            const stockSql = "INSERT INTO stock (product_id, quantity) VALUES (?, ?)"
+            const stockValues = [productId, quantity]
+            connection.execute(stockSql, stockValues, (err, stockResult) => {
+              if (err) {
+                console.error("Error inserting stock:", err)
+                reject(err)
+              } else {
+                resolve(stockResult)
+              }
+            })
+          }),
+        )
       }
 
       // Insert product images if any
       if (imagePaths.length > 0) {
-        const imagePromises = imagePaths.map((imagePath) => {
-          return new Promise((resolve, reject) => {
-            const imageSql = "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)"
-            connection.execute(imageSql, [productId, imagePath], (err, result) => {
-              if (err) reject(err)
-              else resolve(result)
-            })
-          })
+        imagePaths.forEach((imagePath) => {
+          promises.push(
+            new Promise((resolve, reject) => {
+              const imageSql = "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)"
+              connection.execute(imageSql, [productId, imagePath], (err, result) => {
+                if (err) reject(err)
+                else resolve(result)
+              })
+            }),
+          )
         })
+      }
 
-        Promise.all(imagePromises)
-          .then(() => {
-            return res.status(201).json({
+      Promise.all(promises)
+        .then(() => {
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error("Transaction commit error:", err)
+                res
+                  .status(500)
+                  .json({ success: false, message: "Error finalizing product creation", error: err.message })
+              })
+            }
+            res.status(201).json({
               success: true,
               productId: productId,
               images: imagePaths,
               quantity,
-              result,
+              message: "Product added successfully",
             })
           })
-          .catch((err) => {
-            console.log(err)
-            return res.status(500).json({ error: "Error inserting product images", details: err })
-          })
-      } else {
-        return res.status(201).json({
-          success: true,
-          productId: productId,
-          images: [],
-          quantity,
-          result,
         })
-      }
+        .catch((err) => {
+          connection.rollback(() => {
+            console.error("Error during product creation (stock/images):", err)
+            res.status(500).json({ error: "Error adding product details", details: err.message })
+          })
+        })
     })
   })
 }
@@ -337,70 +368,167 @@ const updateProduct = (req, res) => {
     return res.status(400).json({ error: "Missing required fields: title and price" })
   }
 
-  const sql = `
+  connection.beginTransaction((err) => {
+    if (err) {
+      console.error("Transaction start error:", err)
+      return res.status(500).json({ success: false, message: "Error starting transaction", error: err.message })
+    }
+
+    // 1. Get current product type and quantity
+    const getCurrentProductSql = `
+      SELECT p.ptype_id, s.quantity 
+      FROM products p 
+      LEFT JOIN stock s ON p.product_id = s.product_id 
+      WHERE p.product_id = ?
+    `
+    connection.execute(getCurrentProductSql, [id], (err, currentProductResult) => {
+      if (err) {
+        return connection.rollback(() => {
+          console.error("Error fetching current product details:", err)
+          res
+            .status(500)
+            .json({ success: false, message: "Error fetching current product details", error: err.message })
+        })
+      }
+
+      if (currentProductResult.length === 0) {
+        return connection.rollback(() => {
+          res.status(404).json({ success: false, message: "Product not found" })
+        })
+      }
+
+      const currentPtypeId = currentProductResult[0].ptype_id
+      const currentQuantity = currentProductResult[0].quantity
+
+      const newPtypeId = Number.parseInt(ptype_id)
+      const newQuantity = quantity !== undefined ? Number.parseInt(quantity) : currentQuantity
+
+      // Validate quantity for physical products
+      if (newPtypeId === 2) {
+        // Physical product
+        if (newQuantity === undefined || newQuantity === null || newQuantity < 0) {
+          return connection.rollback(() => {
+            res.status(400).json({ error: "Quantity is required and must be non-negative for physical products" })
+          })
+        }
+      }
+
+      // 2. Update product details
+      const updateProductSql = `
         UPDATE products 
         SET title = ?, description = ?, plat_id = ?, price = ?, ptype_id = ?, 
             release_date = ?, developer = ?, publisher = ? 
         WHERE product_id = ?
-    `
-  const values = [title, description, plat_id, price, ptype_id, release_date, developer, publisher, id]
+      `
+      const updateProductValues = [
+        title,
+        description,
+        plat_id,
+        price,
+        newPtypeId,
+        release_date,
+        developer,
+        publisher,
+        id,
+      ]
 
-  connection.execute(sql, values, (err, result) => {
-    if (err) {
-      console.log(err)
-      return res.status(500).json({ error: "Error updating product", details: err })
-    }
-
-    // Update stock if quantity is provided
-    if (quantity !== undefined) {
-      const stockSql = "UPDATE stock SET quantity = ? WHERE product_id = ?"
-      const stockValues = [quantity, id]
-
-      connection.execute(stockSql, stockValues, (err, stockResult) => {
+      connection.execute(updateProductSql, updateProductValues, (err, productResult) => {
         if (err) {
-          console.log(err)
-          return res.status(500).json({ error: "Error updating stock", details: err })
-        }
-      })
-    }
-
-    // Handle image updates if new images are provided
-    if (imagePaths.length > 0) {
-      // Delete existing images
-      const deleteImagesSql = "DELETE FROM product_images WHERE product_id = ?"
-      connection.execute(deleteImagesSql, [id], (err) => {
-        if (err) {
-          console.log(err)
-          return res.status(500).json({ error: "Error deleting existing images", details: err })
-        }
-
-        // Insert new images
-        const imagePromises = imagePaths.map((imagePath) => {
-          return new Promise((resolve, reject) => {
-            const imageSql = "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)"
-            connection.execute(imageSql, [id, imagePath], (err, result) => {
-              if (err) reject(err)
-              else resolve(result)
-            })
+          return connection.rollback(() => {
+            console.error("Error updating product:", err)
+            res.status(500).json({ error: "Error updating product", details: err.message })
           })
-        })
+        }
 
-        Promise.all(imagePromises)
+        const promises = []
+
+        // 3. Handle stock updates based on product type change
+        if (currentPtypeId === 1 && newPtypeId === 2) {
+          // Digital to Physical: Insert new stock entry
+          promises.push(
+            new Promise((resolve, reject) => {
+              const insertStockSql = "INSERT INTO stock (product_id, quantity) VALUES (?, ?)"
+              connection.execute(insertStockSql, [id, newQuantity], (err, result) => {
+                if (err) reject(err)
+                else resolve(result)
+              })
+            }),
+          )
+        } else if (currentPtypeId === 2 && newPtypeId === 1) {
+          // Physical to Digital: Delete stock entry
+          promises.push(
+            new Promise((resolve, reject) => {
+              const deleteStockSql = "DELETE FROM stock WHERE product_id = ?"
+              connection.execute(deleteStockSql, [id], (err, result) => {
+                if (err) reject(err)
+                else resolve(result)
+              })
+            }),
+          )
+        } else if (currentPtypeId === 2 && newPtypeId === 2 && quantity !== undefined) {
+          // Physical to Physical with quantity update: Update existing stock
+          promises.push(
+            new Promise((resolve, reject) => {
+              const updateStockSql = "UPDATE stock SET quantity = ? WHERE product_id = ?"
+              connection.execute(updateStockSql, [newQuantity, id], (err, result) => {
+                if (err) reject(err)
+                else resolve(result)
+              })
+            }),
+          )
+        }
+
+        // 4. Handle image updates if new images are provided
+        if (imagePaths.length > 0) {
+          promises.push(
+            new Promise((resolve, reject) => {
+              const deleteImagesSql = "DELETE FROM product_images WHERE product_id = ?"
+              connection.execute(deleteImagesSql, [id], (err) => {
+                if (err) {
+                  reject(err)
+                } else {
+                  const imageInsertPromises = imagePaths.map((imagePath) => {
+                    return new Promise((resImg, rejImg) => {
+                      const imageSql = "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)"
+                      connection.execute(imageSql, [id, imagePath], (err, result) => {
+                        if (err) rejImg(err)
+                        else resImg(result)
+                      })
+                    })
+                  })
+                  Promise.all(imageInsertPromises).then(resolve).catch(reject)
+                }
+              })
+            }),
+          )
+        }
+
+        Promise.all(promises)
           .then(() => {
-            return res.status(200).json({
-              success: true,
-              message: "Product and images updated successfully",
-              images: imagePaths,
+            connection.commit((err) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error("Transaction commit error:", err)
+                  res
+                    .status(500)
+                    .json({ success: false, message: "Error finalizing product update", error: err.message })
+                })
+              }
+              res.status(200).json({
+                success: true,
+                message: "Product updated successfully",
+                images: imagePaths,
+              })
             })
           })
           .catch((err) => {
-            console.log(err)
-            return res.status(500).json({ error: "Error inserting new images", details: err })
+            connection.rollback(() => {
+              console.error("Error during product update (stock/images):", err)
+              res.status(500).json({ error: "Error updating product details", details: err.message })
+            })
           })
       })
-    } else {
-      return res.status(200).json({ success: true, message: "Product updated successfully" })
-    }
+    })
   })
 }
 
