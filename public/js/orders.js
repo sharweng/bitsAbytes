@@ -1,4 +1,3 @@
-// Import jQuery and Swal
 const $ = window.$
 const Swal = window.Swal
 
@@ -123,6 +122,28 @@ $(document).ready(() => {
         const statusColor = getStatusColor(order.status)
         const shippingInfo = order.user_shipping_address ? "Required" : "Digital Only"
 
+        let cancelButtonHtml = ""
+        if (order.status.toLowerCase() === "cancelled") {
+          cancelButtonHtml = `
+            <button class="bg-red-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled title="Order has been cancelled">
+              Order Cancelled
+            </button>
+          `
+        } else if (isCancellable) {
+          cancelButtonHtml = `
+            <button class="cancel-order-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
+                    data-order-id="${order.order_id}" title="Click to cancel this order">
+              Cancel Order
+            </button>
+          `
+        } else {
+          cancelButtonHtml = `
+            <button class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled title="Order cannot be cancelled if it's been a day">
+              Cannot Cancel
+            </button>
+          `
+        }
+
         return `
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-300">
           <div class="flex justify-between items-start mb-4">
@@ -160,20 +181,7 @@ $(document).ready(() => {
                       data-order-id="${order.order_id}">
                 View Details
               </button>
-              ${
-                isCancellable
-                  ? `
-              <button class="cancel-order-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
-                      data-order-id="${order.order_id}">
-                Cancel Order
-              </button>
-              `
-                  : `
-              <button class="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed" disabled>
-                Cannot Cancel
-              </button>
-              `
-              }
+              ${cancelButtonHtml}
             </div>
           </div>
         </div>
@@ -251,6 +259,44 @@ $(document).ready(() => {
     const deliveredDate = order.delivered_date ? new Date(order.delivered_date).toLocaleDateString() : null
     const statusColor = getStatusColor(order.status)
 
+    // Determine product types in the order
+    const hasDigital = order.items.some((item) => item.product_type === "digital")
+    const hasPhysical = order.items.some((item) => item.product_type === "physical")
+
+    let shippingInfoBlock = ""
+    if (hasDigital && !hasPhysical) {
+      shippingInfoBlock = `
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2">Digital Order</h4>
+          <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
+        </div>
+      `
+    } else if (!hasDigital && hasPhysical) {
+      shippingInfoBlock = `
+        <div class="bg-green-50 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2">Physical Order</h4>
+          <p class="text-sm text-green-600">This order contains only physical products and will be shipped to your address.</p>
+          <p class="text-sm text-gray-600 mt-2">Shipping Address: ${order.user_shipping_address || "N/A"}</p>
+        </div>
+      `
+    } else if (hasDigital && hasPhysical) {
+      shippingInfoBlock = `
+        <div class="bg-yellow-50 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2">Mixed Order (Digital & Physical)</h4>
+          <p class="text-sm text-yellow-800">This order contains both digital and physical products.</p>
+          <p class="text-sm text-gray-600 mt-2">Physical items will be shipped to: ${order.user_shipping_address || "N/A"}</p>
+        </div>
+      `
+    } else {
+      // Fallback for empty order or unknown types
+      shippingInfoBlock = `
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2">Order Type</h4>
+          <p class="text-sm text-gray-600">No specific product type information available.</p>
+        </div>
+      `
+    }
+
     const itemsHtml = order.items
       .map((item) => {
         const price = Number.parseFloat(item.price)
@@ -305,22 +351,8 @@ $(document).ready(() => {
           <p class="text-sm text-gray-600">${order.email}</p>
         </div>
 
-        <!-- Shipping Info -->
-        ${
-          order.user_shipping_address
-            ? `
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Shipping Address</h4>
-            <p class="text-sm text-gray-600">${order.user_shipping_address}</p>
-          </div>
-        `
-            : `
-          <div class="bg-blue-50 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Digital Order</h4>
-            <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
-          </div>
-        `
-        }
+        <!-- Shipping Info (Conditional) -->
+        ${shippingInfoBlock}
 
         <!-- Order Timeline -->
         <div class="bg-gray-50 p-4 rounded-lg">
