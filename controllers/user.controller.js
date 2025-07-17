@@ -64,7 +64,7 @@ const loginUser = (req, res) => {
 
   const sql = `
     SELECT u.user_id, u.email, u.password_hash, u.first_name, u.last_name, 
-           u.contact_number, u.image_url, u.deleted, r.description as role
+           u.contact_number, u.image_url, u.deleted, u.shipping_address, r.description as role
     FROM users u 
     JOIN roles r ON u.role_id = r.role_id 
     WHERE u.email = ?
@@ -139,7 +139,7 @@ const loginUser = (req, res) => {
 }
 
 const updateUser = (req, res) => {
-  const { first_name, last_name, contact_number, role_id } = req.body
+  const { first_name, last_name, contact_number, role_id, shipping_address } = req.body
   const { user_id } = req.params
   let image_url = null
 
@@ -163,6 +163,7 @@ const updateUser = (req, res) => {
         contact_number = COALESCE(?, contact_number),
         image_url = COALESCE(?, image_url),
         role_id = COALESCE(?, role_id),
+        shipping_address = ?, -- Directly update shipping_address, allowing null
         updated_at = CURRENT_TIMESTAMP
     WHERE user_id = ?
   `
@@ -174,6 +175,7 @@ const updateUser = (req, res) => {
     contact_number === undefined ? null : contact_number,
     image_url, // image_url is already correctly initialized to null or a string
     role_id === undefined ? null : role_id,
+    shipping_address === undefined ? null : shipping_address, // Pass shipping_address directly
     user_id,
   ]
 
@@ -249,7 +251,7 @@ const getUserProfile = (req, res) => {
 
   const sql = `
     SELECT u.user_id, u.email, u.first_name, u.last_name, 
-           u.contact_number, u.image_url, u.deleted, u.created_at, r.description as role
+           u.contact_number, u.image_url, u.deleted, u.created_at, u.shipping_address, r.description as role
     FROM users u 
     JOIN roles r ON u.role_id = r.role_id 
     WHERE u.user_id = ?
@@ -342,7 +344,7 @@ const getAllUsers = (req, res) => {
   const sql = `
     SELECT u.user_id, u.email, u.first_name, u.last_name, 
            u.contact_number, u.image_url, u.deleted, u.created_at, 
-           u.updated_at, r.description as role
+           u.updated_at, u.shipping_address, r.description as role
     FROM users u 
     JOIN roles r ON u.role_id = r.role_id 
     ${whereClause}

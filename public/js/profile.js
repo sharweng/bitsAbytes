@@ -83,6 +83,7 @@ $(document).ready(() => {
           $("#firstName").val(user.first_name || "")
           $("#lastName").val(user.last_name || "")
           $("#contactNumber").val(user.contact_number || "")
+          $("#shippingAddress").val(user.shipping_address || "") // Load shipping address
           if (user.image_url) {
             $("#profileImagePreview").attr("src", `${API_BASE_URL.replace("/api", "")}${user.image_url}`)
           } else {
@@ -138,6 +139,7 @@ $(document).ready(() => {
     formData.append("first_name", $("#firstName").val())
     formData.append("last_name", $("#lastName").val())
     formData.append("contact_number", $("#contactNumber").val())
+    formData.append("shipping_address", $("#shippingAddress").val()) // Add shipping address
 
     const imageFile = $("#image")[0].files[0]
     if (imageFile) {
@@ -167,6 +169,7 @@ $(document).ready(() => {
           updatedUser.first_name = $("#firstName").val()
           updatedUser.last_name = $("#lastName").val()
           updatedUser.contact_number = $("#contactNumber").val()
+          updatedUser.shipping_address = $("#shippingAddress").val() // Update shipping address in local storage
           if (response.image_url) {
             updatedUser.image_url = response.image_url
           }

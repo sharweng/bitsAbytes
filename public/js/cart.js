@@ -232,7 +232,7 @@ $(document).ready(() => {
     })
   }
 
-  function checkout() {
+  async function checkout() {
     if (!currentUser) {
       $("#loginModal").removeClass("hidden")
       return
@@ -245,31 +245,131 @@ $(document).ready(() => {
       return
     }
 
-    // Show shipping address input
-    Swal.fire({
-      title: "Shipping Information",
-      html: `
-        <div class="text-left">
-          <label class="block text-sm font-medium mb-2">Shipping Address</label>
-          <textarea id="shippingAddress" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" rows="3" placeholder="Enter your shipping address..."></textarea>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Place Order",
-      cancelButtonText: "Cancel",
-      preConfirm: () => {
-        const shippingAddress = document.getElementById("shippingAddress").value.trim()
-        if (!shippingAddress) {
-          Swal.showValidationMessage("Please enter a shipping address")
-          return false
+    // Determine if there are any physical products in the cart
+    const hasPhysicalProducts = cart.some((item) => item.product_type === "physical")
+
+    let finalShippingAddress = null
+
+    if (hasPhysicalProducts) {
+      // Fetch latest user profile to get current shipping address
+      let latestUserProfile
+      try {
+        const response = await $.ajax({
+          url: `${API_BASE_URL}/users/profile/${currentUser.user_id}`,
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        if (response.success && response.user) {
+          latestUserProfile = response.user
+        } else {
+          throw new Error(response.message || "Failed to fetch user profile.")
         }
-        return shippingAddress
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        processOrder(cart, result.value)
+      } catch (xhr) {
+        console.error("Error fetching user profile for shipping:", xhr)
+        showError(xhr.responseJSON?.message || "Error fetching your profile to determine shipping address.")
+        return
       }
-    })
+
+      const currentShippingAddress = latestUserProfile.shipping_address || ""
+
+      const { value: enteredShippingAddress, isConfirmed } = await Swal.fire({
+        title: "Shipping Information",
+        html: `
+                <div class="text-left">
+                    <label class="block text-sm font-medium mb-2">Shipping Address</label>
+                    <textarea id="shippingAddress" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" rows="3" placeholder="Enter your shipping address...">${currentShippingAddress}</textarea>
+                </div>
+            `,
+        showCancelButton: true,
+        confirmButtonText: "Place Order",
+        cancelButtonText: "Cancel",
+        preConfirm: () => {
+          const address = document.getElementById("shippingAddress").value.trim()
+          if (!address) {
+            Swal.showValidationMessage("Please enter a shipping address")
+            return false
+          }
+          return address
+        },
+      })
+
+      if (!isConfirmed) {
+        return // User cancelled shipping address input
+      }
+
+      finalShippingAddress = enteredShippingAddress
+
+      // Check if shipping address needs to be updated in the database
+      if (finalShippingAddress !== currentShippingAddress) {
+        const { isConfirmed: confirmSaveAddress } = await Swal.fire({
+          title: "Save Shipping Address?",
+          text: "Do you want to save this new shipping address to your profile for future orders?",
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Yes, save it",
+          cancelButtonText: "No, just for this order",
+        })
+
+        if (confirmSaveAddress) {
+          // Show loading for saving address
+          Swal.fire({
+            title: "Saving Address...",
+            text: "Please wait while we update your shipping address.",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+              Swal.showLoading()
+            },
+          })
+
+          try {
+            const formData = new FormData()
+            formData.append("shipping_address", finalShippingAddress)
+
+            const response = await $.ajax({
+              url: `${API_BASE_URL}/users/profile/${currentUser.user_id}`,
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              data: formData,
+              processData: false,
+              contentType: false,
+            })
+
+            if (response.success) {
+              // Update local storage user info
+              const updatedUser = JSON.parse(localStorage.getItem("user"))
+              updatedUser.shipping_address = finalShippingAddress
+              localStorage.setItem("user", JSON.stringify(updatedUser))
+              Swal.close() // Close saving address loading
+              Swal.fire({
+                icon: "success",
+                title: "Address Saved!",
+                text: "Your shipping address has been updated.",
+                timer: 1500,
+                showConfirmButton: false,
+              })
+            } else {
+              throw new Error(response.message || "Failed to save shipping address.")
+            }
+          } catch (xhr) {
+            console.error("Error saving shipping address:", xhr)
+            showError(
+              xhr.responseJSON?.message ||
+                "Error saving shipping address. Order will proceed with the entered address but it won't be saved to your profile.",
+            )
+            // Do not return, allow order to proceed with the entered address
+          }
+        }
+      }
+    }
+
+    // Proceed to process the order
+    processOrder(cart, finalShippingAddress)
   }
 
   function processOrder(cart, shippingAddress) {
@@ -278,7 +378,7 @@ $(document).ready(() => {
         product_id: item.product_id,
         quantity: item.quantity,
       })),
-      shipping_address: shippingAddress,
+      shipping_address: shippingAddress, // Pass shipping address to backend
     }
 
     // Show loading
