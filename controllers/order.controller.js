@@ -475,85 +475,146 @@ const updateOrderStatus = (req, res) => {
   const orderId = req.params.id
   const { shipped_date, delivered_date, stat_id } = req.body
 
-  // 1. Fetch current order details to get existing dates and status
-  const getCurrentOrderSql = "SELECT shipped_date, delivered_date, stat_id FROM orders WHERE order_id = ?"
-  connection.execute(getCurrentOrderSql, [orderId], (err, currentOrderResult) => {
+  connection.beginTransaction((err) => {
     if (err) {
-      console.error("Error fetching current order for update:", err)
-      return res.status(500).json({
-        success: false,
-        message: "Error fetching current order details",
-        error: err.message,
-      })
-    }
-    if (currentOrderResult.length === 0) {
-      return res.status(404).json({ success: false, message: "Order not found" })
+      console.error("Transaction start error:", err)
+      return res.status(500).json({ success: false, message: "Error starting transaction", error: err.message })
     }
 
-    const currentOrder = currentOrderResult[0]
+    // 1. Fetch current order details AND its items
+    const getCurrentOrderAndItemsSql = `
+      SELECT
+        o.shipped_date, o.delivered_date, o.stat_id,
+        oi.product_id, oi.quantity, pt.description as product_type
+      FROM orders o
+      LEFT JOIN order_items oi ON o.order_id = oi.order_id
+      LEFT JOIN products p ON oi.product_id = p.product_id
+      LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+      WHERE o.order_id = ?
+    `
+    connection.execute(getCurrentOrderAndItemsSql, [orderId], (err, results) => {
+      if (err) {
+        return connection.rollback(() => {
+          console.error("Error fetching current order and items for update:", err)
+          res.status(500).json({ success: false, message: "Error fetching current order details", error: err.message })
+        })
+      }
+      if (results.length === 0) {
+        return connection.rollback(() => {
+          res.status(404).json({ success: false, message: "Order not found" })
+        })
+      }
 
-    // Initialize final values with existing values from DB, then override with provided values if they exist
-    let finalStatId = stat_id !== undefined ? stat_id : currentOrder.stat_id
-    let finalShippedDate = shipped_date !== undefined ? shipped_date : currentOrder.shipped_date
-    let finalDeliveredDate = delivered_date !== undefined ? delivered_date : currentOrder.delivered_date
+      const currentOrder = results[0] // First row contains order details
+      const currentItems = results.filter((row) => row.product_id !== null) // Filter out rows where product_id is null if no items
 
-    // Ensure null for empty strings from frontend (e.g., if a date input is cleared)
-    if (finalShippedDate === "") finalShippedDate = null
-    if (finalDeliveredDate === "") finalDeliveredDate = null
+      const previousStatId = currentOrder.stat_id
 
-    // Logic for clearing dates based on requested status (Pending, Cancelled)
-    // This should override any provided dates if the status implies no shipping/delivery
-    if (finalStatId === 1 || finalStatId === 5) {
-      // Pending or Cancelled
-      finalShippedDate = null
-      finalDeliveredDate = null
-    }
+      let finalStatId = stat_id !== undefined ? stat_id : currentOrder.stat_id
+      let finalShippedDate = shipped_date !== undefined ? shipped_date : currentOrder.shipped_date
+      let finalDeliveredDate = delivered_date !== undefined ? delivered_date : currentOrder.delivered_date
 
-    // Logic for setting status based on dates (Shipped, Delivered)
-    // These override the stat_id if dates are provided.
-    // This should happen *after* any date clearing based on status.
-    if (finalDeliveredDate !== null) {
-      finalStatId = 4 // Delivered
-    } else if (finalShippedDate !== null) {
-      finalStatId = 3 // Shipped
-    }
+      if (finalShippedDate === "") finalShippedDate = null
+      if (finalDeliveredDate === "") finalDeliveredDate = null
 
-    const updateFields = []
-    const params = []
+      // Logic for clearing dates based on requested status (Pending, Cancelled)
+      if (finalStatId === 1 || finalStatId === 5) {
+        finalShippedDate = null
+        finalDeliveredDate = null
+      }
 
-    updateFields.push("stat_id = ?")
-    params.push(finalStatId)
+      // Logic for setting status based on dates (Shipped, Delivered)
+      if (finalDeliveredDate !== null) {
+        finalStatId = 4 // Delivered
+      } else if (finalShippedDate !== null) {
+        finalStatId = 3 // Shipped
+      }
 
-    updateFields.push("shipped_date = ?")
-    params.push(finalShippedDate)
-
-    updateFields.push("delivered_date = ?")
-    params.push(finalDeliveredDate)
-
-    if (updateFields.length === 0) {
-      return res.status(400).json({ success: false, message: "No fields to update" })
-    }
-
-    const sql = `UPDATE orders SET ${updateFields.join(", ")} WHERE order_id = ?`
-    params.push(orderId)
-
-    try {
-      connection.execute(sql, params, (err, result) => {
-        if (err) {
-          console.error("Error updating order:", err)
-          return res.status(500).json({ success: false, message: "Error updating order", error: err.message })
+      // --- NEW LOGIC: Restore stock if status changes to Cancelled ---
+      const stockUpdatePromises = []
+      if (finalStatId === 5 && previousStatId !== 5) {
+        // If new status is Cancelled (5) and old status was not Cancelled
+        const physicalItemsToRestore = currentItems.filter((item) => item.product_type === "physical")
+        if (physicalItemsToRestore.length > 0) {
+          console.log(`Restoring stock for order ${orderId} due to cancellation.`)
+          physicalItemsToRestore.forEach((item) => {
+            stockUpdatePromises.push(
+              new Promise((resolve, reject) => {
+                const updateStockSql = "UPDATE stock SET quantity = quantity + ? WHERE product_id = ?"
+                connection.execute(updateStockSql, [item.quantity, item.product_id], (err, result) => {
+                  if (err) {
+                    console.error(`Error restoring stock for product ${item.product_id}:`, err)
+                    reject(err)
+                  } else {
+                    resolve(result)
+                  }
+                })
+              }),
+            )
+          })
         }
+      }
+      // --- END NEW LOGIC ---
 
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ success: false, message: "Order not found" })
-        }
+      Promise.all(stockUpdatePromises)
+        .then(() => {
+          const updateFields = []
+          const params = []
 
-        return res.status(200).json({ success: true, message: "Order updated successfully" })
-      })
-    } catch (error) {
-      console.error("Server error:", error)
-      return res.status(500).json({ success: false, message: "Server error", error: error.message })
-    }
+          updateFields.push("stat_id = ?")
+          params.push(finalStatId)
+
+          updateFields.push("shipped_date = ?")
+          params.push(finalShippedDate)
+
+          updateFields.push("delivered_date = ?")
+          params.push(finalDeliveredDate)
+
+          if (updateFields.length === 0) {
+            return connection.rollback(() => {
+              res.status(400).json({ success: false, message: "No fields to update" })
+            })
+          }
+
+          const sql = `UPDATE orders SET ${updateFields.join(", ")} WHERE order_id = ?`
+          params.push(orderId)
+
+          connection.execute(sql, params, (err, result) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error("Error updating order:", err)
+                res.status(500).json({ success: false, message: "Error updating order", error: err.message })
+              })
+            }
+
+            if (result.affectedRows === 0) {
+              return connection.rollback(() => {
+                res.status(404).json({ success: false, message: "Order not found" })
+              })
+            }
+
+            connection.commit((err) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error("Transaction commit error:", err)
+                  res.status(500).json({ success: false, message: "Error finalizing order update", error: err.message })
+                })
+              }
+              res.status(200).json({ success: true, message: "Order updated successfully" })
+            })
+          })
+        })
+        .catch((err) => {
+          connection.rollback(() => {
+            console.error("Stock restoration failed:", err)
+            res.status(500).json({
+              success: false,
+              message: "Failed to update order due to stock restoration error",
+              error: err.message,
+            })
+          })
+        })
+    })
   })
 }
 
@@ -571,58 +632,76 @@ const deleteOrder = (req, res) => {
       })
     }
 
-    // Get order items to restore stock (only for physical products)
-    const getItemsSql = `
-  SELECT oi.product_id, oi.quantity, pt.description as product_type
-  FROM order_items oi
-  JOIN products p ON oi.product_id = p.product_id
-  JOIN product_types pt ON p.ptype_id = pt.ptype_id
-  WHERE oi.order_id = ?
-`
-
-    connection.execute(getItemsSql, [orderId], (err, items) => {
+    // First, get the order's current status
+    const getOrderStatusSql = "SELECT stat_id FROM orders WHERE order_id = ?"
+    connection.execute(getOrderStatusSql, [orderId], (err, orderStatusResult) => {
       if (err) {
         return connection.rollback(() => {
           console.log(err)
-          res.status(500).json({
-            success: false,
-            message: "Error fetching order items",
-            error: err.message,
-          })
+          res.status(500).json({ success: false, message: "Error fetching order status", error: err.message })
         })
       }
 
-      const physicalItems = items.filter((item) => item.product_type === "physical")
-      let completedUpdates = 0
-      let hasError = false
-
-      if (physicalItems.length === 0) {
-        // No physical items to restore, just delete the order
-        deleteOrderRecord()
-        return
+      if (orderStatusResult.length === 0) {
+        return connection.rollback(() => {
+          res.status(404).json({ success: false, message: "Order not found" })
+        })
       }
 
-      // Restore stock for physical items only
-      physicalItems.forEach((item) => {
-        const updateStockSql = "UPDATE stock SET quantity = quantity + ? WHERE product_id = ?"
-        connection.execute(updateStockSql, [item.quantity, item.product_id], (err) => {
+      const currentStatId = orderStatusResult[0].stat_id
+
+      // Only restore stock if the order is pending (1) or processing (2)
+      if (currentStatId === 1 || currentStatId === 2) {
+        // Get order items to restore stock (only for physical products)
+        const getItemsSql = `
+          SELECT oi.product_id, oi.quantity, pt.description as product_type
+          FROM order_items oi
+          JOIN products p ON oi.product_id = p.product_id
+          JOIN product_types pt ON p.ptype_id = pt.ptype_id
+          WHERE oi.order_id = ?
+        `
+
+        connection.execute(getItemsSql, [orderId], (err, items) => {
           if (err) {
-            hasError = true
             return connection.rollback(() => {
-              res.status(500).json({
-                success: false,
-                message: "Error restoring stock",
-                error: err.message,
-              })
+              console.log(err)
+              res.status(500).json({ success: false, message: "Error fetching order items", error: err.message })
             })
           }
 
-          completedUpdates++
-          if (completedUpdates === physicalItems.length && !hasError) {
+          const physicalItems = items.filter((item) => item.product_type === "physical")
+          let completedUpdates = 0
+          let hasError = false
+
+          if (physicalItems.length === 0) {
+            // No physical items to restore, just delete the order
             deleteOrderRecord()
+            return
           }
+
+          // Restore stock for physical items only
+          physicalItems.forEach((item) => {
+            const updateStockSql = "UPDATE stock SET quantity = quantity + ? WHERE product_id = ?"
+            connection.execute(updateStockSql, [item.quantity, item.product_id], (err) => {
+              if (err) {
+                hasError = true
+                return connection.rollback(() => {
+                  res.status(500).json({ success: false, message: "Error restoring stock", error: err.message })
+                })
+              }
+
+              completedUpdates++
+              if (completedUpdates === physicalItems.length && !hasError) {
+                deleteOrderRecord()
+              }
+            })
+          })
         })
-      })
+      } else {
+        // If status is not pending or processing, directly delete the order without stock restoration
+        console.log(`Order ${orderId} status is ${currentStatId}, skipping stock restoration on delete.`)
+        deleteOrderRecord()
+      }
 
       function deleteOrderRecord() {
         const deleteOrderSql = "DELETE FROM orders WHERE order_id = ?"
@@ -630,37 +709,28 @@ const deleteOrder = (req, res) => {
           if (err) {
             return connection.rollback(() => {
               console.log(err)
-              res.status(500).json({
-                success: false,
-                message: "Error deleting order",
-                error: err.message,
-              })
+              res.status(500).json({ success: false, message: "Error deleting order", error: err.message })
             })
           }
 
           if (result.affectedRows === 0) {
             return connection.rollback(() => {
-              res.status(404).json({
-                success: false,
-                message: "Order not found",
-              })
+              res.status(404).json({ success: false, message: "Order not found" })
             })
           }
 
           connection.commit((err) => {
             if (err) {
               return connection.rollback(() => {
-                res.status(500).json({
-                  success: false,
-                  message: "Error committing transaction",
-                  error: err.message,
-                })
+                res.status(500).json({ success: false, message: "Error committing transaction", error: err.message })
               })
             }
 
             res.status(200).json({
               success: true,
-              message: "Order deleted successfully and stock restored",
+              message:
+                "Order deleted successfully" +
+                (currentStatId === 1 || currentStatId === 2 ? " and stock restored" : ""),
             })
           })
         })
