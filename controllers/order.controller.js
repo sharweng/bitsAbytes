@@ -1,6 +1,5 @@
 const connection = require("../config/database")
 
-// Add these imports at the top of the file
 const sendEmail = require("../utils/email")
 const generatePdf = require("../utils/pdfGenerator")
 
@@ -43,14 +42,21 @@ const createOrder = (req, res) => {
     // First, check if products exist and get their types
     const productIds = items.map((item) => item.product_id)
     const checkProductsSql = `
-  SELECT p.product_id, p.title, p.price, p.ptype_id, pt.description as product_type, s.quantity as stock_quantity, pi.image_url
-  FROM products p
-  JOIN product_types pt ON p.ptype_id = pt.ptype_id
-  LEFT JOIN stock s ON p.product_id = s.product_id
-  LEFT JOIN product_images pi ON p.product_id = pi.product_id
-  WHERE p.product_id IN (${productIds.map(() => "?").join(",")})
-  GROUP BY p.product_id
-`
+      SELECT 
+        p.product_id, 
+        p.title, 
+        p.price, 
+        p.ptype_id, 
+        pt.description as product_type, 
+        s.quantity as stock_quantity, 
+        MIN(pi.image_url) as image_url -- Use MIN to get one image URL per product
+      FROM products p
+      JOIN product_types pt ON p.ptype_id = pt.ptype_id
+      LEFT JOIN stock s ON p.product_id = s.product_id
+      LEFT JOIN product_images pi ON p.product_id = pi.product_id
+      WHERE p.product_id IN (${productIds.map(() => "?").join(",")})
+      GROUP BY p.product_id, p.title, p.price, p.ptype_id, pt.description, s.quantity
+    `
 
     connection.execute(checkProductsSql, productIds, (err, products) => {
       if (err) {
@@ -64,7 +70,8 @@ const createOrder = (req, res) => {
         })
       }
 
-      if (products.length !== items.length) {
+      // Ensure that all requested products were found and are unique in the result
+      if (products.length !== productIds.length) {
         const foundIds = products.map((p) => p.product_id)
         const missingIds = productIds.filter((id) => !foundIds.includes(id))
         return connection.rollback(() => {
@@ -181,7 +188,7 @@ const createOrder = (req, res) => {
                   oi.product_id, oi.quantity,
                   p.title, p.price,
                   pt.description as product_type,
-                  pi.image_url
+                  MIN(pi.image_url) as image_url -- Use MIN to get one image URL per product
                 FROM orders o
                 JOIN status s ON o.stat_id = s.stat_id
                 JOIN users u ON o.user_id = u.user_id
@@ -190,29 +197,44 @@ const createOrder = (req, res) => {
                 LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
                 LEFT JOIN product_images pi ON p.product_id = pi.product_id
                 WHERE o.order_id = ?
+                GROUP BY o.order_id, oi.product_id, oi.quantity, p.title, p.price, pt.description, o.order_date, o.stat_id, s.description, u.email, u.first_name, u.last_name, u.shipping_address
               `
-              const [orderAndUserDetails] = await connection.promise().execute(getOrderAndUserDetailsSql, [orderId])
+              const [orderAndUserDetailsRaw] = await connection.promise().execute(getOrderAndUserDetailsSql, [orderId])
 
-              if (orderAndUserDetails.length > 0) {
-                const orderDetails = {
-                  order_id: orderAndUserDetails[0].order_id,
-                  order_date: orderAndUserDetails[0].order_date,
-                  stat_id: orderAndUserDetails[0].stat_id,
-                  status_description: orderAndUserDetails[0].status_description,
-                  email: orderAndUserDetails[0].email,
-                  first_name: orderAndUserDetails[0].first_name,
-                  last_name: orderAndUserDetails[0].last_name,
-                  shipping_address: orderAndUserDetails[0].shipping_address,
-                  items: orderAndUserDetails[0].product_id
-                    ? orderAndUserDetails.map((row) => ({
+              if (orderAndUserDetailsRaw.length > 0) {
+                // Aggregate items to ensure uniqueness and correct quantities
+                const itemsMap = new Map()
+                orderAndUserDetailsRaw.forEach((row) => {
+                  if (row.product_id) {
+                    // If the product is already in the map, update its quantity
+                    if (itemsMap.has(row.product_id)) {
+                      const existingItem = itemsMap.get(row.product_id)
+                      existingItem.quantity += row.quantity // Sum quantities if product appears multiple times (e.g., if multiple order_items for same product)
+                      itemsMap.set(row.product_id, existingItem)
+                    } else {
+                      itemsMap.set(row.product_id, {
                         product_id: row.product_id,
                         quantity: row.quantity,
                         title: row.title,
                         price: row.price,
                         product_type: row.product_type,
                         image_url: row.image_url,
-                      }))
-                    : [],
+                      })
+                    }
+                  }
+                })
+                const aggregatedItems = Array.from(itemsMap.values())
+
+                const orderDetails = {
+                  order_id: orderAndUserDetailsRaw[0].order_id,
+                  order_date: orderAndUserDetailsRaw[0].order_date,
+                  stat_id: orderAndUserDetailsRaw[0].stat_id,
+                  status_description: orderAndUserDetailsRaw[0].status_description,
+                  email: orderAndUserDetailsRaw[0].email,
+                  first_name: orderAndUserDetailsRaw[0].first_name,
+                  last_name: orderAndUserDetailsRaw[0].last_name,
+                  shipping_address: orderAndUserDetailsRaw[0].shipping_address,
+                  items: aggregatedItems,
                 }
 
                 const orderDate = new Date(orderDetails.order_date).toLocaleDateString()
@@ -221,61 +243,101 @@ const createOrder = (req, res) => {
                   0,
                 )
 
+                // Determine order type
+                let orderType = "Mixed"
+                const hasPhysical = orderDetails.items.some((item) => item.product_type === "physical")
+                const hasDigital = orderDetails.items.some((item) => item.product_type === "digital")
+
+                if (hasPhysical && !hasDigital) {
+                  orderType = "Physical Only"
+                } else if (!hasPhysical && hasDigital) {
+                  orderType = "Digital Only"
+                }
+
+                // Generate HTML for email body
                 const emailHtml = `
-                  <p>Dear ${orderDetails.first_name} ${orderDetails.last_name},</p>
-                  <p>Thank you for your order from Bits & Bytes!</p>
-                  <p>Your order #${orderDetails.order_id} has been successfully placed and is currently <strong>${orderDetails.status_description}</strong>.</p>
-                  <p><strong>Order Date:</strong> ${orderDate}</p>
-                  <p>You can track your order in the "My Orders" section of your account.</p>
-                  <p>A detailed receipt is attached to this email.</p>
-                  <p>We appreciate your business!</p>
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #f8f8f8; padding: 20px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+                      <h2 style="color: #333; margin: 0;">Order Confirmation - Bits & Bytes</h2>
+                    </div>
+                    <div style="padding: 20px; background-color: #ffffff;">
+                      <p style="font-size: 16px; color: #555;">Dear ${orderDetails.first_name} ${orderDetails.last_name},</p>
+                      <p style="font-size: 16px; color: #555;">Thank you for your order from Bits & Bytes!</p>
+                      <p style="font-size: 16px; color: #555;">Your order <strong style="color: #007bff;">#${orderDetails.order_id}</strong> has been successfully placed and is currently <strong style="text-transform: capitalize; color: #28a745;">${orderDetails.status_description}</strong>.</p>
+                      <p style="font-size: 16px; color: #555;"><strong>Order Date:</strong> ${orderDate}</p>
+                      <p style="font-size: 16px; color: #555;">You can track your order in the "My Orders" section of your account.</p>
+                      <p style="font-size: 16px; color: #555;">A detailed receipt is attached to this email.</p>
+                      <p style="font-size: 16px; color: #555;">We appreciate your business!</p>
+                    </div>
+                    <div style="background-color: #f8f8f8; padding: 15px; text-align: center; font-size: 12px; color: #777; border-top: 1px solid #e0e0e0;">
+                      <p>&copy; ${new Date().getFullYear()} Bits & Bytes. All rights reserved.</p>
+                    </div>
+                  </div>
                 `
 
+                // Generate HTML for PDF receipt
                 const pdfHtml = `
-                  <h1 style="text-align: center; color: #333;">Order Receipt - Bits & Bytes</h1>
-                  <hr style="border: 1px solid #eee; margin-bottom: 20px;">
-                  <p><strong>Order ID:</strong> #${orderDetails.order_id}</p>
-                  <p><strong>Order Date:</strong> ${orderDate}</p>
-                  <p><strong>Current Status:</strong> <span style="text-transform: capitalize;">${orderDetails.status_description}</span></p>
-                  <br>
-                  <p><strong>Customer Name:</strong> ${orderDetails.first_name} ${orderDetails.last_name}</p>
-                  <p><strong>Customer Email:</strong> ${orderDetails.email}</p>
-                  ${orderDetails.shipping_address ? `<p><strong>Shipping Address:</strong> ${orderDetails.shipping_address}</p>` : ""}
-                  <br>
-                  <h2 style="color: #333;">Order Items:</h2>
-                  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                    <thead>
-                      <tr style="background-color: #f2f2f2;">
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Product</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Type</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Qty</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Price</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${orderDetails.items
-                        .map(
-                          (item) => `
-                        <tr>
-                          <td style="padding: 8px; border: 1px solid #ddd;">${item.title}</td>
-                          <td style="padding: 8px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
-                          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
-                          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                  <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h1 style="text-align: center; color: #007bff; margin-bottom: 20px;">Order Receipt - Bits & Bytes</h1>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+
+                    <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                      <p style="margin: 5px 0;"><strong>Order ID:</strong> <span style="color: #007bff;">#${orderDetails.order_id}</span></p>
+                      <p style="margin: 5px 0;"><strong>Order Date:</strong> ${orderDate}</p>
+                      <p style="margin: 5px 0;"><strong>Current Status:</strong> <span style="text-transform: capitalize; color: #28a745;">${orderDetails.status_description}</span></p>
+                      <p style="margin: 5px 0;">
+                        <strong>Order Type:</strong> 
+                        <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; 
+                          ${orderType === "Digital Only" ? "background-color: #e0f7fa; color: #007bff;" : ""}
+                          ${orderType === "Physical Only" ? "background-color: #fff3e0; color: #ff9800;" : ""}
+                          ${orderType === "Mixed" ? "background-color: #e8f5e9; color: #4caf50;" : ""}
+                        ">${orderType}</span>
+                      </p>
+                      ${orderType === "Digital Only" ? `<p style="margin: 5px 0; font-style: italic; color: #666;">This order contains only digital products - no shipping required.</p>` : ""}
+                    </div>
+
+                    <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                      <p style="margin: 5px 0;"><strong>Customer Name:</strong> ${orderDetails.first_name} ${orderDetails.last_name}</p>
+                      <p style="margin: 5px 0;"><strong>Customer Email:</strong> ${orderDetails.email}</p>
+                      ${orderType !== "Digital Only" && orderDetails.shipping_address ? `<p style="margin: 5px 0;"><strong>Shipping Address:</strong> ${orderDetails.shipping_address}</p>` : ""}
+                    </div>
+
+                    <h2 style="color: #333; margin-top: 30px; margin-bottom: 15px;">Order Items:</h2>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #ddd;">
+                      <thead>
+                        <tr style="background-color: #f2f2f2;">
+                          <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Product</th>
+                          <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Type</th>
+                          <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Qty</th>
+                          <th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Price</th>
+                          <th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Total</th>
                         </tr>
-                      `,
-                        )
-                        .join("")}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td colspan="4" style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Total Amount:</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">$${totalAmount.toFixed(2)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                  <p style="text-align: center; font-size: 12px; color: #777;">Thank you for your purchase!</p>
+                      </thead>
+                      <tbody>
+                        ${orderDetails.items
+                          .map(
+                            (item) => `
+                          <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${item.title}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                          </tr>
+                        `,
+                          )
+                          .join("")}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colspan="4" style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">Total Amount:</td>
+                          <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">$${totalAmount.toFixed(2)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                    <p style="text-align: center; font-size: 14px; color: #777; margin-top: 30px;">Thank you for your purchase!</p>
+                    <p style="text-align: center; font-size: 12px; color: #aaa;">Bits & Bytes | Your Trusted Tech Store</p>
+                  </div>
                 `
 
                 const pdfBuffer = await generatePdf(pdfHtml)
@@ -394,22 +456,22 @@ WHERE o.order_id = ? AND o.user_id = ?
   // Get order items
   const itemsSql = `
 SELECT 
-  oi.*,
+  oi.product_id,
+  SUM(oi.quantity) as quantity, -- Sum quantities for the same product
   p.title,
   p.price,
   p.description,
   pt.description as product_type,
-  pi.image_url
+  MIN(pi.image_url) as image_url
 FROM order_items oi
 JOIN products p ON oi.product_id = p.product_id
 JOIN product_types pt ON p.ptype_id = pt.ptype_id
 LEFT JOIN product_images pi ON p.product_id = pi.product_id
 WHERE oi.order_id = ?
-GROUP BY oi.product_id
+GROUP BY oi.product_id, p.title, p.price, p.description, pt.description
 `
 
   try {
-    // FIX: Pass both orderId and user_id to the execute function
     connection.execute(orderSql, [orderId, user_id], (err, orderResult) => {
       if (err) {
         console.log(err)
@@ -429,12 +491,8 @@ GROUP BY oi.product_id
 
       connection.execute(itemsSql, [orderId], (err, itemsResult) => {
         if (err) {
-          console.log(err)
-          return res.status(500).json({
-            success: false,
-            message: "Error fetching order items",
-            error: err.message,
-          })
+          console.error("Error fetching order items:", err)
+          return res.status(500).json({ success: false, message: "Error fetching order items", error: err.message })
         }
 
         const order = orderResult[0]
@@ -551,18 +609,19 @@ WHERE o.order_id = ?
   // Get order items
   const itemsSql = `
 SELECT 
-  oi.*,
+  oi.product_id,
+  SUM(oi.quantity) as quantity, -- Sum quantities for the same product
   p.title,
   p.price,
   p.description,
   pt.description as product_type,
-  pi.image_url
+  MIN(pi.image_url) as image_url
 FROM order_items oi
 JOIN products p ON oi.product_id = p.product_id
 JOIN product_types pt ON p.ptype_id = pt.ptype_id
 LEFT JOIN product_images pi ON p.product_id = pi.product_id
 WHERE oi.order_id = ?
-GROUP BY oi.product_id
+GROUP BY oi.product_id, p.title, p.price, p.description, pt.description
 `
 
   try {
@@ -616,7 +675,7 @@ const updateOrderStatus = (req, res) => {
             oi.product_id, oi.quantity,
             p.title, p.price,
             pt.description as product_type,
-            pi.image_url
+            MIN(pi.image_url) as image_url
           FROM orders o
           JOIN status s ON o.stat_id = s.stat_id
           JOIN users u ON o.user_id = u.user_id
@@ -625,42 +684,56 @@ const updateOrderStatus = (req, res) => {
           LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
           LEFT JOIN product_images pi ON p.product_id = pi.product_id
           WHERE o.order_id = ?
+          GROUP BY o.order_id, oi.product_id, oi.quantity, p.title, p.price, pt.description, o.order_date, o.shipped_date, o.delivered_date, o.stat_id, s.description, u.email, u.first_name, u.last_name, u.shipping_address
         `
-    connection.execute(getCurrentOrderAndItemsSql, [orderId], (err, results) => {
+    connection.execute(getCurrentOrderAndItemsSql, [orderId], (err, resultsRaw) => {
       if (err) {
         return connection.rollback(() => {
           console.error("Error fetching current order and items for update:", err)
           res.status(500).json({ success: false, message: "Error fetching current order details", error: err.message })
         })
       }
-      if (results.length === 0) {
+      if (resultsRaw.length === 0) {
         return connection.rollback(() => {
           res.status(404).json({ success: false, message: "Order not found" })
         })
       }
 
-      // Reconstruct order object from flat results
-      const orderData = {
-        order_id: results[0].order_id,
-        order_date: results[0].order_date,
-        shipped_date: results[0].shipped_date,
-        delivered_date: results[0].delivered_date,
-        stat_id: results[0].stat_id,
-        status_description: results[0].status_description,
-        email: results[0].email,
-        first_name: results[0].first_name,
-        last_name: results[0].last_name,
-        shipping_address: results[0].shipping_address,
-        items: results[0].product_id
-          ? results.map((row) => ({
+      // Aggregate items to ensure uniqueness and correct quantities
+      const itemsMap = new Map()
+      resultsRaw.forEach((row) => {
+        if (row.product_id) {
+          if (itemsMap.has(row.product_id)) {
+            const existingItem = itemsMap.get(row.product_id)
+            existingItem.quantity += row.quantity
+            itemsMap.set(row.product_id, existingItem)
+          } else {
+            itemsMap.set(row.product_id, {
               product_id: row.product_id,
               quantity: row.quantity,
               title: row.title,
               price: row.price,
               product_type: row.product_type,
               image_url: row.image_url,
-            }))
-          : [], // Handle case where order has no items (shouldn't happen for valid orders)
+            })
+          }
+        }
+      })
+      const aggregatedItems = Array.from(itemsMap.values())
+
+      // Reconstruct order object from flat results
+      const orderData = {
+        order_id: resultsRaw[0].order_id,
+        order_date: resultsRaw[0].order_date,
+        shipped_date: resultsRaw[0].shipped_date,
+        delivered_date: resultsRaw[0].delivered_date,
+        stat_id: resultsRaw[0].stat_id,
+        status_description: resultsRaw[0].status_description,
+        email: resultsRaw[0].email,
+        first_name: resultsRaw[0].first_name,
+        last_name: resultsRaw[0].last_name,
+        shipping_address: resultsRaw[0].shipping_address,
+        items: aggregatedItems,
       }
 
       const previousStatId = orderData.stat_id
@@ -768,7 +841,7 @@ const updateOrderStatus = (req, res) => {
                         oi.product_id, oi.quantity,
                         p.title, p.price,
                         pt.description as product_type,
-                        pi.image_url
+                        MIN(pi.image_url) as image_url
                       FROM orders o
                       JOIN status s ON o.stat_id = s.stat_id
                       JOIN users u ON o.user_id = u.user_id
@@ -777,31 +850,45 @@ const updateOrderStatus = (req, res) => {
                       LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
                       LEFT JOIN product_images pi ON p.product_id = pi.product_id
                       WHERE o.order_id = ?
+                      GROUP BY o.order_id, oi.product_id, oi.quantity, p.title, p.price, pt.description, o.order_date, o.shipped_date, o.delivered_date, o.stat_id, s.description, u.email, u.first_name, u.last_name, u.shipping_address
                     `
-                const [updatedOrderResults] = await connection.promise().execute(getUpdatedOrderSql, [orderId])
+                const [updatedOrderResultsRaw] = await connection.promise().execute(getUpdatedOrderSql, [orderId])
 
-                if (updatedOrderResults.length > 0) {
-                  const updatedOrder = {
-                    order_id: updatedOrderResults[0].order_id,
-                    order_date: updatedOrderResults[0].order_date,
-                    shipped_date: updatedOrderResults[0].shipped_date,
-                    delivered_date: updatedOrderResults[0].delivered_date,
-                    stat_id: updatedOrderResults[0].stat_id,
-                    status_description: updatedOrderResults[0].status_description,
-                    email: updatedOrderResults[0].email,
-                    first_name: updatedOrderResults[0].first_name,
-                    last_name: updatedOrderResults[0].last_name,
-                    shipping_address: updatedOrderResults[0].shipping_address,
-                    items: updatedOrderResults[0].product_id
-                      ? updatedOrderResults.map((row) => ({
+                if (updatedOrderResultsRaw.length > 0) {
+                  // Aggregate items to ensure uniqueness and correct quantities
+                  const itemsMap = new Map()
+                  updatedOrderResultsRaw.forEach((row) => {
+                    if (row.product_id) {
+                      if (itemsMap.has(row.product_id)) {
+                        const existingItem = itemsMap.get(row.product_id)
+                        existingItem.quantity += row.quantity
+                        itemsMap.set(row.product_id, existingItem)
+                      } else {
+                        itemsMap.set(row.product_id, {
                           product_id: row.product_id,
                           quantity: row.quantity,
                           title: row.title,
                           price: row.price,
                           product_type: row.product_type,
                           image_url: row.image_url,
-                        }))
-                      : [],
+                        })
+                      }
+                    }
+                  })
+                  const aggregatedItems = Array.from(itemsMap.values())
+
+                  const updatedOrder = {
+                    order_id: updatedOrderResultsRaw[0].order_id,
+                    order_date: updatedOrderResultsRaw[0].order_date,
+                    shipped_date: updatedOrderResultsRaw[0].shipped_date,
+                    delivered_date: updatedOrderResultsRaw[0].delivered_date,
+                    stat_id: updatedOrderResultsRaw[0].stat_id,
+                    status_description: updatedOrderResultsRaw[0].status_description,
+                    email: updatedOrderResultsRaw[0].email,
+                    first_name: updatedOrderResultsRaw[0].first_name,
+                    last_name: updatedOrderResultsRaw[0].last_name,
+                    shipping_address: updatedOrderResultsRaw[0].shipping_address,
+                    items: aggregatedItems,
                   }
 
                   const orderDate = new Date(updatedOrder.order_date).toLocaleDateString()
@@ -816,67 +903,105 @@ const updateOrderStatus = (req, res) => {
                     0,
                   )
 
+                  // Determine order type
+                  let orderType = "Mixed"
+                  const hasPhysical = updatedOrder.items.some((item) => item.product_type === "physical")
+                  const hasDigital = updatedOrder.items.some((item) => item.product_type === "digital")
+
+                  if (hasPhysical && !hasDigital) {
+                    orderType = "Physical Only"
+                  } else if (!hasPhysical && hasDigital) {
+                    orderType = "Digital Only"
+                  }
+
                   // Generate HTML for email body
                   const emailHtml = `
-                        <p>Dear ${updatedOrder.first_name} ${updatedOrder.last_name},</p>
-                        <p>Your order #${updatedOrder.order_id} has been updated!</p>
-                        <p><strong>New Status:</strong> <span style="text-transform: capitalize;">${updatedOrder.status_description}</span></p>
-                        <p><strong>Order Date:</strong> ${orderDate}</p>
-                        <p><strong>Shipped Date:</strong> ${shippedDate}</p>
-                        <p><strong>Delivered Date:</strong> ${deliveredDate}</p>
-                        <p>You can view your order details by logging into your account.</p>
-                        <p>A detailed receipt is attached to this email.</p>
-                        <p>Thank you for shopping with Bits & Bytes!</p>
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                          <div style="background-color: #f8f8f8; padding: 20px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+                            <h2 style="color: #333; margin: 0;">Order Status Update - Bits & Bytes</h2>
+                          </div>
+                          <div style="padding: 20px; background-color: #ffffff;">
+                            <p style="font-size: 16px; color: #555;">Dear ${updatedOrder.first_name} ${updatedOrder.last_name},</p>
+                            <p style="font-size: 16px; color: #555;">Your order <strong style="color: #007bff;">#${updatedOrder.order_id}</strong> has been updated!</p>
+                            <p style="font-size: 16px; color: #555;"><strong>New Status:</strong> <span style="text-transform: capitalize; color: #28a745;">${updatedOrder.status_description}</span></p>
+                            <p style="font-size: 16px; color: #555;"><strong>Order Date:</strong> ${orderDate}</p>
+                            <p style="font-size: 16px; color: #555;"><strong>Shipped Date:</strong> ${shippedDate}</p>
+                            <p style="font-size: 16px; color: #555;"><strong>Delivered Date:</strong> ${deliveredDate}</p>
+                            <p style="font-size: 16px; color: #555;">You can view your order details by logging into your account.</p>
+                            <p style="font-size: 16px; color: #555;">A detailed receipt is attached to this email.</p>
+                            <p style="font-size: 16px; color: #555;">Thank you for shopping with Bits & Bytes!</p>
+                          </div>
+                          <div style="background-color: #f8f8f8; padding: 15px; text-align: center; font-size: 12px; color: #777; border-top: 1px solid #e0e0e0;">
+                            <p>&copy; ${new Date().getFullYear()} Bits & Bytes. All rights reserved.</p>
+                          </div>
+                        </div>
                       `
 
                   // Generate HTML for PDF receipt
                   const pdfHtml = `
-                        <h1 style="text-align: center; color: #333;">Order Receipt - Bits & Bytes</h1>
-                        <hr style="border: 1px solid #eee; margin-bottom: 20px;">
-                        <p><strong>Order ID:</strong> #${updatedOrder.order_id}</p>
-                        <p><strong>Order Date:</strong> ${orderDate}</p>
-                        <p><strong>Current Status:</strong> <span style="text-transform: capitalize;">${updatedOrder.status_description}</span></p>
-                        <p><strong>Shipped Date:</strong> ${shippedDate}</p>
-                        <p><strong>Delivered Date:</strong> ${deliveredDate}</p>
-                        <br>
-                        <p><strong>Customer Name:</strong> ${updatedOrder.first_name} ${updatedOrder.last_name}</p>
-                        <p><strong>Customer Email:</strong> ${updatedOrder.email}</p>
-                        ${updatedOrder.shipping_address ? `<p><strong>Shipping Address:</strong> ${updatedOrder.shipping_address}</p>` : ""}
-                        <br>
-                        <h2 style="color: #333;">Order Items:</h2>
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                          <thead>
-                            <tr style="background-color: #f2f2f2;">
-                              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Product</th>
-                              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Type</th>
-                              <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Qty</th>
-                              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Price</th>
-                              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Total</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            ${updatedOrder.items
-                              .map(
-                                (item) => `
-                              <tr>
-                                <td style="padding: 8px; border: 1px solid #ddd;">${item.title}</td>
-                                <td style="padding: 8px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
-                                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
-                                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                          <h1 style="text-align: center; color: #007bff; margin-bottom: 20px;">Order Receipt - Bits & Bytes</h1>
+                          <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+
+                          <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 5px 0;"><strong>Order ID:</strong> <span style="color: #007bff;">#${updatedOrder.order_id}</span></p>
+                            <p style="margin: 5px 0;"><strong>Order Date:</strong> ${orderDate}</p>
+                            <p style="margin: 5px 0;"><strong>Current Status:</strong> <span style="text-transform: capitalize; color: #28a745;">${updatedOrder.status_description}</span></p>
+                            <p style="margin: 5px 0;"><strong>Shipped Date:</strong> ${shippedDate}</p>
+                            <p style="margin: 5px 0;"><strong>Delivered Date:</strong> ${deliveredDate}</p>
+                            <p style="margin: 5px 0;">
+                              <strong>Order Type:</strong> 
+                              <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; 
+                                ${orderType === "Digital Only" ? "background-color: #e0f7fa; color: #007bff;" : ""}
+                                ${orderType === "Physical Only" ? "background-color: #fff3e0; color: #ff9800;" : ""}
+                                ${orderType === "Mixed" ? "background-color: #e8f5e9; color: #4caf50;" : ""}
+                              ">${orderType}</span>
+                            </p>
+                            ${orderType === "Digital Only" ? `<p style="margin: 5px 0; font-style: italic; color: #666;">This order contains only digital products - no shipping required.</p>` : ""}
+                          </div>
+
+                          <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 5px 0;"><strong>Customer Name:</strong> ${updatedOrder.first_name} ${updatedOrder.last_name}</p>
+                            <p style="margin: 5px 0;"><strong>Customer Email:</strong> ${updatedOrder.email}</p>
+                            ${orderType !== "Digital Only" && updatedOrder.shipping_address ? `<p style="margin: 5px 0;"><strong>Shipping Address:</strong> ${updatedOrder.shipping_address}</p>` : ""}
+                          </div>
+
+                          <h2 style="color: #333; margin-top: 30px; margin-bottom: 15px;">Order Items:</h2>
+                          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #ddd;">
+                            <thead>
+                              <tr style="background-color: #f2f2f2;">
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Product</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Type</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Qty</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Price</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Total</th>
                               </tr>
-                            `,
-                              )
-                              .join("")}
-                          </tbody>
-                          <tfoot>
-                            <tr>
-                              <td colspan="4" style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Total Amount:</td>
-                              <td style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">$${totalAmount.toFixed(2)}</td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                        <p style="text-align: center; font-size: 12px; color: #777;">Thank you for your purchase!</p>
+                            </thead>
+                            <tbody>
+                              ${updatedOrder.items
+                                .map(
+                                  (item) => `
+                                <tr>
+                                  <td style="padding: 10px; border: 1px solid #ddd;">${item.title}</td>
+                                  <td style="padding: 10px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
+                                  <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+                                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
+                                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                                </tr>
+                              `,
+                                )
+                                .join("")}
+                            </tbody>
+                            <tfoot>
+                              <tr>
+                                <td colspan="4" style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">Total Amount:</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">$${totalAmount.toFixed(2)}</td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                          <p style="text-align: center; font-size: 14px; color: #777; margin-top: 30px;">Thank you for your purchase!</p>
+                          <p style="text-align: center; font-size: 12px; color: #aaa;">Bits & Bytes | Your Trusted Tech Store</p>
+                        </div>
                       `
 
                   const pdfBuffer = await generatePdf(pdfHtml)
