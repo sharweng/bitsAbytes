@@ -71,16 +71,16 @@ $(document).ready(() => {
         {
           data: null,
           render: (data) => `
-          <button class="text-green-600 hover:text-green-800 mr-2 view-product" data-id="${data.product_id}" title="View Details">
-            <i class="fas fa-eye"></i>
-          </button>
-          <button class="text-blue-600 hover:text-blue-800 mr-2 edit-product" data-id="${data.product_id}" title="Edit">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="text-red-600 hover:text-red-800 delete-product" data-id="${data.product_id}" title="Delete">
-            <i class="fas fa-trash"></i>
-          </button>
-        `,
+        <button class="text-green-600 hover:text-green-800 mr-2 view-product" data-id="${data.product_id}" title="View Details">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="text-blue-600 hover:text-blue-800 mr-2 edit-product" data-id="${data.product_id}" title="Edit">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="text-red-600 hover:text-red-800 delete-product" data-id="${data.product_id}" title="Delete">
+          <i class="fas fa-trash"></i>
+        </button>
+      `,
         },
       ],
       responsive: true,
@@ -103,37 +103,37 @@ $(document).ready(() => {
           let imagesHtml = ""
           if (product.images && product.images.length > 0) {
             imagesHtml = `
-              <div class="mb-4">
-                <h4 class="font-semibold mb-2">Product Images:</h4>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  ${product.images
-                    .map(
-                      (img) =>
-                        `<img src="${API_BASE_URL.replace("/api", "")}/${img}" alt="Product image" class="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-75" onclick="openImageModal('${API_BASE_URL.replace("/api", "")}/${img}')">`,
-                    )
-                    .join("")}
-                </div>
-              </div>
-            `
-          }
-
-          const content = `
-            <div class="space-y-4">
-              ${imagesHtml}
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><strong>Product ID:</strong> ${product.product_id}</div>
-                <div><strong>Title:</strong> ${product.title}</div>
-                <div><strong>Price:</strong> $${Number.parseFloat(product.price).toFixed(2)}</div>
-                <div><strong>Platform:</strong> ${product.platform_type || "N/A"}</div>
-                <div><strong>Type:</strong> ${product.product_type || "N/A"}</div>
-                <div><strong>Stock:</strong> ${product.product_type && product.product_type.toLowerCase() === "digital" ? "N/A" : product.quantity || 0}</div>
-                <div><strong>Developer:</strong> ${product.developer || "N/A"}</div>
-                <div><strong>Publisher:</strong> ${product.publisher || "N/A"}</div>
-                <div><strong>Release Date:</strong> ${product.release_date ? new Date(product.release_date).toLocaleDateString() : "N/A"}</div>
-                <div class="md:col-span-2"><strong>Description:</strong> ${product.description || "No description available"}</div>
+            <div class="mb-4">
+              <h4 class="font-semibold mb-2">Product Images:</h4>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                ${product.images
+                  .map(
+                    (img) =>
+                      `<img src="${API_BASE_URL.replace("/api", "")}/${img}" alt="Product image" class="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-75" onclick="openImageModal('${API_BASE_URL.replace("/api", "")}/${img}')">`,
+                  )
+                  .join("")}
               </div>
             </div>
           `
+          }
+
+          const content = `
+          <div class="space-y-4">
+            ${imagesHtml}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><strong>Product ID:</strong> ${product.product_id}</div>
+              <div><strong>Title:</strong> ${product.title}</div>
+              <div><strong>Price:</strong> $${Number.parseFloat(product.price).toFixed(2)}</div>
+              <div><strong>Platform:</strong> ${product.platform_type || "N/A"}</div>
+              <div><strong>Type:</strong> ${product.product_type || "N/A"}</div>
+              <div><strong>Stock:</strong> ${product.product_type && product.product_type.toLowerCase() === "digital" ? "N/A" : product.quantity || 0}</div>
+              <div><strong>Developer:</strong> ${product.developer || "N/A"}</div>
+              <div><strong>Publisher:</strong> ${product.publisher || "N/A"}</div>
+              <div><strong>Release Date:</strong> ${product.releaseDate ? new Date(product.releaseDate).toLocaleDateString() : "N/A"}</div>
+              <div class="md:col-span-2"><strong>Description:</strong> ${product.description || "No description available"}</div>
+            </div>
+          </div>
+        `
 
           window.Swal.fire({
             title: "Product Details",
@@ -281,7 +281,7 @@ $(document).ready(() => {
           $("#quantity").val(product.quantity)
           $("#developer").val(product.developer)
           $("#publisher").val(product.publisher)
-          $("#releaseDate").val(product.release_date ? product.release_date.split("T")[0] : "")
+          $("#releaseDate").val(product.releaseDate ? product.releaseDate.split("T")[0] : "")
 
           // Set platform and product type after a short delay to ensure options are loaded
           setTimeout(() => {
@@ -336,9 +336,9 @@ $(document).ready(() => {
         number: true,
         min: 0,
       },
-      // productImages: { // File input validation can be tricky with jQuery Validate and FormData
-      //   // You might need a custom method or handle this separately if it's required
-      // }
+      releaseDate: {
+        required: true, // Make release date required
+      },
     },
     messages: {
       title: {
@@ -361,6 +361,9 @@ $(document).ready(() => {
         number: "Please enter a valid number for quantity.",
         min: "Quantity cannot be negative.",
       },
+      releaseDate: {
+        required: "Please enter a release date.", // Message for required release date
+      },
     },
     errorElement: "div",
     errorClass: "text-red-500 text-xs mt-1",
@@ -374,13 +377,6 @@ $(document).ready(() => {
       // This function is called only if the form is valid
       const formData = new FormData(form)
       const productId = $("#productId").val()
-      const selectedPtypeId = $("#ptypeId").val()
-
-      // If digital product, ensure quantity is not sent or is 0
-      if (selectedPtypeId === "1") {
-        // 1 is digital
-        formData.set("quantity", "0")
-      }
 
       const url = isEditMode ? `${API_BASE_URL}/products/${productId}` : `${API_BASE_URL}/products`
       const method = isEditMode ? "PUT" : "POST"

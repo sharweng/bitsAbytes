@@ -240,7 +240,7 @@ const addProduct = (req, res) => {
     plat_id,
     price,
     ptype_id = 1, // Default to digital (1)
-    release_date,
+    releaseDate,
     developer,
     publisher,
     quantity = 0, // Default quantity for physical products
@@ -276,7 +276,7 @@ const addProduct = (req, res) => {
         INSERT INTO products (title, description, plat_id, price, ptype_id, release_date, developer, publisher) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `
-    const values = [title, description, plat_id, price, ptype_id, release_date, developer, publisher]
+    const values = [title, description, plat_id, price, ptype_id, releaseDate, developer, publisher]
 
     connection.execute(sql, values, (err, result) => {
       if (err) {
@@ -354,7 +354,7 @@ const addProduct = (req, res) => {
 
 const updateProduct = (req, res) => {
   const id = req.params.id
-  const { title, description, plat_id, price, ptype_id, release_date, developer, publisher, quantity } = req.body
+  const { title, description, plat_id, price, ptype_id, releaseDate, developer, publisher, quantity } = req.body
 
   // Handle multiple image files
   let imagePaths = []
@@ -426,7 +426,7 @@ const updateProduct = (req, res) => {
         plat_id,
         price,
         newPtypeId,
-        release_date,
+        releaseDate,
         developer,
         publisher,
         id,
