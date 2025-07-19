@@ -13,8 +13,8 @@ const { isAuthenticatedUser } = require("../middlewares/auth.js")
 
 // Public routes
 router.get("/", getAllReviews)
-router.get("/:id", getReview)
-router.get("/check-purchase", checkUserPurchase)
+router.get("/check-purchase", checkUserPurchase) // Specific route first
+router.get("/:id", getReview) // Parameterized route second
 
 // Protected routes (require authentication)
 router.post("/", isAuthenticatedUser, addReview)

@@ -1,7 +1,7 @@
 $(document).ready(() => {
   const API_BASE_URL = "http://localhost:4000/api"
-  const $ = window.$
   const Swal = window.Swal
+  const $ = window.$ // Declare the $ variable
 
   let currentProduct = null
   let currentImageIndex = 0
@@ -57,7 +57,12 @@ $(document).ready(() => {
     // Auth buttons
     $("#loginBtn").click(() => $("#loginModal").removeClass("hidden"))
     $("#logoutBtn").click(logout)
-    $(".close-modal").click(() => {
+
+    // Modal close buttons - using event delegation for dynamically added elements
+    $(document).on("click", ".close-modal, .cancel-btn", (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      console.log("Close button clicked")
       $("#loginModal").addClass("hidden")
       $("#reviewModal").addClass("hidden")
     })
@@ -66,10 +71,10 @@ $(document).ready(() => {
     $("#loginForm").submit(handleLogin)
 
     // Review form
-    $("#reviewForm").submit(handleReviewSubmit)
+    $(document).on("submit", "#reviewForm", handleReviewSubmit)
 
-    // Star rating
-    $(".star-btn").click(function () {
+    // Star rating - using event delegation
+    $(document).on("click", ".star-btn", function () {
       selectedRating = Number.parseInt($(this).data("rating"))
       $("#selectedRating").val(selectedRating)
       updateStarDisplay()
@@ -80,11 +85,17 @@ $(document).ready(() => {
       window.location.href = "cart.html"
     })
 
-    // Modal clicks
-    $("#loginModal, #reviewModal").click(function (e) {
+    // Modal background clicks
+    $(document).on("click", "#loginModal, #reviewModal", function (e) {
       if (e.target === this) {
+        console.log("Modal background clicked")
         $(this).addClass("hidden")
       }
+    })
+
+    // Prevent modal content clicks from closing modal
+    $(document).on("click", ".modal-content", (e) => {
+      e.stopPropagation()
     })
   }
 
@@ -460,52 +471,113 @@ $(document).ready(() => {
       return
     }
 
+    console.log("Opening review modal for user:", currentUser.user_id, "product:", productId)
+
     // Check if user purchased this product
     $.ajax({
       url: `${API_BASE_URL}/reviews/check-purchase?user_id=${currentUser.user_id}&product_id=${productId}`,
       method: "GET",
       success: (response) => {
+        console.log("Purchase check response:", response)
         if (response.success) {
           if (!response.has_purchased) {
             Swal.fire({
               icon: "warning",
               title: "Purchase Required",
-              text: "You can only review products you have purchased.",
+              text: "You can only review products you have purchased and that have been delivered.",
             })
             return
           }
 
-          // Reset form
-          $("#reviewForm")[0].reset()
-          $("#reviewId").val("")
-          $("#reviewProductId").val(productId)
-          $("#reviewUserId").val(currentUser.user_id)
-          selectedRating = 0
-          updateStarDisplay()
-
-          if (response.existing_review) {
-            // Edit mode
-            const review = response.existing_review
-            $("#reviewModalTitle").text("Edit Your Review")
-            $("#reviewId").val(review.review_id)
-            $("#reviewTitle").val(review.review_title || "")
-            $("#reviewText").val(review.review_text || "")
-            selectedRating = review.rating
-            $("#selectedRating").val(selectedRating)
-            updateStarDisplay()
-          } else {
-            // New review mode
-            $("#reviewModalTitle").text("Write a Review")
-          }
-
-          $("#reviewModal").removeClass("hidden")
+          // Create and show review modal
+          showReviewModal(response.existing_review)
         }
       },
       error: (xhr) => {
         console.error("Error checking purchase:", xhr)
-        showError("Failed to verify purchase status")
+        console.error("Response text:", xhr.responseText)
+        showError("Failed to verify purchase status. Please try again.")
       },
     })
+  }
+
+  function showReviewModal(existingReview = null) {
+    const isEdit = existingReview !== null
+    const modalTitle = isEdit ? "Edit Your Review" : "Write a Review"
+
+    const modalHtml = `
+      <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="modal-content bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="reviewModalTitle" class="text-lg font-semibold">${modalTitle}</h3>
+            <button class="close-modal text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          
+          <form id="reviewForm">
+            <input type="hidden" id="reviewId" name="review_id" value="${isEdit ? existingReview.review_id : ""}">
+            <input type="hidden" id="reviewProductId" name="product_id" value="${productId}">
+            <input type="hidden" id="reviewUserId" name="user_id" value="${currentUser.user_id}">
+            <input type="hidden" id="selectedRating" name="rating" value="${isEdit ? existingReview.rating : "0"}">
+            
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Rating *</label>
+              <div class="flex space-x-1">
+                ${[1, 2, 3, 4, 5]
+                  .map(
+                    (rating) => `
+                  <button type="button" class="star-btn text-2xl ${isEdit && existingReview.rating >= rating ? "text-yellow-400" : "text-gray-300"} hover:text-yellow-400 transition-colors" data-rating="${rating}">
+                    <i class="fas fa-star"></i>
+                  </button>
+                `,
+                  )
+                  .join("")}
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <label for="reviewTitle" class="block text-sm font-medium text-gray-700 mb-2">Review Title</label>
+              <input type="text" id="reviewTitle" name="review_title" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     placeholder="Brief summary of your review"
+                     value="${isEdit && existingReview.review_title ? existingReview.review_title : ""}">
+            </div>
+            
+            <div class="mb-6">
+              <label for="reviewText" class="block text-sm font-medium text-gray-700 mb-2">Review</label>
+              <textarea id="reviewText" name="review_text" rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Share your thoughts about this game...">${isEdit && existingReview.review_text ? existingReview.review_text : ""}</textarea>
+            </div>
+            
+            <div class="flex space-x-3">
+              <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md font-medium transition duration-200">
+                ${isEdit ? "Update Review" : "Submit Review"}
+              </button>
+              <button type="button" class="cancel-btn flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-md font-medium transition duration-200">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `
+
+    // Remove existing modal if any
+    $("#reviewModal").remove()
+
+    // Add modal to body
+    $("body").append(modalHtml)
+
+    // Set selected rating for edit mode
+    if (isEdit) {
+      selectedRating = existingReview.rating
+      updateStarDisplay()
+    } else {
+      selectedRating = 0
+      updateStarDisplay()
+    }
   }
 
   function updateStarDisplay() {
@@ -551,7 +623,7 @@ $(document).ready(() => {
       data: JSON.stringify(reviewData),
       success: (response) => {
         if (response.success) {
-          $("#reviewModal").addClass("hidden")
+          $("#reviewModal").remove()
           loadProductReviews()
           loadProduct() // Reload to update average rating
           Swal.fire({
@@ -576,17 +648,7 @@ $(document).ready(() => {
       method: "GET",
       success: (response) => {
         if (response.success) {
-          const review = response.review
-          $("#reviewModalTitle").text("Edit Your Review")
-          $("#reviewId").val(review.review_id)
-          $("#reviewProductId").val(review.product_id)
-          $("#reviewUserId").val(review.user_id)
-          $("#reviewTitle").val(review.review_title || "")
-          $("#reviewText").val(review.review_text || "")
-          selectedRating = review.rating
-          $("#selectedRating").val(selectedRating)
-          updateStarDisplay()
-          $("#reviewModal").removeClass("hidden")
+          showReviewModal(response.review)
         }
       },
       error: (xhr) => {

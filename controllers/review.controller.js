@@ -1,5 +1,42 @@
 const connection = require("../config/database")
 
+// Simple profanity filter implementation
+const badWords = [
+  "fuck",
+  "shit",
+  "damn",
+  "bitch",
+  "ass",
+  "hell",
+  "crap",
+  "piss",
+  "bastard",
+  "whore",
+  "slut",
+  "cock",
+  "dick",
+  "pussy",
+  "tits",
+  "nigger",
+  "faggot",
+  "retard",
+  "gay",
+  "lesbian",
+  "homo",
+  // Add more words as needed
+]
+
+const filterProfanity = (text) => {
+  if (!text) return text
+
+  let filteredText = text
+  badWords.forEach((word) => {
+    const regex = new RegExp(`\\b${word}\\b`, "gi")
+    filteredText = filteredText.replace(regex, "*".repeat(word.length))
+  })
+  return filteredText
+}
+
 const getAllReviews = (req, res) => {
   const { product_id, user_id, rating_filter } = req.query
 
@@ -142,11 +179,15 @@ const addReview = (req, res) => {
     })
   }
 
+  // Filter bad words from review title and text
+  const filteredTitle = filterProfanity(review_title)
+  const filteredText = filterProfanity(review_text)
+
   const sql = `
         INSERT INTO reviews (user_id, product_id, rating, review_title, review_text) 
         VALUES (?, ?, ?, ?, ?)
     `
-  const values = [user_id, product_id, rating, review_title, review_text]
+  const values = [user_id, product_id, rating, filteredTitle, filteredText]
 
   try {
     connection.execute(sql, values, (err, result) => {
@@ -205,6 +246,10 @@ const updateReview = (req, res) => {
     })
   }
 
+  // Filter bad words from review title and text
+  const filteredTitle = review_title ? filterProfanity(review_title) : review_title
+  const filteredText = review_text ? filterProfanity(review_text) : review_text
+
   const sql = `
         UPDATE reviews 
         SET rating = COALESCE(?, rating),
@@ -213,7 +258,7 @@ const updateReview = (req, res) => {
             updated_at = CURRENT_TIMESTAMP
         WHERE review_id = ?
     `
-  const values = [rating, review_title, review_text, reviewId]
+  const values = [rating, filteredTitle, filteredText, reviewId]
 
   try {
     connection.execute(sql, values, (err, result) => {
@@ -287,21 +332,27 @@ const deleteReview = (req, res) => {
 }
 
 const checkUserPurchase = (req, res) => {
+  console.log("=== CHECK USER PURCHASE FUNCTION CALLED ===")
+  console.log("Query params:", req.query)
+
   const { user_id, product_id } = req.query
 
   if (!user_id || !product_id) {
+    console.log("❌ Missing parameters")
     return res.status(400).json({
       success: false,
       message: "User ID and Product ID are required",
     })
   }
 
-  // Check if user purchased this product
+  console.log(`✅ Checking purchase for user ${user_id}, product ${product_id}`)
+
+  // Check if user purchased this product AND it was delivered (stat_id = 4)
   const purchaseCheckSql = `
     SELECT COUNT(*) as purchase_count
     FROM orders o
     JOIN order_items oi ON o.order_id = oi.order_id
-    WHERE o.user_id = ? AND oi.product_id = ?
+    WHERE o.user_id = ? AND oi.product_id = ? AND o.stat_id = 4
   `
 
   // Get user's existing review if any
@@ -311,9 +362,10 @@ const checkUserPurchase = (req, res) => {
   `
 
   try {
+    console.log("🔍 Executing purchase check query...")
     connection.execute(purchaseCheckSql, [user_id, product_id], (err, purchaseResult) => {
       if (err) {
-        console.log(err)
+        console.log("❌ Purchase check error:", err)
         return res.status(500).json({
           success: false,
           message: "Error checking purchase history",
@@ -321,11 +373,14 @@ const checkUserPurchase = (req, res) => {
         })
       }
 
+      console.log("✅ Purchase check result:", purchaseResult)
       const hasPurchased = purchaseResult[0].purchase_count > 0
+      console.log("📊 Has purchased and delivered:", hasPurchased)
 
+      console.log("🔍 Executing review check query...")
       connection.execute(reviewCheckSql, [user_id, product_id], (err, reviewResult) => {
         if (err) {
-          console.log(err)
+          console.log("❌ Review check error:", err)
           return res.status(500).json({
             success: false,
             message: "Error checking existing review",
@@ -333,15 +388,22 @@ const checkUserPurchase = (req, res) => {
           })
         }
 
-        return res.status(200).json({
+        console.log("✅ Review check result:", reviewResult)
+        const existingReview = reviewResult.length > 0 ? reviewResult[0] : null
+        console.log("📝 Existing review:", existingReview ? "Found" : "None")
+
+        const response = {
           success: true,
           has_purchased: hasPurchased,
-          existing_review: reviewResult.length > 0 ? reviewResult[0] : null,
-        })
+          existing_review: existingReview,
+        }
+
+        console.log("📤 Sending response:", response)
+        return res.status(200).json(response)
       })
     })
   } catch (error) {
-    console.log(error)
+    console.log("❌ Catch error:", error)
     return res.status(500).json({
       success: false,
       message: "Server error",
