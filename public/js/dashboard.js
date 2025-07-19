@@ -80,35 +80,42 @@ $(document).ready(() => {
     return colors
   }
 
-  // Create Products by Category Bar Chart
-  function createProductsChart() {
+  // Create Products by Types Bar Chart
+  function createProductTypesChart() {
     window.makeAuthenticatedRequest({
       url: `${API_BASE_URL}/products`,
       method: "GET",
       success: (response) => {
         if (response.rows) {
-          // Group products by category
-          const categoryCount = {}
+          // Group products by product type
+          const typeCount = {}
           response.rows.forEach((product) => {
-            const category = product.category || "Uncategorized"
-            categoryCount[category] = (categoryCount[category] || 0) + 1
+            const type = product.product_type || "Unknown"
+            typeCount[type] = (typeCount[type] || 0) + 1
           })
 
-          const categories = Object.keys(categoryCount)
-          const counts = Object.values(categoryCount)
-          const colors = generateRandomColors(categories.length)
+          const types = Object.keys(typeCount)
+          const counts = Object.values(typeCount)
+          const colors = [
+            "#3B82F6", // blue
+            "#10B981", // green
+            "#F59E0B", // yellow
+            "#EF4444", // red
+            "#8B5CF6", // purple
+            "#06B6D4", // cyan
+          ]
 
-          const ctx = document.getElementById("productsChart")
+          const ctx = document.getElementById("productTypesChart")
           new Chart(ctx, {
             type: "bar",
             data: {
-              labels: categories,
+              labels: types,
               datasets: [
                 {
                   label: "Number of Products",
                   data: counts,
-                  backgroundColor: colors,
-                  borderColor: colors.map((color) => color.replace("0.2", "1")),
+                  backgroundColor: colors.slice(0, types.length),
+                  borderColor: colors.slice(0, types.length).map((color) => color + "CC"),
                   borderWidth: 1,
                 },
               ],
@@ -128,13 +135,86 @@ $(document).ready(() => {
                 legend: {
                   display: false,
                 },
+                title: {
+                  display: true,
+                  text: "Digital vs Physical Products",
+                },
               },
             },
           })
         }
       },
       error: (xhr) => {
-        console.error("Error loading products for chart:", xhr)
+        console.error("Error loading products for types chart:", xhr)
+      },
+    })
+  }
+
+  // Create Products by Platform Bar Chart
+  function createPlatformChart() {
+    window.makeAuthenticatedRequest({
+      url: `${API_BASE_URL}/products`,
+      method: "GET",
+      success: (response) => {
+        if (response.rows) {
+          // Group products by platform type
+          const platformCount = {}
+          response.rows.forEach((product) => {
+            const platform = product.platform_type || "Unknown"
+            platformCount[platform] = (platformCount[platform] || 0) + 1
+          })
+
+          const platforms = Object.keys(platformCount)
+          const counts = Object.values(platformCount)
+          const colors = generateRandomColors(platforms.length)
+
+          const ctx = document.getElementById("platformChart")
+          new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: platforms,
+              datasets: [
+                {
+                  label: "Number of Products",
+                  data: counts,
+                  backgroundColor: colors,
+                  borderColor: colors.map((color) => color + "CC"),
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 1,
+                  },
+                },
+                x: {
+                  ticks: {
+                    maxRotation: 45,
+                    minRotation: 0,
+                  },
+                },
+              },
+              plugins: {
+                legend: {
+                  display: false,
+                },
+                title: {
+                  display: true,
+                  text: "Games by Gaming Platform",
+                },
+              },
+            },
+          })
+        }
+      },
+      error: (xhr) => {
+        console.error("Error loading products for platform chart:", xhr)
       },
     })
   }
@@ -176,6 +256,10 @@ $(document).ready(() => {
                   borderWidth: 2,
                   fill: true,
                   tension: 0.4,
+                  pointBackgroundColor: "#3B82F6",
+                  pointBorderColor: "#ffffff",
+                  pointBorderWidth: 2,
+                  pointRadius: 5,
                 },
               ],
             },
@@ -194,6 +278,10 @@ $(document).ready(() => {
                 legend: {
                   display: true,
                   position: "top",
+                },
+                title: {
+                  display: true,
+                  text: "Monthly Order Trends",
                 },
               },
             },
@@ -228,6 +316,7 @@ $(document).ready(() => {
             "#EF4444", // red for cancelled
             "#8B5CF6", // purple for processing
             "#06B6D4", // cyan for shipped
+            "#F97316", // orange for delivered
           ]
 
           const ctx = document.getElementById("statusChart")
@@ -242,6 +331,7 @@ $(document).ready(() => {
                   backgroundColor: colors.slice(0, statuses.length),
                   borderColor: "#ffffff",
                   borderWidth: 2,
+                  hoverOffset: 4,
                 },
               ],
             },
@@ -254,7 +344,14 @@ $(document).ready(() => {
                   labels: {
                     padding: 20,
                     usePointStyle: true,
+                    font: {
+                      size: 12,
+                    },
                   },
+                },
+                title: {
+                  display: true,
+                  text: "Order Status Breakdown",
                 },
                 tooltip: {
                   callbacks: {
@@ -278,7 +375,8 @@ $(document).ready(() => {
 
   // Initialize charts
   function initializeCharts() {
-    createProductsChart()
+    createProductTypesChart()
+    createPlatformChart()
     createOrdersChart()
     createStatusChart()
   }

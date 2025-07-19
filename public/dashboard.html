@@ -92,14 +92,25 @@
     
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            <!-- Bar Chart - Products by Category -->
+            <!-- Bar Chart - Products by Types -->
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Products by Category</h3>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Products by Types</h3>
                 <div class="chart-container" style="position: relative; height: 300px;">
-                    <canvas id="productsChart"></canvas>
+                    <canvas id="productTypesChart"></canvas>
                 </div>
             </div>
             
+            <!-- Bar Chart - Products by Platform -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Products by Platform</h3>
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <canvas id="platformChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <!-- Line Chart - Orders Over Time -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Orders Over Time</h3>
@@ -107,13 +118,13 @@
                     <canvas id="ordersChart"></canvas>
                 </div>
             </div>
-        </div>
 
-        <!-- Pie Chart - Order Status Distribution -->
-        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Status Distribution</h3>
-            <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
-                <canvas id="statusChart"></canvas>
+            <!-- Pie Chart - Order Status Distribution -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Status Distribution</h3>
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
