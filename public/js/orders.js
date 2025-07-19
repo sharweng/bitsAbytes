@@ -472,6 +472,15 @@ $(document).ready(() => {
       confirmButtonText: "Yes, mark as delivered!",
     }).then(async (result) => {
       if (result.isConfirmed) {
+        Swal.fire({
+          title: "Marking as Delivered...",
+          text: "Please wait while the order is being marked as delivered.",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading()
+          },
+        })
+
         const requestFn = window.makeAuthenticatedRequest || $.ajax
         const deliveredDate = new Date().toISOString().split("T")[0] // Current date
 
@@ -492,6 +501,7 @@ $(document).ready(() => {
           }
         } catch (error) {
           console.error("Error fetching current order details:", error)
+          Swal.close()
           showError("Failed to fetch current order details. Cannot mark as delivered.")
           return
         }
@@ -511,6 +521,7 @@ $(document).ready(() => {
             delivered_date: deliveredDate,
           }),
           success: (response) => {
+            Swal.close()
             if (response.success) {
               Swal.fire({
                 icon: "success",
@@ -523,6 +534,7 @@ $(document).ready(() => {
             }
           },
           error: (xhr) => {
+            Swal.close()
             const error = xhr.responseJSON?.message || "Failed to mark order as delivered"
             showError(error)
           },
@@ -542,6 +554,15 @@ $(document).ready(() => {
       confirmButtonText: "Yes, cancel it!",
     }).then((result) => {
       if (result.isConfirmed) {
+        Swal.fire({
+          title: "Cancelling Order...",
+          text: "Please wait while the order is being cancelled.",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading()
+          },
+        })
+
         // Use window.makeAuthenticatedRequest if available, otherwise fallback to $.ajax
         const requestFn = window.makeAuthenticatedRequest || $.ajax
 
@@ -557,6 +578,7 @@ $(document).ready(() => {
               },
           data: JSON.stringify({ stat_id: 5 }), // Assuming 5 is the stat_id for 'cancelled'
           success: (response) => {
+            Swal.close()
             if (response.success) {
               Swal.fire({
                 icon: "success",
@@ -569,6 +591,7 @@ $(document).ready(() => {
             }
           },
           error: (xhr) => {
+            Swal.close()
             const error = xhr.responseJSON?.message || "Failed to cancel order"
             showError(error)
           },

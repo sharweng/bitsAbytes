@@ -388,6 +388,15 @@ $(document).ready(() => {
       delivered_date: deliveredDate || null,
     }
 
+    Swal.fire({
+      title: "Updating Order Status...",
+      text: "Please wait while the order status is being updated.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      },
+    })
+
     $.ajax({
       url: `${API_BASE_URL}/orders/${orderId}`,
       method: "PUT",
@@ -397,6 +406,7 @@ $(document).ready(() => {
       },
       data: JSON.stringify(updateData),
       success: (response) => {
+        Swal.close()
         if (response.success) {
           $("#updateStatusModal").addClass("hidden")
           ordersTable.ajax.reload()
@@ -410,6 +420,7 @@ $(document).ready(() => {
         }
       },
       error: (xhr) => {
+        Swal.close()
         const error = xhr.responseJSON?.message || "Failed to update order"
         showError(error)
       },
