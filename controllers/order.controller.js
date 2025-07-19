@@ -1,5 +1,9 @@
 const connection = require("../config/database")
 
+// Add these imports at the top of the file
+const sendEmail = require("../utils/email")
+const generatePdf = require("../utils/pdfGenerator")
+
 const createOrder = (req, res) => {
   const { items, shipping_address } = req.body
   const user_id = req.user.id
@@ -39,11 +43,13 @@ const createOrder = (req, res) => {
     // First, check if products exist and get their types
     const productIds = items.map((item) => item.product_id)
     const checkProductsSql = `
-  SELECT p.product_id, p.title, p.ptype_id, pt.description as product_type, s.quantity as stock_quantity
+  SELECT p.product_id, p.title, p.price, p.ptype_id, pt.description as product_type, s.quantity as stock_quantity, pi.image_url
   FROM products p
   JOIN product_types pt ON p.ptype_id = pt.ptype_id
   LEFT JOIN stock s ON p.product_id = s.product_id
+  LEFT JOIN product_images pi ON p.product_id = pi.product_id
   WHERE p.product_id IN (${productIds.map(() => "?").join(",")})
+  GROUP BY p.product_id
 `
 
     connection.execute(checkProductsSql, productIds, (err, products) => {
@@ -149,8 +155,8 @@ const createOrder = (req, res) => {
           })
         })
 
-        function commitTransaction() {
-          connection.commit((err) => {
+        async function commitTransaction() {
+          connection.commit(async (err) => {
             if (err) {
               return connection.rollback(() => {
                 console.error("Transaction commit error:", err)
@@ -163,6 +169,137 @@ const createOrder = (req, res) => {
             }
 
             console.log("Order completed successfully:", orderId)
+
+            // --- Email Sending Logic for New Order ---
+            try {
+              // Fetch user details and the newly created order details for the email
+              const getOrderAndUserDetailsSql = `
+                SELECT
+                  o.order_id, o.order_date, o.stat_id,
+                  s.description as status_description,
+                  u.email, u.first_name, u.last_name, u.shipping_address,
+                  oi.product_id, oi.quantity,
+                  p.title, p.price,
+                  pt.description as product_type,
+                  pi.image_url
+                FROM orders o
+                JOIN status s ON o.stat_id = s.stat_id
+                JOIN users u ON o.user_id = u.user_id
+                LEFT JOIN order_items oi ON o.order_id = oi.order_id
+                LEFT JOIN products p ON oi.product_id = p.product_id
+                LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+                LEFT JOIN product_images pi ON p.product_id = pi.product_id
+                WHERE o.order_id = ?
+              `
+              const [orderAndUserDetails] = await connection.promise().execute(getOrderAndUserDetailsSql, [orderId])
+
+              if (orderAndUserDetails.length > 0) {
+                const orderDetails = {
+                  order_id: orderAndUserDetails[0].order_id,
+                  order_date: orderAndUserDetails[0].order_date,
+                  stat_id: orderAndUserDetails[0].stat_id,
+                  status_description: orderAndUserDetails[0].status_description,
+                  email: orderAndUserDetails[0].email,
+                  first_name: orderAndUserDetails[0].first_name,
+                  last_name: orderAndUserDetails[0].last_name,
+                  shipping_address: orderAndUserDetails[0].shipping_address,
+                  items: orderAndUserDetails[0].product_id
+                    ? orderAndUserDetails.map((row) => ({
+                        product_id: row.product_id,
+                        quantity: row.quantity,
+                        title: row.title,
+                        price: row.price,
+                        product_type: row.product_type,
+                        image_url: row.image_url,
+                      }))
+                    : [],
+                }
+
+                const orderDate = new Date(orderDetails.order_date).toLocaleDateString()
+                const totalAmount = orderDetails.items.reduce(
+                  (sum, item) => sum + Number(item.price) * item.quantity,
+                  0,
+                )
+
+                const emailHtml = `
+                  <p>Dear ${orderDetails.first_name} ${orderDetails.last_name},</p>
+                  <p>Thank you for your order from Bits & Bytes!</p>
+                  <p>Your order #${orderDetails.order_id} has been successfully placed and is currently <strong>${orderDetails.status_description}</strong>.</p>
+                  <p><strong>Order Date:</strong> ${orderDate}</p>
+                  <p>You can track your order in the "My Orders" section of your account.</p>
+                  <p>A detailed receipt is attached to this email.</p>
+                  <p>We appreciate your business!</p>
+                `
+
+                const pdfHtml = `
+                  <h1 style="text-align: center; color: #333;">Order Receipt - Bits & Bytes</h1>
+                  <hr style="border: 1px solid #eee; margin-bottom: 20px;">
+                  <p><strong>Order ID:</strong> #${orderDetails.order_id}</p>
+                  <p><strong>Order Date:</strong> ${orderDate}</p>
+                  <p><strong>Current Status:</strong> <span style="text-transform: capitalize;">${orderDetails.status_description}</span></p>
+                  <br>
+                  <p><strong>Customer Name:</strong> ${orderDetails.first_name} ${orderDetails.last_name}</p>
+                  <p><strong>Customer Email:</strong> ${orderDetails.email}</p>
+                  ${orderDetails.shipping_address ? `<p><strong>Shipping Address:</strong> ${orderDetails.shipping_address}</p>` : ""}
+                  <br>
+                  <h2 style="color: #333;">Order Items:</h2>
+                  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                      <tr style="background-color: #f2f2f2;">
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Product</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Type</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Qty</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Price</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${orderDetails.items
+                        .map(
+                          (item) => `
+                        <tr>
+                          <td style="padding: 8px; border: 1px solid #ddd;">${item.title}</td>
+                          <td style="padding: 8px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
+                          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+                          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
+                          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                        </tr>
+                      `,
+                        )
+                        .join("")}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="4" style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Total Amount:</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">$${totalAmount.toFixed(2)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                  <p style="text-align: center; font-size: 12px; color: #777;">Thank you for your purchase!</p>
+                `
+
+                const pdfBuffer = await generatePdf(pdfHtml)
+
+                await sendEmail({
+                  email: orderDetails.email,
+                  subject: `Your Bits & Bytes Order #${orderDetails.order_id} Confirmation`,
+                  html: emailHtml,
+                  attachments: [
+                    {
+                      filename: `receipt_order_${orderDetails.order_id}.pdf`,
+                      content: pdfBuffer,
+                      contentType: "application/pdf",
+                    },
+                  ],
+                })
+              }
+            } catch (emailError) {
+              console.error("Failed to send new order confirmation email:", emailError)
+              // Do not rollback the transaction here, as the order creation was successful.
+              // Just log the email error.
+            }
+            // --- End Email Sending Logic ---
+
             res.status(201).json({
               success: true,
               message: "Order created successfully",
@@ -431,29 +568,18 @@ GROUP BY oi.product_id
   try {
     connection.execute(orderSql, [orderId], (err, orderResult) => {
       if (err) {
-        console.log(err)
-        return res.status(500).json({
-          success: false,
-          message: "Error fetching order",
-          error: err.message,
-        })
+        console.error("Error fetching order:", err)
+        return res.status(500).json({ success: false, message: "Error fetching order", error: err.message })
       }
 
       if (orderResult.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: "Order not found",
-        })
+        return res.status(404).json({ success: false, message: "Order not found" })
       }
 
       connection.execute(itemsSql, [orderId], (err, itemsResult) => {
         if (err) {
-          console.log(err)
-          return res.status(500).json({
-            success: false,
-            message: "Error fetching order items",
-            error: err.message,
-          })
+          console.error("Error fetching order items:", err)
+          return res.status(500).json({ success: false, message: "Error fetching order items", error: err.message })
         }
 
         const order = orderResult[0]
@@ -466,12 +592,8 @@ GROUP BY oi.product_id
       })
     })
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    })
+    console.error("Server error:", error)
+    return res.status(500).json({ success: false, message: "Server error", error: error.message })
   }
 }
 
@@ -485,17 +607,25 @@ const updateOrderStatus = (req, res) => {
       return res.status(500).json({ success: false, message: "Error starting transaction", error: err.message })
     }
 
-    // 1. Fetch current order details AND its items
+    // 1. Fetch current order details AND its items with user info for email
     const getCurrentOrderAndItemsSql = `
-      SELECT
-        o.shipped_date, o.delivered_date, o.stat_id,
-        oi.product_id, oi.quantity, pt.description as product_type
-      FROM orders o
-      LEFT JOIN order_items oi ON o.order_id = oi.order_id
-      LEFT JOIN products p ON oi.product_id = p.product_id
-      LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
-      WHERE o.order_id = ?
-    `
+          SELECT
+            o.order_id, o.order_date, o.shipped_date, o.delivered_date, o.stat_id,
+            s.description as status_description,
+            u.email, u.first_name, u.last_name, u.shipping_address,
+            oi.product_id, oi.quantity,
+            p.title, p.price,
+            pt.description as product_type,
+            pi.image_url
+          FROM orders o
+          JOIN status s ON o.stat_id = s.stat_id
+          JOIN users u ON o.user_id = u.user_id
+          LEFT JOIN order_items oi ON o.order_id = oi.order_id
+          LEFT JOIN products p ON oi.product_id = p.product_id
+          LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+          LEFT JOIN product_images pi ON p.product_id = pi.product_id
+          WHERE o.order_id = ?
+        `
     connection.execute(getCurrentOrderAndItemsSql, [orderId], (err, results) => {
       if (err) {
         return connection.rollback(() => {
@@ -509,14 +639,35 @@ const updateOrderStatus = (req, res) => {
         })
       }
 
-      const currentOrder = results[0] // First row contains order details
-      const currentItems = results.filter((row) => row.product_id !== null) // Filter out rows where product_id is null if no items
+      // Reconstruct order object from flat results
+      const orderData = {
+        order_id: results[0].order_id,
+        order_date: results[0].order_date,
+        shipped_date: results[0].shipped_date,
+        delivered_date: results[0].delivered_date,
+        stat_id: results[0].stat_id,
+        status_description: results[0].status_description,
+        email: results[0].email,
+        first_name: results[0].first_name,
+        last_name: results[0].last_name,
+        shipping_address: results[0].shipping_address,
+        items: results[0].product_id
+          ? results.map((row) => ({
+              product_id: row.product_id,
+              quantity: row.quantity,
+              title: row.title,
+              price: row.price,
+              product_type: row.product_type,
+              image_url: row.image_url,
+            }))
+          : [], // Handle case where order has no items (shouldn't happen for valid orders)
+      }
 
-      const previousStatId = currentOrder.stat_id
+      const previousStatId = orderData.stat_id
 
-      let finalStatId = stat_id !== undefined ? stat_id : currentOrder.stat_id
-      let finalShippedDate = shipped_date !== undefined ? shipped_date : currentOrder.shipped_date
-      let finalDeliveredDate = delivered_date !== undefined ? delivered_date : currentOrder.delivered_date
+      let finalStatId = stat_id !== undefined ? stat_id : orderData.stat_id
+      let finalShippedDate = shipped_date !== undefined ? shipped_date : orderData.shipped_date
+      let finalDeliveredDate = delivered_date !== undefined ? delivered_date : orderData.delivered_date
 
       if (finalShippedDate === "") finalShippedDate = null
       if (finalDeliveredDate === "") finalDeliveredDate = null
@@ -538,7 +689,7 @@ const updateOrderStatus = (req, res) => {
       const stockUpdatePromises = []
       if (finalStatId === 5 && previousStatId !== 5) {
         // If new status is Cancelled (5) and old status was not Cancelled
-        const physicalItemsToRestore = currentItems.filter((item) => item.product_type === "physical")
+        const physicalItemsToRestore = orderData.items.filter((item) => item.product_type === "physical")
         if (physicalItemsToRestore.length > 0) {
           console.log(`Restoring stock for order ${orderId} due to cancellation.`)
           physicalItemsToRestore.forEach((item) => {
@@ -597,13 +748,159 @@ const updateOrderStatus = (req, res) => {
               })
             }
 
-            connection.commit((err) => {
+            connection.commit(async (err) => {
+              // Make commit callback async
               if (err) {
                 return connection.rollback(() => {
                   console.error("Transaction commit error:", err)
                   res.status(500).json({ success: false, message: "Error finalizing order update", error: err.message })
                 })
               }
+
+              // --- Email Sending Logic ---
+              try {
+                // Re-fetch the order details to get the *new* status description
+                const getUpdatedOrderSql = `
+                      SELECT
+                        o.order_id, o.order_date, o.shipped_date, o.delivered_date, o.stat_id,
+                        s.description as status_description,
+                        u.email, u.first_name, u.last_name, u.shipping_address,
+                        oi.product_id, oi.quantity,
+                        p.title, p.price,
+                        pt.description as product_type,
+                        pi.image_url
+                      FROM orders o
+                      JOIN status s ON o.stat_id = s.stat_id
+                      JOIN users u ON o.user_id = u.user_id
+                      LEFT JOIN order_items oi ON o.order_id = oi.order_id
+                      LEFT JOIN products p ON oi.product_id = p.product_id
+                      LEFT JOIN product_types pt ON p.ptype_id = pt.ptype_id
+                      LEFT JOIN product_images pi ON p.product_id = pi.product_id
+                      WHERE o.order_id = ?
+                    `
+                const [updatedOrderResults] = await connection.promise().execute(getUpdatedOrderSql, [orderId])
+
+                if (updatedOrderResults.length > 0) {
+                  const updatedOrder = {
+                    order_id: updatedOrderResults[0].order_id,
+                    order_date: updatedOrderResults[0].order_date,
+                    shipped_date: updatedOrderResults[0].shipped_date,
+                    delivered_date: updatedOrderResults[0].delivered_date,
+                    stat_id: updatedOrderResults[0].stat_id,
+                    status_description: updatedOrderResults[0].status_description,
+                    email: updatedOrderResults[0].email,
+                    first_name: updatedOrderResults[0].first_name,
+                    last_name: updatedOrderResults[0].last_name,
+                    shipping_address: updatedOrderResults[0].shipping_address,
+                    items: updatedOrderResults[0].product_id
+                      ? updatedOrderResults.map((row) => ({
+                          product_id: row.product_id,
+                          quantity: row.quantity,
+                          title: row.title,
+                          price: row.price,
+                          product_type: row.product_type,
+                          image_url: row.image_url,
+                        }))
+                      : [],
+                  }
+
+                  const orderDate = new Date(updatedOrder.order_date).toLocaleDateString()
+                  const shippedDate = updatedOrder.shipped_date
+                    ? new Date(updatedOrder.shipped_date).toLocaleDateString()
+                    : "N/A"
+                  const deliveredDate = updatedOrder.delivered_date
+                    ? new Date(updatedOrder.delivered_date).toLocaleDateString()
+                    : "N/A"
+                  const totalAmount = updatedOrder.items.reduce(
+                    (sum, item) => sum + Number(item.price) * item.quantity,
+                    0,
+                  )
+
+                  // Generate HTML for email body
+                  const emailHtml = `
+                        <p>Dear ${updatedOrder.first_name} ${updatedOrder.last_name},</p>
+                        <p>Your order #${updatedOrder.order_id} has been updated!</p>
+                        <p><strong>New Status:</strong> <span style="text-transform: capitalize;">${updatedOrder.status_description}</span></p>
+                        <p><strong>Order Date:</strong> ${orderDate}</p>
+                        <p><strong>Shipped Date:</strong> ${shippedDate}</p>
+                        <p><strong>Delivered Date:</strong> ${deliveredDate}</p>
+                        <p>You can view your order details by logging into your account.</p>
+                        <p>A detailed receipt is attached to this email.</p>
+                        <p>Thank you for shopping with Bits & Bytes!</p>
+                      `
+
+                  // Generate HTML for PDF receipt
+                  const pdfHtml = `
+                        <h1 style="text-align: center; color: #333;">Order Receipt - Bits & Bytes</h1>
+                        <hr style="border: 1px solid #eee; margin-bottom: 20px;">
+                        <p><strong>Order ID:</strong> #${updatedOrder.order_id}</p>
+                        <p><strong>Order Date:</strong> ${orderDate}</p>
+                        <p><strong>Current Status:</strong> <span style="text-transform: capitalize;">${updatedOrder.status_description}</span></p>
+                        <p><strong>Shipped Date:</strong> ${shippedDate}</p>
+                        <p><strong>Delivered Date:</strong> ${deliveredDate}</p>
+                        <br>
+                        <p><strong>Customer Name:</strong> ${updatedOrder.first_name} ${updatedOrder.last_name}</p>
+                        <p><strong>Customer Email:</strong> ${updatedOrder.email}</p>
+                        ${updatedOrder.shipping_address ? `<p><strong>Shipping Address:</strong> ${updatedOrder.shipping_address}</p>` : ""}
+                        <br>
+                        <h2 style="color: #333;">Order Items:</h2>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                          <thead>
+                            <tr style="background-color: #f2f2f2;">
+                              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Product</th>
+                              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Type</th>
+                              <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Qty</th>
+                              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Price</th>
+                              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${updatedOrder.items
+                              .map(
+                                (item) => `
+                              <tr>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${item.title}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                              </tr>
+                            `,
+                              )
+                              .join("")}
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colspan="4" style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Total Amount:</td>
+                              <td style="padding: 8px; border: 1px solid #ddd; text-align: right; font-weight: bold;">$${totalAmount.toFixed(2)}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                        <p style="text-align: center; font-size: 12px; color: #777;">Thank you for your purchase!</p>
+                      `
+
+                  const pdfBuffer = await generatePdf(pdfHtml)
+
+                  await sendEmail({
+                    email: updatedOrder.email,
+                    subject: `Order #${updatedOrder.order_id} Status Update: ${updatedOrder.status_description.charAt(0).toUpperCase() + updatedOrder.status_description.slice(1)}`,
+                    html: emailHtml,
+                    attachments: [
+                      {
+                        filename: `receipt_order_${updatedOrder.order_id}.pdf`,
+                        content: pdfBuffer,
+                        contentType: "application/pdf",
+                      },
+                    ],
+                  })
+                }
+              } catch (emailError) {
+                console.error("Failed to send order update email:", emailError)
+                // Do not rollback the transaction here, as the order update was successful.
+                // Just log the email error.
+              }
+              // --- End Email Sending Logic ---
+
               res.status(200).json({ success: true, message: "Order updated successfully" })
             })
           })
