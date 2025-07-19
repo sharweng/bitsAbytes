@@ -229,6 +229,8 @@ $(document).ready(() => {
       $quantityInput.prop("required", false)
       $quantityInput.val(0) // Reset quantity to 0 for digital products
     }
+    // Re-validate quantity field if its visibility changes
+    $("#productForm").validate().element("#quantity")
   }
 
   // Add product button
@@ -238,6 +240,10 @@ $(document).ready(() => {
     $("#submitProductBtn").text("Add Product")
     $("#productForm")[0].reset()
     $("#productId").val("")
+
+    // Clear previous validation errors
+    $("#productForm").validate().resetForm()
+    $(".error").removeClass("error") // Remove error classes from inputs
 
     // Load dropdowns and set initial quantity field visibility
     loadPlatformTypes()
@@ -250,6 +256,10 @@ $(document).ready(() => {
   $(document).on("click", ".edit-product", function () {
     const productId = $(this).data("id")
     isEditMode = true
+
+    // Clear previous validation errors
+    $("#productForm").validate().resetForm()
+    $(".error").removeClass("error") // Remove error classes from inputs
 
     // Load dropdowns first
     loadPlatformTypes()
@@ -298,76 +308,125 @@ $(document).ready(() => {
   // Listen for changes on the product type dropdown
   $("#ptypeId").on("change", handleProductTypeChange)
 
-  // Submit product form
-  $("#productForm").on("submit", function (e) {
-    e.preventDefault()
+  // Initialize jQuery Validation for product form
+  $("#productForm").validate({
+    rules: {
+      title: {
+        required: true,
+        minlength: 3,
+      },
+      price: {
+        required: true,
+        number: true,
+        min: 0,
+      },
+      plat_id: {
+        required: true,
+      },
+      ptype_id: {
+        required: true,
+      },
+      quantity: {
+        required: {
+          depends: (element) => {
+            // Quantity is required only if product type is 'physical' (ptype_id = 2)
+            return $("#ptypeId").val() === "2"
+          },
+        },
+        number: true,
+        min: 0,
+      },
+      // productImages: { // File input validation can be tricky with jQuery Validate and FormData
+      //   // You might need a custom method or handle this separately if it's required
+      // }
+    },
+    messages: {
+      title: {
+        required: "Please enter a product title.",
+        minlength: "Title must be at least 3 characters.",
+      },
+      price: {
+        required: "Please enter a price.",
+        number: "Please enter a valid number for price.",
+        min: "Price cannot be negative.",
+      },
+      plat_id: {
+        required: "Please select a platform.",
+      },
+      ptype_id: {
+        required: "Please select a product type.",
+      },
+      quantity: {
+        required: "Quantity is required for physical products.",
+        number: "Please enter a valid number for quantity.",
+        min: "Quantity cannot be negative.",
+      },
+    },
+    errorElement: "div",
+    errorClass: "text-red-500 text-xs mt-1",
+    highlight: (element, errorClass, validClass) => {
+      $(element).addClass("border-red-500")
+    },
+    unhighlight: (element, errorClass, validClass) => {
+      $(element).removeClass("border-red-500")
+    },
+    submitHandler: (form) => {
+      // This function is called only if the form is valid
+      const formData = new FormData(form)
+      const productId = $("#productId").val()
+      const selectedPtypeId = $("#ptypeId").val()
 
-    const formData = new FormData(this)
-    const productId = $("#productId").val()
-    const selectedPtypeId = $("#ptypeId").val()
-
-    // If digital product, ensure quantity is not sent or is 0
-    if (selectedPtypeId === "1") {
-      // 1 is digital
-      formData.set("quantity", "0")
-    } else if (selectedPtypeId === "2") {
-      // 2 is physical
-      // Ensure quantity is a valid number for physical products
-      const quantityVal = formData.get("quantity")
-      if (quantityVal === "" || isNaN(Number(quantityVal)) || Number(quantityVal) < 0) {
-        window.Swal.fire({
-          icon: "error",
-          title: "Validation Error",
-          text: "Quantity is required and must be a non-negative number for physical products.",
-        })
-        return
+      // If digital product, ensure quantity is not sent or is 0
+      if (selectedPtypeId === "1") {
+        // 1 is digital
+        formData.set("quantity", "0")
       }
-    }
 
-    const url = isEditMode ? `${API_BASE_URL}/products/${productId}` : `${API_BASE_URL}/products`
-    const method = isEditMode ? "PUT" : "POST"
+      const url = isEditMode ? `${API_BASE_URL}/products/${productId}` : `${API_BASE_URL}/products`
+      const method = isEditMode ? "PUT" : "POST"
 
-    if (window.makeAuthenticatedRequest) {
-      window.makeAuthenticatedRequest({
-        url: url,
-        method: method,
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: (response) => {
-          if (response.success) {
-            window.Swal.fire({
-              icon: "success",
-              title: "Success!",
-              text: isEditMode ? "Product updated successfully" : "Product added successfully",
-              timer: 1500,
-              showConfirmButton: false,
-            })
-            $("#productModal").addClass("hidden").removeClass("flex")
-            productsTable.ajax.reload()
-          }
-        },
-        error: (xhr) => {
-          console.error("Product form error:", xhr)
-          const response = xhr.responseJSON
-          let errorMessage = "An error occurred"
-
-          if (response) {
-            errorMessage = response.error || response.message || errorMessage
-            if (response.details) {
-              console.error("Error details:", response.details)
-              errorMessage += ": " + (response.details.message || response.details)
+      if (window.makeAuthenticatedRequest) {
+        window.makeAuthenticatedRequest({
+          url: url,
+          method: method,
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: (response) => {
+            if (response.success) {
+              window.Swal.fire({
+                icon: "success",
+                title: "Success!",
+                text: isEditMode ? "Product updated successfully" : "Product added successfully",
+                timer: 1500,
+                showConfirmButton: false,
+              })
+              $("#productModal").addClass("hidden").removeClass("flex")
+              productsTable.ajax.reload()
             }
-          }
+          },
+          error: (xhr) => {
+            console.error("Product form error:", xhr)
+            const response = xhr.responseJSON
+            let errorMessage = "An error occurred"
 
-          window.Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: errorMessage,
-          })
-        },
-      })
-    }
+            if (response) {
+              errorMessage = response.error || response.message || errorMessage
+              if (response.details) {
+                console.error("Error details:", response.details)
+                errorMessage += ": " + (response.details.message || response.details)
+              }
+            }
+
+            window.Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: errorMessage,
+            })
+          },
+        })
+      }
+    },
   })
 
   // Delete product

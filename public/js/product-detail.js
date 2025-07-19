@@ -64,20 +64,22 @@ $(document).ready(() => {
       e.stopPropagation()
       console.log("Close button clicked")
       $("#loginModal").addClass("hidden")
-      $("#reviewModal").addClass("hidden")
+      $("#reviewModal").remove() // Use .remove() for dynamically added modal
     })
 
     // Login form
     $("#loginForm").submit(handleLogin)
 
-    // Review form
-    $(document).on("submit", "#reviewForm", handleReviewSubmit)
+    // Review form submission is now handled by jQuery Validate's submitHandler
+    // $(document).on("submit", "#reviewForm", handleReviewSubmit) // This line is no longer needed
 
     // Star rating - using event delegation
     $(document).on("click", ".star-btn", function () {
       selectedRating = Number.parseInt($(this).data("rating"))
       $("#selectedRating").val(selectedRating)
       updateStarDisplay()
+      // Trigger validation for the rating field after selection
+      $("#reviewForm").validate().element("#selectedRating")
     })
 
     // Cart button
@@ -90,6 +92,9 @@ $(document).ready(() => {
       if (e.target === this) {
         console.log("Modal background clicked")
         $(this).addClass("hidden")
+        if ($(this).attr("id") === "reviewModal") {
+          $(this).remove() // Remove review modal if background clicked
+        }
       }
     })
 
@@ -534,6 +539,8 @@ $(document).ready(() => {
                   )
                   .join("")}
               </div>
+              <!-- Error message for rating will be placed here by jQuery Validate -->
+              <div id="rating-error" class="text-red-500 text-xs mt-1"></div>
             </div>
             
             <div class="mb-4">
@@ -578,6 +585,53 @@ $(document).ready(() => {
       selectedRating = 0
       updateStarDisplay()
     }
+
+    // Initialize jQuery Validation for the dynamically added review form
+    $("#reviewForm").validate({
+      rules: {
+        rating: {
+          required: true,
+          min: 1, // Ensure at least 1 star is selected
+        },
+        review_title: {
+          maxlength: 100, // Optional: Add a max length for title
+        },
+        review_text: {
+          maxlength: 1000, // Optional: Add a max length for review text
+        },
+      },
+      messages: {
+        rating: {
+          required: "Please select a rating.",
+          min: "Please select at least one star.",
+        },
+        review_title: {
+          maxlength: "Review title cannot exceed 100 characters.",
+        },
+        review_text: {
+          maxlength: "Review text cannot exceed 1000 characters.",
+        },
+      },
+      errorElement: "div",
+      errorClass: "text-red-500 text-xs mt-1",
+      highlight: (element, errorClass, validClass) => {
+        $(element).addClass("border-red-500")
+      },
+      unhighlight: (element, errorClass, validClass) => {
+        $(element).removeClass("border-red-500")
+      },
+      errorPlacement: (error, element) => {
+        if (element.attr("name") === "rating") {
+          error.appendTo("#rating-error") // Place rating error in a specific div
+        } else {
+          error.insertAfter(element)
+        }
+      },
+      submitHandler: (form) => {
+        // This function is called only if the form is valid
+        handleReviewSubmit(form) // Call the original submit logic
+      },
+    })
   }
 
   function updateStarDisplay() {
@@ -591,19 +645,13 @@ $(document).ready(() => {
     })
   }
 
-  function handleReviewSubmit(e) {
-    e.preventDefault()
-
-    if (selectedRating === 0) {
-      showError("Please select a rating")
-      return
-    }
-
-    const formData = new FormData(e.target)
+  // Modified handleReviewSubmit to be called by jQuery Validate's submitHandler
+  function handleReviewSubmit(form) {
+    const formData = new FormData(form)
     const reviewData = {
       user_id: Number.parseInt(formData.get("user_id")),
       product_id: Number.parseInt(formData.get("product_id")),
-      rating: selectedRating,
+      rating: selectedRating, // Use selectedRating directly
       review_title: formData.get("review_title"),
       review_text: formData.get("review_text"),
     }
