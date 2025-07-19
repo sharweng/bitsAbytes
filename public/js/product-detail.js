@@ -524,7 +524,7 @@ $(document).ready(() => {
             <input type="hidden" id="reviewId" name="review_id" value="${isEdit ? existingReview.review_id : ""}">
             <input type="hidden" id="reviewProductId" name="product_id" value="${productId}">
             <input type="hidden" id="reviewUserId" name="user_id" value="${currentUser.user_id}">
-            <input type="hidden" id="selectedRating" name="rating" value="${isEdit ? existingReview.rating : "0"}">
+            <input type="hidden" id="selectedRating" name="rating" value="${isEdit ? existingReview.rating : "5"}">
             
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-2">Rating *</label>
@@ -582,7 +582,7 @@ $(document).ready(() => {
       selectedRating = existingReview.rating
       updateStarDisplay()
     } else {
-      selectedRating = 0
+      selectedRating = 5
       updateStarDisplay()
     }
 
