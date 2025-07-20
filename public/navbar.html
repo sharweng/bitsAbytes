@@ -63,11 +63,11 @@
       <form id="loginForm">
         <div class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-          <input type="email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+          <input type="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
         </div>
         <div class="mb-6">
           <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-          <input type="password" name="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+          <input type="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
         </div>
         <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
           Login
@@ -248,6 +248,11 @@ function showUnauthenticatedState(isDashboardPage) {
 // New function to perform the actual login AJAX request
 function performLogin(loginData) {
   const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api'
+  
+  // Clear any existing errors
+  $('#loginForm').find('.error').remove()
+  $('#loginForm').find('input').removeClass('border-red-500').addClass('border-gray-300')
+  
   $.ajax({
     url: `${API_BASE_URL}/users/login`,
     method: 'POST',
@@ -283,9 +288,43 @@ function performLogin(loginData) {
       }
     },
     error: (xhr) => {
-      // Errors are now handled by jQuery Validation directly on the form fields.
-      // Keep console.error for debugging purposes.
-      console.error("Login AJAX error:", xhr.responseJSON?.message || 'Login failed');
+      const errorResponse = xhr.responseJSON
+      const errorMessage = errorResponse?.message || 'Login failed'
+      const errorType = errorResponse?.errorType
+      
+      // Handle specific error types
+      if (errorType === 'ACCOUNT_DEACTIVATED') {
+        // Show SweetAlert for deactivated account
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Account Deactivated',
+            text: errorMessage,
+            confirmButtonText: 'OK'
+          })
+        }
+      } else if (errorType === 'EMAIL_NOT_FOUND') {
+        // Show error under email field
+        const emailField = $('#loginForm input[name="email"]')
+        emailField.addClass('border-red-500').removeClass('border-gray-300')
+        emailField.after('<div class="error text-red-500 text-xs mt-1">Email not registered</div>')
+      } else if (errorType === 'WRONG_PASSWORD') {
+        // Show error under password field
+        const passwordField = $('#loginForm input[name="password"]')
+        passwordField.addClass('border-red-500').removeClass('border-gray-300')
+        passwordField.after('<div class="error text-red-500 text-xs mt-1">Wrong password</div>')
+      } else {
+        // Generic error handling
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            text: errorMessage,
+          })
+        }
+      }
+      
+      console.error("Login AJAX error:", errorMessage);
     }
   })
 }

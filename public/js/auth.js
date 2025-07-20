@@ -28,65 +28,6 @@ $(document).ready(() => {
     return true
   }
 
-  // Register function
-  $("#registerForm").on("submit", (e) => {
-    e.preventDefault()
-
-    const email = $("#email").val()
-    const password = $("#password").val()
-    const confirmPassword = $("#confirmPassword").val()
-
-    // Validate password confirmation
-    if (password !== confirmPassword) {
-      Swal.fire({
-        icon: "error",
-        title: "Password Mismatch",
-        text: "Passwords do not match. Please try again.",
-      })
-      return
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      Swal.fire({
-        icon: "error",
-        title: "Password Too Short",
-        text: "Password must be at least 6 characters long.",
-      })
-      return
-    }
-
-    $.ajax({
-      url: `${API_BASE_URL}/users/register`,
-      method: "POST",
-      contentType: "application/json",
-      data: JSON.stringify({ email, password }),
-      success: (response) => {
-        if (response.success) {
-          Swal.fire({
-            icon: "success",
-            title: "Registration Successful!",
-            text: response.message,
-            timer: 2000,
-            showConfirmButton: false,
-          }).then(() => {
-            // After successful registration
-            localStorage.setItem('showLoginModal', 'true');
-            window.location.href = 'index.html';
-          })
-        }
-      },
-      error: (xhr) => {
-        const response = xhr.responseJSON
-        Swal.fire({
-          icon: "error",
-          title: "Registration Failed",
-          text: response.message || "An error occurred during registration",
-        })
-      },
-    })
-  })
-
   // Get auth headers
   function getAuthHeaders() {
     const token = localStorage.getItem("token")
