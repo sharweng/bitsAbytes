@@ -69,8 +69,70 @@ $(document).ready(() => {
       return
     }
 
-    displayCartItems(cart)
-    updateCartSummary(cart)
+    // Validate cart items against current stock levels
+    validateCartStock(cart)
+  }
+
+  async function validateCartStock(cart) {
+    const updatedCart = []
+    let hasChanges = false
+
+    for (const item of cart) {
+      try {
+        // Fetch current product data to get latest stock
+        const response = await $.ajax({
+          url: `${API_BASE_URL}/products/${item.product_id}`,
+          method: "GET",
+        })
+
+        if (response.success) {
+          const product = response.result
+          const isPhysical = product.product_type === "physical"
+          const currentStock = Number.parseInt(product.quantity) || 0
+
+          if (isPhysical && currentStock === 0) {
+            // Remove out of stock items
+            hasChanges = true
+            showError(`${item.title} is now out of stock and has been removed from your cart.`)
+            continue
+          }
+
+          if (isPhysical && item.quantity > currentStock) {
+            // Adjust quantity to available stock
+            item.quantity = currentStock
+            item.stock = currentStock
+            hasChanges = true
+            showError(`${item.title} quantity has been adjusted to available stock (${currentStock}).`)
+          } else {
+            // Update stock info
+            item.stock = currentStock
+            item.product_type = product.product_type
+          }
+
+          updatedCart.push(item)
+        } else {
+          // Product not found, remove from cart
+          hasChanges = true
+          showError(`${item.title} is no longer available and has been removed from your cart.`)
+        }
+      } catch (error) {
+        console.error(`Error validating product ${item.product_id}:`, error)
+        // Keep item in cart if validation fails
+        updatedCart.push(item)
+      }
+    }
+
+    if (hasChanges) {
+      localStorage.setItem("cart", JSON.stringify(updatedCart))
+    }
+
+    if (updatedCart.length === 0) {
+      showEmptyCart()
+      return
+    }
+
+    displayCartItems(updatedCart)
+    updateCartSummary(updatedCart)
   }
 
   function showEmptyCart() {
@@ -90,6 +152,8 @@ $(document).ready(() => {
         const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
         const totalPrice = price * item.quantity
         const totalDisplay = totalPrice === 0 ? "Free" : `$${totalPrice.toFixed(2)}`
+        const isPhysical = item.product_type === "physical"
+        const stock = Number.parseInt(item.stock) || 0
 
         const imageUrl = item.image
           ? `${API_BASE_URL.replace("/api", "")}/${item.image}`
@@ -104,6 +168,7 @@ $(document).ready(() => {
               <h3 class="font-semibold text-lg">${item.title}</h3>
               <p class="text-gray-600 text-sm">${item.platform_type || "Unknown Platform"}</p>
               <p class="text-blue-600 font-semibold">${priceDisplay}</p>
+              ${isPhysical ? `<p class="text-xs text-gray-500">Stock: ${stock} available</p>` : ""}
             </div>
             
             <div class="flex items-center space-x-3">
@@ -111,7 +176,9 @@ $(document).ready(() => {
                 <i class="fas fa-minus text-sm"></i>
               </button>
               <span class="quantity font-semibold text-lg w-8 text-center">${item.quantity}</span>
-              <button class="quantity-btn plus bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center" data-product-id="${item.product_id}">
+              <button class="quantity-btn plus bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center ${
+                isPhysical && item.quantity >= stock ? "opacity-50 cursor-not-allowed" : ""
+              }" data-product-id="${item.product_id}" ${isPhysical && item.quantity >= stock ? "disabled" : ""}>
                 <i class="fas fa-plus text-sm"></i>
               </button>
             </div>
@@ -132,6 +199,8 @@ $(document).ready(() => {
 
     // Add event listeners
     $(".quantity-btn").click(function () {
+      if ($(this).prop("disabled")) return
+
       const productId = Number.parseInt($(this).data("product-id"))
       const action = $(this).hasClass("plus") ? "increase" : "decrease"
       updateQuantity(productId, action)
@@ -149,7 +218,15 @@ $(document).ready(() => {
 
     if (itemIndex === -1) return
 
+    const item = cart[itemIndex]
+    const isPhysical = item.product_type === "physical"
+    const stock = Number.parseInt(item.stock) || 0
+
     if (action === "increase") {
+      if (isPhysical && item.quantity >= stock) {
+        showError(`Only ${stock} items available in stock`)
+        return
+      }
       cart[itemIndex].quantity += 1
     } else if (action === "decrease") {
       if (cart[itemIndex].quantity > 1) {
@@ -283,8 +360,17 @@ $(document).ready(() => {
       return
     }
 
+    // Validate cart one more time before checkout
+    await validateCartStock(cart)
+    const finalCart = JSON.parse(localStorage.getItem("cart") || "[]")
+
+    if (finalCart.length === 0) {
+      showError("Your cart is empty after stock validation")
+      return
+    }
+
     // Determine if there are any physical products in the cart
-    const hasPhysicalProducts = cart.some((item) => item.product_type === "physical")
+    const hasPhysicalProducts = finalCart.some((item) => item.product_type === "physical")
 
     let finalShippingAddress = null
 
@@ -407,7 +493,7 @@ $(document).ready(() => {
     }
 
     // Proceed to process the order
-    processOrder(cart, finalShippingAddress)
+    processOrder(finalCart, finalShippingAddress)
   }
 
   function processOrder(cart, shippingAddress) {
@@ -526,7 +612,7 @@ $(document).ready(() => {
     }).then((result) => {
       if (result.isConfirmed) {
         localStorage.removeItem("token")
-        localStorage.removeItem("user")
+        localStorage.removeItem("user") // Corrected from removeUser to removeItem
         currentUser = null
         showUnauthenticatedState()
         Swal.fire({

@@ -130,6 +130,9 @@ $(document).ready(() => {
     productImages = product.images || []
     const price = Number.parseFloat(product.price)
     const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
+    const stock = Number.parseInt(product.quantity) || 0
+    const isPhysical = product.product_type === "physical"
+    const isOutOfStock = isPhysical && stock === 0
 
     // Generate star rating display
     const avgRating = Number.parseFloat(product.average_rating) || 0
@@ -204,6 +207,7 @@ $(document).ready(() => {
               <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
                 ${product.platform_type || "Unknown Platform"}
               </span>
+              ${isOutOfStock ? '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-semibold">OUT OF STOCK</span>' : ""}
             </div>
             <div class="text-3xl font-bold text-blue-600 mb-4">${priceDisplay}</div>
           </div>
@@ -213,7 +217,7 @@ $(document).ready(() => {
             <div><strong>Publisher:</strong> ${product.publisher || "Unknown"}</div>
             <div><strong>Platform:</strong> ${product.platform_type || "Unknown"}</div>
             <div><strong>Type:</strong> ${product.product_type || "Digital"}</div>
-            <div><strong>Stock:</strong> ${product.quantity || 0} available</div>
+            ${isPhysical ? `<div><strong>Stock:</strong> ${stock} available</div>` : ""}
             ${product.release_date ? `<div><strong>Release Date:</strong> ${new Date(product.release_date).toLocaleDateString()}</div>` : ""}
           </div>
 
@@ -231,11 +235,19 @@ $(document).ready(() => {
           <!-- Action Buttons -->
           <div class="space-y-3">
             <div class="flex space-x-3">
-              <button id="addToCartBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition duration-200">
-                <i class="fas fa-cart-plus mr-2"></i>Add to Cart
+              <button id="addToCartBtn" class="flex-1 py-3 px-6 rounded-lg font-semibold transition duration-200 ${
+                isOutOfStock
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+              }" ${isOutOfStock ? "disabled" : ""}>
+                <i class="fas fa-cart-plus mr-2"></i>${isOutOfStock ? "Out of Stock" : "Add to Cart"}
               </button>
-              <button id="buyNowBtn" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-lg font-semibold transition duration-200">
-                <i class="fas fa-bolt mr-2"></i>Buy Now
+              <button id="buyNowBtn" class="flex-1 py-3 px-6 rounded-lg font-semibold transition duration-200 ${
+                isOutOfStock
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 text-white"
+              }" ${isOutOfStock ? "disabled" : ""}>
+                <i class="fas fa-bolt mr-2"></i>${isOutOfStock ? "Out of Stock" : "Buy Now"}
               </button>
             </div>
             <div class="text-center">
@@ -260,12 +272,14 @@ $(document).ready(() => {
 
     // Add event listeners for action buttons
     $("#addToCartBtn").click(function () {
+      if (isOutOfStock) return
       const $btn = $(this)
       $btn.prop("disabled", true) // Disable button
       addToCart(currentProduct, () => $btn.prop("disabled", false)) // Re-enable in callback
     })
 
     $("#buyNowBtn").click(function () {
+      if (isOutOfStock) return
       const $btn = $(this)
       $btn.prop("disabled", true) // Disable button
       buyNow(currentProduct, () => $btn.prop("disabled", false)) // Re-enable in callback
@@ -336,10 +350,26 @@ $(document).ready(() => {
       return
     }
 
+    // Check if it's a physical product and if it's out of stock
+    const isPhysical = product.product_type === "physical"
+    const stock = Number.parseInt(product.quantity) || 0
+
+    if (isPhysical && stock === 0) {
+      showError("This product is currently out of stock")
+      if (callback) callback()
+      return
+    }
+
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     const existingItem = cart.find((item) => item.product_id === product.product_id)
 
     if (existingItem) {
+      // Check if adding one more would exceed stock for physical products
+      if (isPhysical && existingItem.quantity + 1 > stock) {
+        showError(`Only ${stock} items available in stock`)
+        if (callback) callback()
+        return
+      }
       existingItem.quantity += 1
     } else {
       cart.push({
@@ -348,7 +378,9 @@ $(document).ready(() => {
         price: product.price,
         image: product.images && product.images.length > 0 ? product.images[0] : null,
         platform_type: product.platform_type,
+        product_type: product.product_type,
         quantity: 1,
+        stock: stock, // Store stock info for cart validation
       })
     }
 
@@ -369,6 +401,16 @@ $(document).ready(() => {
   function buyNow(product, callback) {
     if (!currentUser) {
       $("#loginModal").removeClass("hidden")
+      if (callback) callback()
+      return
+    }
+
+    // Check if it's a physical product and if it's out of stock
+    const isPhysical = product.product_type === "physical"
+    const stock = Number.parseInt(product.quantity) || 0
+
+    if (isPhysical && stock === 0) {
+      showError("This product is currently out of stock")
       if (callback) callback()
       return
     }
