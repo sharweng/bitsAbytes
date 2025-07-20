@@ -56,19 +56,21 @@
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold text-gray-800">Login</h2>
-        <button class="close-modal text-gray-500 hover:text-gray-700">
+        <button type="button" class="close-modal text-gray-500 hover:text-gray-700">
           <i class="fas fa-times text-xl"></i>
         </button>
       </div>
-      <form id="loginForm" novalidate>
+      <!-- KEY FIXES: Added method="post" and action="#" to prevent GET submission -->
+      <form id="loginForm" method="post" action="#" novalidate>
         <div class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-          <input type="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+          <input type="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
         </div>
         <div class="mb-6">
           <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-          <input type="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+          <input type="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
         </div>
+        <!-- KEY FIX: Explicitly set type="submit" -->
         <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
           Login
         </button>
@@ -145,6 +147,22 @@ function initializeNavbarEvents() {
     window.location.href = 'index.html'
   })
   
+  // KEY FIX: Enhanced form submission handling
+  $('#loginForm').off('submit').on('submit', function(e) {
+    e.preventDefault(); // Always prevent default form submission
+    e.stopPropagation();
+    
+    if ($(this).valid()) {
+      const formData = new FormData(this);
+      const loginData = {
+        email: formData.get("email"),
+        password: formData.get("password"),
+      };
+      performLogin(loginData);
+    }
+    return false; // Extra safety to prevent form submission
+  });
+  
   // Initialize jQuery Validation for login form
   $('#loginForm').validate({
     rules: {
@@ -173,13 +191,14 @@ function initializeNavbarEvents() {
     unhighlight: (element, errorClass, validClass) => {
       $(element).removeClass("border-red-500").addClass("border-gray-300");
     },
-    submitHandler: function(form) {
-      const formData = new FormData(form);
-      const loginData = {
-        email: formData.get("email"),
-        password: formData.get("password"),
-      };
-      performLogin(loginData);
+    // REMOVED submitHandler to use our custom submit event handler instead
+  });
+
+  // KEY FIX: Additional Enter key handling
+  $('#loginForm input').off('keypress').on('keypress', function(e) {
+    if (e.which === 13) { // Enter key
+      e.preventDefault();
+      $('#loginForm').trigger('submit');
     }
   });
 }
@@ -266,6 +285,9 @@ function performLogin(loginData) {
         const isDashboardPage = window.location.pathname.includes('dashboard.html')
         showAuthenticatedState(response.user, isDashboardPage)
         $('#loginModal').addClass('hidden')
+        
+        // Clear the form after successful login
+        $('#loginForm')[0].reset()
         
         // Show success message
         if (window.Swal) {
@@ -377,7 +399,6 @@ function deactivated() {
     }
   })
 }
-
 
 function logout() {
   if (window.Swal) {

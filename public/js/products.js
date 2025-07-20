@@ -103,18 +103,18 @@ $(document).ready(() => {
           let imagesHtml = ""
           if (product.images && product.images.length > 0) {
             imagesHtml = `
-            <div class="mb-4">
-              <h4 class="font-semibold mb-2">Product Images:</h4>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                ${product.images
-                  .map(
-                    (img) =>
-                      `<img src="${img}" alt="Product image" class="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-75" onclick="openImageModal('${img}')">`,
-                  )
-                  .join("")}
-              </div>
-            </div>
-          `
+  <div class="mb-4">
+    <h4 class="font-semibold mb-2">Product Images:</h4>
+    <div class="flex gap-2 justify-center items-center flex-wrap">
+      ${product.images
+        .map(
+          (img) =>
+            `<img src="${img}" alt="Product image" class="h-32 object-contain rounded border cursor-pointer hover:opacity-75" onclick="openImageModal('${img}')">`,
+        )
+        .join("")}
+    </div>
+  </div>
+`
           }
 
           const content = `
@@ -161,12 +161,17 @@ $(document).ready(() => {
   // Function to open image in modal
   function openImageModal(imageSrc) {
     window.Swal.fire({
-      imageUrl: imageSrc,
-      imageAlt: "Product Image",
+      html: `<img src="${imageSrc}" alt="Product Image" style="max-width: 100%; max-height: 80vh; object-fit: contain;">`,
       showConfirmButton: false,
       showCloseButton: true,
       width: "auto",
-      padding: "1rem",
+      padding: "2rem",
+      customClass: {
+        popup: "relative",
+        closeButton: "absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl z-10",
+      },
+      background: "white",
+      backdrop: "rgba(0,0,0,0.8)",
     })
   }
 

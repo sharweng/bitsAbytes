@@ -146,15 +146,15 @@ $(document).ready(() => {
           ${
             productImages.length > 0
               ? `
-            <div class="image-carousel bg-gray-100 rounded-lg overflow-hidden">
+            <div class="image-carousel bg-gray-300 rounded-lg overflow-hidden">
               <div class="carousel-container" id="carouselContainer">
                 ${productImages
                   .map(
                     (img, index) => `
-                  <div class="carousel-slide">
-                    <img src="${img}" alt="${product.title}" class="w-full h-96 object-cover">
-                  </div>
-                `,
+    <div class="carousel-slide">
+      <img src="${img}" alt="${product.title}" class="w-full h-96 object-contain cursor-pointer hover:opacity-90 transition-opacity" onclick="openImageModal('${img}')">
+    </div>
+  `,
                   )
                   .join("")}
               </div>
@@ -341,6 +341,26 @@ $(document).ready(() => {
     $(".indicator").removeClass("active")
     $(`.indicator:eq(${currentImageIndex})`).addClass("active")
   }
+
+  // Add this function after the updateCarousel function
+  function openImageModal(imageSrc) {
+    Swal.fire({
+      html: `<img src="${imageSrc}" alt="Product Image" style="max-width: 100%; max-height: 80vh; object-fit: contain;">`,
+      showConfirmButton: false,
+      showCloseButton: true,
+      width: "auto",
+      padding: "2rem",
+      customClass: {
+        popup: "relative",
+        closeButton: "absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl z-10",
+      },
+      background: "white",
+      backdrop: "rgba(0,0,0,0.8)",
+    })
+  }
+
+  // Make openImageModal globally available
+  window.openImageModal = openImageModal
 
   // Cart functions
   function addToCart(product, callback) {
