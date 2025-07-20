@@ -331,7 +331,7 @@ $(document).ready(() => {
     const { value: password } = await Swal.fire({
       title: "Enter Current Password",
       input: "password",
-      inputLabel: "For security, please enter your current password to confirm changes.",
+      text: "For security, please enter your current password to confirm changes.",
       inputPlaceholder: "Enter your password",
       inputAttributes: {
         autocapitalize: "off",

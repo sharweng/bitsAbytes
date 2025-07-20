@@ -134,7 +134,7 @@ $(document).ready(() => {
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-900 truncate">${product.title}</p>
-                        <p class="text-sm text-gray-500">${product.platform_type || "Unknown Platform"} • $${Number.parseFloat(product.price).toFixed(2)}</p>
+                        <p class="text-sm text-gray-500">${product.platform_type || "Unknown Platform"} • ₱${Number.parseFloat(product.price).toFixed(2)}</p>
                     </div>
                 </div>
             </div>

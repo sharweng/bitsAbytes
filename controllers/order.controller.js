@@ -321,8 +321,8 @@ const createOrder = (req, res) => {
                             <td style="padding: 10px; border: 1px solid #ddd;">${item.title}</td>
                             <td style="padding: 10px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
                             <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
-                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">₱${Number(item.price).toFixed(2)}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">₱${(Number(item.price) * item.quantity).toFixed(2)}</td>
                           </tr>
                         `,
                           )
@@ -331,7 +331,7 @@ const createOrder = (req, res) => {
                       <tfoot>
                         <tr>
                           <td colspan="4" style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">Total Amount:</td>
-                          <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">$${totalAmount.toFixed(2)}</td>
+                          <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">₱${totalAmount.toFixed(2)}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -985,8 +985,8 @@ const updateOrderStatus = (req, res) => {
                                   <td style="padding: 10px; border: 1px solid #ddd;">${item.title}</td>
                                   <td style="padding: 10px; border: 1px solid #ddd; text-transform: capitalize;">${item.product_type}</td>
                                   <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${Number(item.price).toFixed(2)}</td>
-                                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$${(Number(item.price) * item.quantity).toFixed(2)}</td>
+                                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">₱${Number(item.price).toFixed(2)}</td>
+                                  <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">₱${(Number(item.price) * item.quantity).toFixed(2)}</td>
                                 </tr>
                               `,
                                 )
@@ -995,7 +995,7 @@ const updateOrderStatus = (req, res) => {
                             <tfoot>
                               <tr>
                                 <td colspan="4" style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">Total Amount:</td>
-                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">$${totalAmount.toFixed(2)}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f2f2f2;">₱${totalAmount.toFixed(2)}</td>
                               </tr>
                             </tfoot>
                           </table>

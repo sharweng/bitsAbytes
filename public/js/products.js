@@ -48,7 +48,7 @@ $(document).ready(() => {
         { data: "title" },
         {
           data: "price",
-          render: (data) => `$${Number.parseFloat(data).toFixed(2)}`,
+          render: (data) => `₱${Number.parseFloat(data).toFixed(2)}`,
         },
         {
           data: "platform_type",
@@ -123,7 +123,7 @@ $(document).ready(() => {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><strong>Product ID:</strong> ${product.product_id}</div>
               <div><strong>Title:</strong> ${product.title}</div>
-              <div><strong>Price:</strong> $${Number.parseFloat(product.price).toFixed(2)}</div>
+              <div><strong>Price:</strong> ₱${Number.parseFloat(product.price).toFixed(2)}</div>
               <div><strong>Platform:</strong> ${product.platform_type || "N/A"}</div>
               <div><strong>Type:</strong> ${product.product_type || "N/A"}</div>
               <div><strong>Stock:</strong> ${product.product_type && product.product_type.toLowerCase() === "digital" ? "N/A" : product.quantity || 0}</div>

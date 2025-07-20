@@ -149,14 +149,14 @@ $(document).ready(() => {
     const cartItemsHtml = cart
       .map((item) => {
         const price = Number.parseFloat(item.price)
-        const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
+        const priceDisplay = price === 0 ? "Free" : `₱${price.toFixed(2)}`
         const totalPrice = price * item.quantity
-        const totalDisplay = totalPrice === 0 ? "Free" : `$${totalPrice.toFixed(2)}`
+        const totalDisplay = totalPrice === 0 ? "Free" : `₱${totalPrice.toFixed(2)}`
         const isPhysical = item.product_type === "physical"
         const stock = Number.parseInt(item.stock) || 0
 
         const imageUrl = item.image
-          ? `${API_BASE_URL.replace("/api", "")}/${item.image}`
+          ? `${item.image}`
           : "/placeholder.svg?height=100&width=100"
 
         return `
@@ -272,9 +272,9 @@ $(document).ready(() => {
     const tax = subtotal * TAX_RATE
     const total = subtotal + tax
 
-    $("#subtotal").text(`$${subtotal.toFixed(2)}`)
-    $("#tax").text(`$${tax.toFixed(2)}`)
-    $("#total").text(`$${total.toFixed(2)}`)
+    $("#subtotal").text(`₱${subtotal.toFixed(2)}`)
+    $("#tax").text(`₱${tax.toFixed(2)}`)
+    $("#total").text(`₱${total.toFixed(2)}`)
   }
 
   function clearCart() {

@@ -129,7 +129,7 @@ $(document).ready(() => {
   function displayProduct(product) {
     productImages = product.images || []
     const price = Number.parseFloat(product.price)
-    const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
+    const priceDisplay = price === 0 ? "Free" : `₱${price.toFixed(2)}`
     const stock = Number.parseInt(product.quantity) || 0
     const isPhysical = product.product_type === "physical"
     const isOutOfStock = isPhysical && stock === 0

@@ -143,7 +143,7 @@ $(document).ready(() => {
         { data: "total_items" },
         {
           data: "total_amount",
-          render: (data) => `$${Number.parseFloat(data || 0).toFixed(2)}`,
+          render: (data) => `₱${Number.parseFloat(data || 0).toFixed(2)}`,
         },
         {
           data: null,
@@ -286,10 +286,10 @@ $(document).ready(() => {
           <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded">
           <div class="flex-1">
             <p class="font-semibold">${item.title}</p>
-            <div class="text-sm text-gray-600">Qty: ${item.quantity} | $${price.toFixed(2)} each</div>
+            <div class="text-sm text-gray-600">Qty: ${item.quantity} | ₱${price.toFixed(2)} each</div>
             ${productTypeBadge}
           </div>
-          <div class="text-right text-sm font-medium">$${total.toFixed(2)}</div>
+          <div class="text-right text-sm font-medium">₱${total.toFixed(2)}</div>
         </div>
       `
       })
@@ -325,7 +325,7 @@ $(document).ready(() => {
         </div>
 
         <div class="pt-4 border-t">
-          <p class="text-right font-bold text-blue-700">Total: $${totalAmount.toFixed(2)}</p>
+          <p class="text-right font-bold text-blue-700">Total: ₱${totalAmount.toFixed(2)}</p>
         </div>
       </div>
     `

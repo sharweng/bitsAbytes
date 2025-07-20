@@ -208,7 +208,7 @@ $(document).ready(() => {
           </div>
           <div>
             <p class="text-sm text-gray-600">Total Amount</p>
-            <p class="font-semibold">$${totalAmount.toFixed(2)}</p>
+            <p class="font-semibold">₱${totalAmount.toFixed(2)}</p>
           </div>
           <div>
             <p class="text-sm text-gray-600">Type</p>
@@ -359,7 +359,7 @@ $(document).ready(() => {
         const price = Number.parseFloat(item.price)
         const total = price * item.quantity
         const imageUrl = item.image_url
-          ? `${API_BASE_URL.replace("/api", "")}/${item.image_url}`
+          ? `${item.image_url}`
           : "/placeholder.svg?height=80&width=80"
 
         const productTypeBadge =
@@ -378,8 +378,8 @@ $(document).ready(() => {
         </div>
       </div>
       <div class="text-right">
-        <p class="font-semibold">$${price.toFixed(2)} each</p>
-        <p class="text-sm text-gray-600">Total: $${total.toFixed(2)}</p>
+        <p class="font-semibold">₱${price.toFixed(2)} each</p>
+        <p class="text-sm text-gray-600">Total: ₱${total.toFixed(2)}</p>
       </div>
     </div>
   `
@@ -454,7 +454,7 @@ $(document).ready(() => {
     <div class="bg-gray-50 p-4 rounded-lg">
       <div class="flex justify-between items-center">
         <span class="font-semibold">Total Amount</span>
-        <span class="text-xl font-bold text-blue-600">$${totalAmount.toFixed(2)}</span>
+        <span class="text-xl font-bold text-blue-600">₱${totalAmount.toFixed(2)}</span>
       </div>
     </div>
   </div>
