@@ -12,62 +12,62 @@ ALTER TABLE products AUTO_INCREMENT = 1;
 -- Insert sample products
 INSERT INTO products (title, description, plat_id, price, ptype_id, release_date, developer, publisher) VALUES
 -- PC Games (Digital) - ptype_id = 1
-('Cyberpunk 2077', 'An open-world, action-adventure RPG set in the dark future of Night City.', 2, 59.99, 1, '2020-12-10', 'CD Projekt RED', 'CD Projekt'),
-('The Witcher 3: Wild Hunt', 'A story-driven open world RPG set in a visually stunning fantasy universe.', 2, 39.99, 1, '2015-05-19', 'CD Projekt RED', 'CD Projekt'),
-('Baldurs Gate 3', 'An epic RPG based on the legendary Dungeons & Dragons tabletop RPG.', 2, 59.99, 1, '2023-08-03', 'Larian Studios', 'Larian Studios'),
-('Hades', 'A rogue-like dungeon crawler from the creators of Bastion and Transistor.', 2, 24.99, 1, '2020-09-17', 'Supergiant Games', 'Supergiant Games'),
-('Disco Elysium', 'A groundbreaking detective RPG.', 2, 39.99, 1, '2019-10-15', 'ZA/UM', 'ZA/UM'),
-('Among Us', 'Multiplayer party game of teamwork and betrayal.', 2, 5.00, 1, '2018-11-16', 'Innersloth', 'Innersloth'),
-('The Stanley Parable', 'A narrative-driven walking simulator.', 2, 14.99, 1, '2013-10-17', 'Galactic Cafe', 'Galactic Cafe'),
-('Factorio', 'Factory-building automation game.', 2, 30.00, 1, '2020-08-14', 'Wube Software', 'Wube Software'),
-('Subnautica', 'Underwater survival and exploration.', 2, 29.99, 1, '2018-01-23', 'Unknown Worlds', 'Unknown Worlds'),
+('Cyberpunk 2077', 'An open-world, action-adventure RPG set in the dark future of Night City.', 2, 2599.00, 1, '2020-12-10', 'CD Projekt RED', 'CD Projekt'),
+('The Witcher 3: Wild Hunt', 'A story-driven open world RPG set in a visually stunning fantasy universe.', 2, 1699.00, 1, '2015-05-19', 'CD Projekt RED', 'CD Projekt'),
+('Baldurs Gate 3', 'An epic RPG based on the legendary Dungeons & Dragons tabletop RPG.', 2, 2599.00, 1, '2023-08-03', 'Larian Studios', 'Larian Studios'),
+('Hades', 'A rogue-like dungeon crawler from the creators of Bastion and Transistor.', 2, 765.00, 1, '2020-09-17', 'Supergiant Games', 'Supergiant Games'),
+('Disco Elysium', 'A groundbreaking detective RPG.', 2, 829.95, 1, '2019-10-15', 'ZA/UM', 'ZA/UM'),
+('Among Us', 'Multiplayer party game of teamwork and betrayal.', 2, 95.40, 1, '2018-11-16', 'Innersloth', 'Innersloth'),
+('The Stanley Parable', 'A narrative-driven walking simulator.', 2, 549.95, 1, '2013-10-17', 'Galactic Cafe', 'Galactic Cafe'),
+('Factorio', 'Factory-building automation game.', 2, 1000.00, 1, '2020-08-14', 'Wube Software', 'Wube Software'),
+('Subnautica', 'Underwater survival and exploration.', 2, 1375.00, 1, '2018-01-23', 'Unknown Worlds', 'Unknown Worlds'),
 ('Dota 2', 'A complex competitive MOBA.', 2, 0.00, 1, '2013-07-09', 'Valve', 'Valve'),
 ('Team Fortress 2', 'Fast-paced class-based shooter.', 2, 0.00, 1, '2007-10-10', 'Valve', 'Valve'),
-('Slay the Spire', 'Card-battler roguelike deck-builder.', 2, 24.99, 1, '2019-01-23', 'MegaCrit', 'Humble Games'),
-('Cuphead', 'Run-and-gun platformer with 1930s animation.', 2, 19.99, 1, '2017-09-29', 'Studio MDHR', 'Studio MDHR'),
-('Star Wars Jedi: Survivor', 'Third-person action-adventure in the Star Wars universe.', 2, 69.99, 1, '2023-04-28', 'Respawn Entertainment', 'EA'),
-('Elden Ring', 'A fantasy action-RPG adventure set within a world created by Hidetaka Miyazaki and George R.R. Martin.', 2, 59.99, 1, '2022-02-25', 'FromSoftware', 'Bandai Namco Entertainment'),
+('Slay the Spire', 'Card-battler roguelike deck-builder.', 2, 780.00, 1, '2019-01-23', 'MegaCrit', 'Humble Games'),
+('Cuphead', 'Run-and-gun platformer with 1930s animation.', 2, 499.95, 1, '2017-09-29', 'Studio MDHR', 'Studio MDHR'),
+('Star Wars Jedi: Survivor', 'Third-person action-adventure in the Star Wars universe.', 2, 2999.00, 1, '2023-04-28', 'Respawn Entertainment', 'EA'),
+('Elden Ring', 'A fantasy action-RPG adventure set within a world created by Hidetaka Miyazaki and George R.R. Martin.', 2, 2399.00, 1, '2022-02-25', 'FromSoftware', 'Bandai Namco Entertainment'),
 ('Valorant', 'A 5v5 character-based tactical FPS where precise gunplay meets unique agent abilities.', 2, 0.00, 1, '2020-06-02', 'Riot Games', 'Riot Games'),
-('Minecraft', 'A sandbox game where you can build anything you can imagine.', 2, 26.95, 1, '2011-11-18', 'Mojang Studios', 'Microsoft Studios'),
-('Left 4 Dead 2', 'Co-op zombie survival shooter.', 2, 9.99, 1, '2009-11-17', 'Valve', 'Valve'),
-('Ori and the Blind Forest', 'Visually stunning platformer.', 2, 19.99, 1, '2015-03-11', 'Moon Studios', 'Xbox Game Studios'),
-('Metro Exodus', 'Post-apocalyptic shooter with story focus.', 2, 39.99, 1, '2019-02-15', '4A Games', 'Deep Silver'),
-('The Forest', 'Open world survival horror game.', 2, 19.99, 1, '2018-04-30', 'Endnight Games', 'Endnight Games'),
-('Satisfactory', 'Factory-building sim in 3D.', 2, 29.99, 1, '2019-03-19', 'Coffee Stain Studios', 'Coffee Stain Studios'),
-('No Man''s Sky', 'Space exploration survival game.', 2, 59.99, 1, '2016-08-12', 'Hello Games', 'Hello Games'),
-('RimWorld', 'Sci-fi colony sim driven by AI storytelling.', 2, 34.99, 1, '2018-10-17', 'Ludeon Studios', 'Ludeon Studios'),
-('Project Zomboid', 'Isometric zombie survival RPG.', 2, 19.99, 1, '2013-11-08', 'The Indie Stone', 'The Indie Stone'),
-('Hollow Knight', 'Action-adventure metroidvania.', 2, 14.99, 1, '2017-02-24', 'Team Cherry', 'Team Cherry'),
-('Tunic', 'Isometric adventure game starring a fox.', 2, 29.99, 1, '2022-03-16', 'Andrew Shouldice', 'Finji'),
+('Minecraft', 'A sandbox game where you can build anything you can imagine.', 2, 2283.82, 1, '2011-11-18', 'Mojang Studios', 'Microsoft Studios'),
+('Left 4 Dead 2', 'Co-op zombie survival shooter.', 2, 335.00, 1, '2009-11-17', 'Valve', 'Valve'),
+('Ori and the Blind Forest', 'Visually stunning platformer.', 2, 990.00, 1, '2015-03-11', 'Moon Studios', 'Xbox Game Studios'),
+('Metro Exodus', 'Post-apocalyptic shooter with story focus.', 2, 1192.00, 1, '2019-02-15', '4A Games', 'Deep Silver'),
+('The Forest', 'Open world survival horror game.', 2, 449.95, 1, '2018-04-30', 'Endnight Games', 'Endnight Games'),
+('Satisfactory', 'Factory-building sim in 3D.', 2, 770.00, 1, '2019-03-19', 'Coffee Stain Studios', 'Coffee Stain Studios'),
+('No Man''s Sky', 'Space exploration survival game.', 2, 668.00, 1, '2016-08-12', 'Hello Games', 'Hello Games'),
+('RimWorld', 'Sci-fi colony sim driven by AI storytelling.', 2, 840.00, 1, '2018-10-17', 'Ludeon Studios', 'Ludeon Studios'),
+('Project Zomboid', 'Isometric zombie survival RPG.', 2, 615.00, 1, '2013-11-08', 'The Indie Stone', 'The Indie Stone'),
+('Hollow Knight', 'Action-adventure metroidvania.', 2, 485.00, 1, '2017-02-24', 'Team Cherry', 'Team Cherry'),
+('Tunic', 'Isometric adventure game starring a fox.', 2, 910.00, 1, '2022-03-16', 'Andrew Shouldice', 'Finji'),
 
 -- Console Games (Physical) - ptype_id = 2
-('The Legend of Zelda: Breath of the Wild', 'An open-air adventure that breaks boundaries.', 3, 49.99, 2, '2017-03-03', 'Nintendo EPD', 'Nintendo'),
-('God of War', 'Kratos returns in this Norse mythology-inspired action adventure.', 3, 39.99, 2, '2018-04-20', 'Santa Monica Studio', 'Sony Interactive Entertainment'),
-('Red Dead Redemption 2', 'An epic tale of life in Americas unforgiving heartland.', 3, 59.99, 2, '2018-10-26', 'Rockstar Games', 'Rockstar Games'),
-('Spider-Man: Miles Morales', 'Experience the rise of Miles Morales as he masters new powers.', 3, 49.99, 2, '2020-11-12', 'Insomniac Games', 'Sony Interactive Entertainment'),
-('Assassin''s Creed Valhalla', 'Viking-era open world action game.', 3, 59.99, 2, '2020-11-10', 'Ubisoft Montreal', 'Ubisoft'),
-('Resident Evil Village', 'Survival horror with intense atmosphere.', 3, 59.99, 2, '2021-05-07', 'Capcom', 'Capcom'),
-('FIFA 23', 'Latest edition of the football franchise.', 3, 69.99, 2, '2022-09-30', 'EA Vancouver', 'EA Sports'),
-('NBA 2K24', 'Basketball sim with advanced features.', 3, 69.99, 2, '2023-09-08', 'Visual Concepts', '2K Sports'),
-('Mortal Kombat 11', 'Brutal and cinematic fighting game.', 3, 49.99, 2, '2019-04-23', 'NetherRealm Studios', 'WB Games'),
-('Crash Bandicoot 4', 'Modern revival of the classic platformer.', 3, 59.99, 2, '2020-10-02', 'Toys for Bob', 'Activision'),
-('Tony Hawk''s Pro Skater 1+2', 'Remake of the classic skating titles.', 3, 39.99, 2, '2020-09-04', 'Vicarious Visions', 'Activision'),
-('Far Cry 6', 'Open world chaos in a fictional dictatorship.', 3, 59.99, 2, '2021-10-07', 'Ubisoft Toronto', 'Ubisoft'),
-('Gran Turismo 7', 'Realistic racing simulator.', 3, 69.99, 2, '2022-03-04', 'Polyphony Digital', 'Sony'),
-('Need for Speed Unbound', 'Street racing with stylized visuals.', 3, 69.99, 2, '2022-12-02', 'Criterion Games', 'EA'),
-('Horizon Zero Dawn', 'Experience Aloys entire legendary quest to unravel the mysteries of a world ruled by deadly Machines.', 3, 39.99, 2, '2017-02-28', 'Guerrilla Games', 'Sony Interactive Entertainment'),
-('Super Mario Odyssey', 'Join Mario on a massive, globe-trotting 3D adventure.', 3, 49.99, 2, '2017-10-27', 'Nintendo EPD', 'Nintendo'),
-('Halo Infinite', 'Master Chief returns in the most expansive Master Chief story yet.', 3, 59.99, 2, '2021-12-08', '343 Industries', 'Microsoft Studios'),
-('Ratchet & Clank: Rift Apart', 'Dimension-hopping action-platformer.', 3, 69.99, 2, '2021-06-11', 'Insomniac Games', 'Sony'),
-('Returnal', 'Sci-fi rogue-like shooter.', 3, 69.99, 2, '2021-04-30', 'Housemarque', 'Sony'),
-('Ghost of Tsushima', 'Open-world samurai action.', 3, 59.99, 2, '2020-07-17', 'Sucker Punch Productions', 'Sony'),
-('Demon''s Souls (Remake)', 'Hardcore action RPG.', 3, 69.99, 2, '2020-11-12', 'Bluepoint Games', 'Sony'),
-('Bayonetta 3', 'Hack and slash action game.', 3, 59.99, 2, '2022-10-28', 'PlatinumGames', 'Nintendo'),
-('Splatoon 3', 'Colorful ink-based shooter.', 3, 59.99, 2, '2022-09-09', 'Nintendo EPD', 'Nintendo'),
-('Fire Emblem Engage', 'Tactical RPG with returning heroes.', 3, 59.99, 2, '2023-01-20', 'Intelligent Systems', 'Nintendo'),
-('Kirby and the Forgotten Land', '3D Kirby platforming adventure.', 3, 59.99, 2, '2022-03-25', 'HAL Laboratory', 'Nintendo'),
-('The Last of Us Part I', 'Remake of the iconic narrative game.', 3, 69.99, 2, '2022-09-02', 'Naughty Dog', 'Sony'),
-('Metroid Dread', 'Side-scrolling sci-fi platformer.', 3, 59.99, 2, '2021-10-08', 'MercurySteam', 'Nintendo'),
+('The Legend of Zelda: Breath of the Wild', 'An open-air adventure that breaks boundaries.', 3, 2450.00, 2, '2017-03-03', 'Nintendo EPD', 'Nintendo'),
+('God of War', 'Kratos returns in this Norse mythology-inspired action adventure.', 3, 2490.00, 2, '2018-04-20', 'Santa Monica Studio', 'Sony Interactive Entertainment'),
+('Red Dead Redemption 2', 'An epic tale of life in Americas unforgiving heartland.', 3, 849.75, 2, '2018-10-26', 'Rockstar Games', 'Rockstar Games'),
+('Spider-Man: Miles Morales', 'Experience the rise of Miles Morales as he masters new powers.', 3, 2490.00, 2, '2020-11-12', 'Insomniac Games', 'Sony Interactive Entertainment'),
+('Assassin''s Creed Valhalla', 'Viking-era open world action game.', 3, 2200.00, 2, '2020-11-10', 'Ubisoft Montreal', 'Ubisoft'),
+('Resident Evil Village', 'Survival horror with intense atmosphere.', 3, 1790.00, 2, '2021-05-07', 'Capcom', 'Capcom'),
+('FIFA 23', 'Latest edition of the football franchise.', 3, 1395.00, 2, '2022-09-30', 'EA Vancouver', 'EA Sports'),
+('NBA 2K24', 'Basketball sim with advanced features.', 3, 2199.00, 2, '2023-09-08', 'Visual Concepts', '2K Sports'),
+('Mortal Kombat 11', 'Brutal and cinematic fighting game.', 3, 1490.00, 2, '2019-04-23', 'NetherRealm Studios', 'WB Games'),
+('Crash Bandicoot 4', 'Modern revival of the classic platformer.', 3, 2400.00, 2, '2020-10-02', 'Toys for Bob', 'Activision'),
+('Tony Hawk''s Pro Skater 1+2', 'Remake of the classic skating titles.', 3, 1944.99, 2, '2020-09-04', 'Vicarious Visions', 'Activision'),
+('Far Cry 6', 'Open world chaos in a fictional dictatorship.', 3, 2200.00, 2, '2021-10-07', 'Ubisoft Toronto', 'Ubisoft'),
+('Gran Turismo 7', 'Realistic racing simulator.', 3, 3490.00, 2, '2022-03-04', 'Polyphony Digital', 'Sony'),
+('Need for Speed Unbound', 'Street racing with stylized visuals.', 3, 2999.00, 2, '2022-12-02', 'Criterion Games', 'EA'),
+('Horizon Zero Dawn', 'Experience Aloys entire legendary quest to unravel the mysteries of a world ruled by deadly Machines.', 3, 2490.00, 2, '2017-02-28', 'Guerrilla Games', 'Sony Interactive Entertainment'),
+('Super Mario Odyssey', 'Join Mario on a massive, globe-trotting 3D adventure.', 3, 2895.00, 2, '2017-10-27', 'Nintendo EPD', 'Nintendo'),
+('Halo Infinite', 'Master Chief returns in the most expansive Master Chief story yet.', 3, 3490.00, 2, '2021-12-08', '343 Industries', 'Microsoft Studios'),
+('Ratchet & Clank: Rift Apart', 'Dimension-hopping action-platformer.', 3, 2990.00, 2, '2021-06-11', 'Insomniac Games', 'Sony'),
+('Returnal', 'Sci-fi rogue-like shooter.', 3, 2990.00, 2, '2021-04-30', 'Housemarque', 'Sony'),
+('Ghost of Tsushima', 'Open-world samurai action.', 3, 1950.00, 2, '2020-07-17', 'Sucker Punch Productions', 'Sony'),
+('Demon''s Souls (Remake)', 'Hardcore action RPG.', 3, 3490.00, 2, '2020-11-12', 'Bluepoint Games', 'Sony'),
+('Bayonetta 3', 'Hack and slash action game.', 3, 2495.00, 2, '2022-10-28', 'PlatinumGames', 'Nintendo'),
+('Splatoon 3', 'Colorful ink-based shooter.', 3, 2350.00, 2, '2022-09-09', 'Nintendo EPD', 'Nintendo'),
+('Fire Emblem Engage', 'Tactical RPG with returning heroes.', 3, 2495.00, 2, '2023-01-20', 'Intelligent Systems', 'Nintendo'),
+('Kirby and the Forgotten Land', '3D Kirby platforming adventure.', 3, 2495.00, 2, '2022-03-25', 'HAL Laboratory', 'Nintendo'),
+('The Last of Us Part I', 'Remake of the iconic narrative game.', 3, 2990.00, 2, '2022-09-02', 'Naughty Dog', 'Sony'),
+('Metroid Dread', 'Side-scrolling sci-fi platformer.', 3, 2450.00, 2, '2021-10-08', 'MercurySteam', 'Nintendo'),
 
 -- Mobile Games (Digital) - ptype_id = 1
 ('Mobile Legends: Bang Bang', 'MOBA optimized for mobile.', 1, 0.00, 1, '2016-07-11', 'Moonton', 'Moonton'),
@@ -86,25 +86,19 @@ INSERT INTO product_images (product_id, image_url) VALUES
 -- PC Games (Digital) - product_id 1-27
 -- Cyberpunk 2077 (product_id = 1)
 (1, '/images/products/cyberpunk2077/main.jpg'),
-(1, '/images/products/cyberpunk2077/gameplay1.jpg'),
-(1, '/images/products/cyberpunk2077/gameplay2.jpg'),
-(1, '/images/products/cyberpunk2077/character.jpg'),
+(1, '/images/products/cyberpunk2077/main2.jpg'),
 
 -- The Witcher 3: Wild Hunt (product_id = 2)
 (2, '/images/products/witcher3/main.jpg'),
-(2, '/images/products/witcher3/geralt.jpg'),
 (2, '/images/products/witcher3/world.jpg'),
-(2, '/images/products/witcher3/combat.jpg'),
 
 -- Baldurs Gate 3 (product_id = 3)
 (3, '/images/products/baldursgate3/main.jpg'),
-(3, '/images/products/baldursgate3/party.jpg'),
 (3, '/images/products/baldursgate3/combat.jpg'),
 
 -- Hades (product_id = 4)
 (4, '/images/products/hades/main.jpg'),
-(4, '/images/products/hades/zagreus.jpg'),
-(4, '/images/products/hades/underworld.jpg'),
+(4, '/images/products/hades/gameplay.jpg'),
 
 -- Disco Elysium (product_id = 5)
 (5, '/images/products/disco_elysium/main.jpg'),
@@ -148,17 +142,15 @@ INSERT INTO product_images (product_id, image_url) VALUES
 
 -- Elden Ring (product_id = 15)
 (15, '/images/products/elden_ring/main.jpg'),
-(15, '/images/products/elden_ring/tarnished.jpg'),
-(15, '/images/products/elden_ring/world.jpg'),
 (15, '/images/products/elden_ring/boss.jpg'),
 
 -- Valorant (product_id = 16)
 (16, '/images/products/valorant/main.jpg'),
-(16, '/images/products/valorant/agents.jpg'),
+(16, '/images/products/valorant/gameplay.jpg'),
 
 -- Minecraft (product_id = 17)
 (17, '/images/products/minecraft/main.jpg'),
-(17, '/images/products/minecraft/building.jpg'),
+(17, '/images/products/minecraft/main2.jpg'),
 
 -- Left 4 Dead 2 (product_id = 18)
 (18, '/images/products/l4d2/main.jpg'),
@@ -203,25 +195,19 @@ INSERT INTO product_images (product_id, image_url) VALUES
 -- Console Games (Physical) - product_id 28-54
 -- The Legend of Zelda: Breath of the Wild (product_id = 28)
 (28, '/images/products/zelda_botw/main.jpg'),
-(28, '/images/products/zelda_botw/link.jpg'),
-(28, '/images/products/zelda_botw/hyrule.jpg'),
-(28, '/images/products/zelda_botw/gameplay.jpg'),
+(28, '/images/products/zelda_botw/world.jpg'),
 
 -- God of War (product_id = 29)
 (29, '/images/products/god_of_war/main.jpg'),
-(29, '/images/products/god_of_war/kratos_atreus.jpg'),
-(29, '/images/products/god_of_war/combat.jpg'),
+(29, '/images/products/god_of_war/gameplay.jpg'),
 
 -- Red Dead Redemption 2 (product_id = 30)
 (30, '/images/products/rdr2/main.jpg'),
-(30, '/images/products/rdr2/arthur.jpg'),
 (30, '/images/products/rdr2/world.jpg'),
-(30, '/images/products/rdr2/gang.jpg'),
 
 -- Spider-Man: Miles Morales (product_id = 31)
 (31, '/images/products/spiderman_miles/main.jpg'),
-(31, '/images/products/spiderman_miles/miles.jpg'),
-(31, '/images/products/spiderman_miles/swinging.jpg'),
+(31, '/images/products/spiderman_miles/gameplay.jpg'),
 
 -- Assassin's Creed Valhalla (product_id = 32)
 (32, '/images/products/ac_valhalla/main.jpg'),
@@ -265,18 +251,15 @@ INSERT INTO product_images (product_id, image_url) VALUES
 
 -- Horizon Zero Dawn (product_id = 42)
 (42, '/images/products/horizon/main.jpg'),
-(42, '/images/products/horizon/aloy.jpg'),
-(42, '/images/products/horizon/machines.jpg'),
+(42, '/images/products/horizon/gameplay.jpg'),
 
 -- Super Mario Odyssey (product_id = 43)
 (43, '/images/products/mario_odyssey/main.jpg'),
-(43, '/images/products/mario_odyssey/mario_cappy.jpg'),
-(43, '/images/products/mario_odyssey/kingdoms.jpg'),
+(43, '/images/products/mario_odyssey/gameplay.jpg'),
 
 -- Halo Infinite (product_id = 44)
 (44, '/images/products/halo_infinite/main.jpg'),
-(44, '/images/products/halo_infinite/master_chief.jpg'),
-(44, '/images/products/halo_infinite/multiplayer.jpg'),
+(44, '/images/products/halo_infinite/gameplay.jpg'),
 
 -- Ratchet & Clank: Rift Apart (product_id = 45)
 (45, '/images/products/ratchet_rift_apart/main.jpg'),
