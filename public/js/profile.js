@@ -11,6 +11,7 @@ $(document).ready(() => {
   function initializePage() {
     checkAuthAndLoadProfile()
     initializeEventListeners()
+    initializeFormValidations() // New function for validations
   }
 
   function checkAuthAndLoadProfile() {
@@ -38,10 +39,6 @@ $(document).ready(() => {
     $("#infoTabBtn").click(() => switchTab("information"))
     $("#securityTabBtn").click(() => switchTab("security"))
 
-    // Form submissions
-    $("#infoForm").submit(handleInformationSubmit)
-    $("#securityForm").submit(handleSecuritySubmit)
-
     // Image preview
     $("#image").change(function () {
       if (this.files && this.files[0]) {
@@ -56,6 +53,80 @@ $(document).ready(() => {
     })
   }
 
+  function initializeFormValidations() {
+    // Information Form Validation
+    $("#infoForm").validate({
+      rules: {
+        first_name: {
+          minlength: 2,
+        },
+        last_name: {
+          minlength: 2,
+        },
+        contact_number: {
+          digits: true, // Only digits allowed
+          minlength: 11,
+          maxlength: 12,
+        },
+        shipping_address: {
+          minlength: 5,
+        },
+        image: {
+          extension: "jpg|jpeg|png", // Allow only these image types
+        },
+      },
+      messages: {
+        first_name: {
+          minlength: "First name must be at least 2 characters.",
+        },
+        last_name: {
+          minlength: "Last name must be at least 2 characters.",
+        },
+        contact_number: {
+          digits: "Please enter a valid contact number (digits only).",
+          minlength: "Contact number must be at least 11 digits.",
+          maxlength: "Contact number cannot exceed 12 digits.",
+        },
+        shipping_address: {
+          minlength: "Shipping address must be at least 5 characters.",
+        },
+        image: {
+          extension: "Please upload a valid image file (JPG, JPEG, PNG).",
+        },
+      },
+      submitHandler: (form) => {
+        // Call the original handler, which now doesn't need e.preventDefault()
+        handleInformationSubmit()
+      },
+    })
+
+    // Security Form Validation
+    $("#securityForm").validate({
+      rules: {
+        new_password: {
+          // Corresponds to name="new_password"
+          minlength: 6,
+        },
+        confirm_password: {
+          // Corresponds to name="confirm_password"
+          equalTo: "#newPassword", // Matches the ID of the new password field
+        },
+      },
+      messages: {
+        new_password: {
+          minlength: "New password must be at least 6 characters long.",
+        },
+        confirm_password: {
+          equalTo: "Please enter the same password as above.",
+        },
+      },
+      submitHandler: (form) => {
+        // Call the original handler, which now doesn't need e.preventDefault()
+        handleSecuritySubmit()
+      },
+    })
+  }
+
   function switchTab(tabName) {
     $(".tab-button").removeClass("active")
     $(".tab-content").addClass("hidden")
@@ -63,9 +134,11 @@ $(document).ready(() => {
     if (tabName === "information") {
       $("#infoTabBtn").addClass("active")
       $("#informationTabContent").removeClass("hidden")
+      $("#infoForm").validate().resetForm() // Clear validation errors when switching tabs
     } else if (tabName === "security") {
       $("#securityTabBtn").addClass("active")
       $("#securityTabContent").removeClass("hidden")
+      $("#securityForm").validate().resetForm() // Clear validation errors when switching tabs
     }
   }
 
@@ -120,9 +193,8 @@ $(document).ready(() => {
     }
   }
 
-  async function handleInformationSubmit(e) {
-    e.preventDefault()
-
+  async function handleInformationSubmit() {
+    // Removed 'e' parameter
     const currentPassword = await promptForPassword()
     if (!currentPassword) {
       return // User cancelled or didn't enter password
@@ -187,12 +259,12 @@ $(document).ready(() => {
     })
   }
 
-  async function handleSecuritySubmit(e) {
-    e.preventDefault()
-
+  async function handleSecuritySubmit() {
+    // Removed 'e' parameter
     const newPassword = $("#newPassword").val()
     const confirmPassword = $("#confirmPassword").val()
 
+    // Validation is now handled by jQuery Validate, but we keep this for the promptForPassword logic
     if (newPassword && newPassword !== confirmPassword) {
       showError("New password and confirm password do not match.")
       return
