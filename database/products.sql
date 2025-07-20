@@ -70,10 +70,6 @@ INSERT INTO products (title, description, plat_id, price, ptype_id, release_date
 ('Metroid Dread', 'Side-scrolling sci-fi platformer.', 3, 59.99, 2, '2021-10-08', 'MercurySteam', 'Nintendo'),
 
 -- Mobile Games (Digital) - ptype_id = 1
-('Genshin Impact', 'An open-world action RPG with gacha mechanics.', 1, 0.00, 1, '2020-09-28', 'miHoYo', 'miHoYo'),
-('Call of Duty: Mobile', 'The iconic multiplayer maps and modes from Call of Duty.', 1, 0.00, 1, '2019-10-01', 'TiMi Studio Group', 'Activision'),
-('PUBG Mobile', 'The original battle royale experience on mobile.', 1, 0.00, 1, '2018-03-19', 'PUBG Corporation', 'Tencent Games'),
-('Clash Royale', 'Real-time strategy game with collectible card elements.', 1, 0.00, 1, '2016-03-02', 'Supercell', 'Supercell'),
 ('Mobile Legends: Bang Bang', 'MOBA optimized for mobile.', 1, 0.00, 1, '2016-07-11', 'Moonton', 'Moonton'),
 ('Candy Crush Saga', 'Classic match-three puzzle game.', 1, 0.00, 1, '2012-04-12', 'King', 'King'),
 ('Pokemon GO', 'Augmented reality monster-catching.', 1, 0.00, 1, '2016-07-06', 'Niantic', 'Niantic'),
@@ -323,63 +319,45 @@ INSERT INTO product_images (product_id, image_url) VALUES
 (54, '/images/products/metroid_dread/samus.jpg'),
 
 -- Mobile Games (Digital) - product_id 55-68
--- Genshin Impact (product_id = 55)
-(55, '/images/products/genshin/main.jpg'),
-(55, '/images/products/genshin/characters.jpg'),
-(55, '/images/products/genshin/world.jpg'),
-
--- Call of Duty: Mobile (product_id = 56)
-(56, '/images/products/cod_mobile/main.jpg'),
-(56, '/images/products/cod_mobile/multiplayer.jpg'),
-(56, '/images/products/cod_mobile/battle_royale.jpg'),
-
--- PUBG Mobile (product_id = 57)
-(57, '/images/products/pubg_mobile/main.jpg'),
-(57, '/images/products/pubg_mobile/gameplay.jpg'),
-
--- Clash Royale (product_id = 58)
-(58, '/images/products/clash_royale/main.jpg'),
-(58, '/images/products/clash_royale/cards.jpg'),
-
 -- Mobile Legends: Bang Bang (product_id = 59)
-(59, '/images/products/mlbb/main.jpg'),
-(59, '/images/products/mlbb/heroes.jpg'),
+(55, '/images/products/mlbb/main.jpg'),
+(55, '/images/products/mlbb/heroes.jpg'),
 
 -- Candy Crush Saga (product_id = 60)
-(60, '/images/products/candy_crush/main.jpg'),
-(60, '/images/products/candy_crush/levels.jpg'),
+(56, '/images/products/candy_crush/main.jpg'),
+(56, '/images/products/candy_crush/levels.jpg'),
 
 -- Pokemon GO (product_id = 61)
-(61, '/images/products/pokemon_go/main.jpg'),
-(61, '/images/products/pokemon_go/map.jpg'),
+(57, '/images/products/pokemon_go/main.jpg'),
+(57, '/images/products/pokemon_go/map.jpg'),
 
 -- Brawl Stars (product_id = 62)
-(62, '/images/products/brawl_stars/main.jpg'),
-(62, '/images/products/brawl_stars/battle.jpg'),
+(58, '/images/products/brawl_stars/main.jpg'),
+(58, '/images/products/brawl_stars/battle.jpg'),
 
 -- Roblox (product_id = 63)
-(63, '/images/products/roblox/main.jpg'),
-(63, '/images/products/roblox/worlds.jpg'),
+(59, '/images/products/roblox/main.jpg'),
+(59, '/images/products/roblox/worlds.jpg'),
 
 -- Subway Surfers (product_id = 64)
-(64, '/images/products/subway_surfers/main.jpg'),
-(64, '/images/products/subway_surfers/running.jpg'),
+(60, '/images/products/subway_surfers/main.jpg'),
+(60, '/images/products/subway_surfers/running.jpg'),
 
 -- Temple Run 2 (product_id = 65)
-(65, '/images/products/temple_run2/main.jpg'),
-(65, '/images/products/temple_run2/temple.jpg'),
+(61, '/images/products/temple_run2/main.jpg'),
+(61, '/images/products/temple_run2/temple.jpg'),
 
 -- Angry Birds 2 (product_id = 66)
-(66, '/images/products/angry_birds2/main.jpg'),
-(66, '/images/products/angry_birds2/pigs.jpg'),
+(62, '/images/products/angry_birds2/main.jpg'),
+(62, '/images/products/angry_birds2/pigs.jpg'),
 
 -- Plague Inc. (product_id = 67)
-(67, '/images/products/plague_inc/main.jpg'),
-(67, '/images/products/plague_inc/world_map.jpg'),
+(63, '/images/products/plague_inc/main.jpg'),
+(63, '/images/products/plague_inc/world_map.jpg'),
 
 -- AFK Arena (product_id = 68)
-(68, '/images/products/afk_arena/main.jpg'),
-(68, '/images/products/afk_arena/heroes.jpg');
+(64, '/images/products/afk_arena/main.jpg'),
+(64, '/images/products/afk_arena/heroes.jpg');
 
 -- Insert stock ONLY for physical games (ptype_id = 2) with random quantities between 35-75
 INSERT INTO stock (product_id, quantity)

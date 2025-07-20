@@ -22,7 +22,7 @@ $(document).ready(() => {
 
     // Load products count
     window.makeAuthenticatedRequest({
-      url: `${API_BASE_URL}/products`,
+      url: `${API_BASE_URL}/products?limit=1000&page=1`,
       method: "GET",
       success: (response) => {
         console.log("Products response:", response)
@@ -83,7 +83,7 @@ $(document).ready(() => {
   // Create Products by Types Bar Chart
   function createProductTypesChart() {
     window.makeAuthenticatedRequest({
-      url: `${API_BASE_URL}/products`,
+      url: `${API_BASE_URL}/products?limit=1000&page=1`,
       method: "GET",
       success: (response) => {
         if (response.rows) {
@@ -153,7 +153,7 @@ $(document).ready(() => {
   // Create Products by Platform Bar Chart
   function createPlatformChart() {
     window.makeAuthenticatedRequest({
-      url: `${API_BASE_URL}/products`,
+      url: `${API_BASE_URL}/products?limit=1000&page=1`,
       method: "GET",
       success: (response) => {
         if (response.rows) {

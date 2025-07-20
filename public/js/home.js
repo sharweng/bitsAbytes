@@ -128,7 +128,7 @@ $(document).ready(() => {
                     <div class="w-12 h-12 bg-gray-200 rounded flex-shrink-0 overflow-hidden">
                         ${
                           product.images && product.images.length > 0
-                            ? `<img src="${API_BASE_URL.replace("/api", "")}/${product.images[0]}" alt="${product.title}" class="w-full h-full object-cover">`
+                            ? `<img src="${product.images[0]}" alt="${product.title}" class="w-full h-full object-cover">`
                             : `<i class="fas fa-gamepad text-gray-400 flex items-center justify-center w-full h-full"></i>`
                         }
                     </div>
@@ -404,7 +404,7 @@ $(document).ready(() => {
         : "/placeholder.svg?height=200&width=300"
 
     const price = Number.parseFloat(product.price)
-    const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
+    const priceDisplay = price === 0 ? "Free" : `₱${price.toFixed(2)}`
 
     // Generate star rating
     const avgRating = Number.parseFloat(product.average_rating) || 0
