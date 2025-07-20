@@ -229,7 +229,7 @@ $(document).ready(() => {
           // Group orders by month
           const monthlyOrders = {}
           response.orders.forEach((order) => {
-            const date = new Date(order.created_at)
+            const date = new Date(order.order_date)
             const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
             monthlyOrders[monthYear] = (monthlyOrders[monthYear] || 0) + 1
           })
