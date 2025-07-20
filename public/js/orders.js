@@ -369,9 +369,9 @@ $(document).ready(() => {
 
         return `
     <div class="flex items-center space-x-4 p-4 border-b border-gray-200">
-      <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded">
+      <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded cursor-pointer product-item-image" data-product-id="${item.product_id}">
       <div class="flex-1">
-        <h4 class="font-semibold">${item.title}</h4>
+        <h4 class="font-semibold cursor-pointer hover:text-blue-600 product-item-title" data-product-id="${item.product_id}">${item.title}</h4>
         <div class="flex items-center space-x-2 mt-1">
           <span class="text-sm text-gray-600">Qty: ${item.quantity}</span>
           ${productTypeBadge}
@@ -459,6 +459,12 @@ $(document).ready(() => {
     </div>
   </div>
 `)
+
+    // Add click handlers for product items
+    $(".product-item-image, .product-item-title").click(function () {
+      const productId = $(this).data("product-id")
+      window.location.href = `product-detail.html?id=${productId}`
+    })
   }
 
   async function markOrderAsDelivered(orderId) {

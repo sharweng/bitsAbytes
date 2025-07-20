@@ -411,16 +411,24 @@ $(document).ready(() => {
     const reviewCount = Number.parseInt(product.review_count) || 0
     const starsHtml = generateStarRating(avgRating)
 
+    // Check stock for physical products
+    const isPhysical = product.product_type === "physical"
+    const stock = Number.parseInt(product.quantity) || 0
+    const isOutOfStock = isPhysical && stock === 0
+
     // Conditionally display stock for physical products only
-    const stockDisplay =
-      product.product_type === "physical"
-        ? `
+    const stockDisplay = isPhysical
+      ? `
       <div class="flex items-center space-x-1">
         <i class="fas fa-box text-gray-400"></i>
-        <span class="text-sm text-gray-500">${product.quantity || 0} in stock</span>
+        <span class="text-sm ${isOutOfStock ? "text-red-500" : "text-gray-500"}">${stock} in stock</span>
       </div>
     `
-        : ""
+      : ""
+
+    // Disable buttons for out of stock physical products
+    const buttonsDisabled = isOutOfStock ? "disabled" : ""
+    const buttonOpacity = isOutOfStock ? "opacity-50 cursor-not-allowed" : ""
 
     return `
       <div class="product-card bg-white rounded-lg shadow-md overflow-hidden" data-product-id="${product.product_id}">
@@ -432,6 +440,7 @@ $(document).ready(() => {
             </span>
           </div>
           ${price === 0 ? '<div class="absolute top-2 left-2"><span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">FREE</span></div>' : ""}
+          ${isOutOfStock ? '<div class="absolute top-2 left-2"><span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs">OUT OF STOCK</span></div>' : ""}
         </div>
         <div class="p-4">
           <h3 class="font-semibold text-lg mb-2 line-clamp-2 cursor-pointer product-title" data-product-id="${product.product_id}">${product.title}</h3>
@@ -458,10 +467,10 @@ $(document).ready(() => {
           <!-- Action Buttons -->
           <div class="space-y-2">
             <div class="flex space-x-2">
-              <button class="add-to-cart-btn flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm font-medium transition duration-200" data-product-id="${product.product_id}">
+              <button class="add-to-cart-btn flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm font-medium transition duration-200 ${buttonOpacity}" data-product-id="${product.product_id}" ${buttonsDisabled}>
                 <i class="fas fa-cart-plus mr-1"></i>Add to Cart
               </button>
-              <button class="buy-now-btn flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded text-sm font-medium transition duration-200" data-product-id="${product.product_id}">
+              <button class="buy-now-btn flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded text-sm font-medium transition duration-200 ${buttonOpacity}" data-product-id="${product.product_id}" ${buttonsDisabled}>
                 <i class="fas fa-bolt mr-1"></i>Buy Now
               </button>
             </div>

@@ -245,6 +245,44 @@ $(document).ready(() => {
       return
     }
 
+    // Check if user profile is complete
+    try {
+      const response = await $.ajax({
+        url: `${API_BASE_URL}/users/profile/${currentUser.user_id}`,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+
+      if (response.success && response.user) {
+        const userProfile = response.user
+        const isProfileComplete = userProfile.first_name && userProfile.last_name && userProfile.contact_number
+
+        if (!isProfileComplete) {
+          Swal.fire({
+            icon: "warning",
+            title: "Profile Incomplete",
+            text: "Please complete your profile information (first name, last name, and contact number) before placing an order.",
+            showCancelButton: true,
+            confirmButtonText: "Go to Profile",
+            cancelButtonText: "Cancel",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = "profile.html"
+            }
+          })
+          return
+        }
+      } else {
+        throw new Error("Failed to fetch user profile")
+      }
+    } catch (xhr) {
+      console.error("Error fetching user profile:", xhr)
+      showError("Error verifying profile information. Please try again.")
+      return
+    }
+
     // Determine if there are any physical products in the cart
     const hasPhysicalProducts = cart.some((item) => item.product_type === "physical")
 
