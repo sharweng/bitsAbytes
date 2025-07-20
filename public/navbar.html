@@ -80,6 +80,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
 <script>
 // Auto-load navbar functionality
 $(document).ready(() => {
@@ -117,9 +118,13 @@ function initializeNavbarEvents() {
   $('#logoutBtn').off('click').on('click', logout)
   $('.close-modal').off('click').on('click', () => $('#loginModal').addClass('hidden'))
   
-  // Login form
-  $('#loginForm').off('submit').on('submit', handleLogin)
-  
+  // Modal clicks
+  $('#loginModal').off('click').on('click', function(e) {
+    if (e.target === this) {
+      $(this).addClass('hidden')
+    }
+  })
+
   // Cart button
   $('#cartBtn').off('click').on('click', () => {
     window.location.href = 'cart.html'
@@ -140,12 +145,43 @@ function initializeNavbarEvents() {
     window.location.href = 'index.html'
   })
   
-  // Modal clicks
-  $('#loginModal').off('click').on('click', function(e) {
-    if (e.target === this) {
-      $(this).addClass('hidden')
+  // Initialize jQuery Validation for login form
+  $('#loginForm').validate({
+    rules: {
+      email: {
+        required: true,
+        email: true
+      },
+      password: {
+        required: true,
+      }
+    },
+    messages: {
+      email: {
+        required: "Please enter your email address",
+        email: "Please enter a valid email address"
+      },
+      password: {
+        required: "Please enter your password",
+      }
+    },
+    errorElement: "div",
+    errorClass: "text-red-500 text-xs mt-1",
+    highlight: (element, errorClass, validClass) => {
+      $(element).addClass("border-red-500").removeClass("border-gray-300");
+    },
+    unhighlight: (element, errorClass, validClass) => {
+      $(element).removeClass("border-red-500").addClass("border-gray-300");
+    },
+    submitHandler: function(form) {
+      const formData = new FormData(form);
+      const loginData = {
+        email: formData.get("email"),
+        password: formData.get("password"),
+      };
+      performLogin(loginData);
     }
-  })
+  });
 }
 
 function checkAuthStatus() {
@@ -209,15 +245,9 @@ function showUnauthenticatedState(isDashboardPage) {
   }
 }
 
-function handleLogin(e) {
-  e.preventDefault()
+// New function to perform the actual login AJAX request
+function performLogin(loginData) {
   const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api'
-  const formData = new FormData(e.target)
-  const loginData = {
-    email: formData.get('email'),
-    password: formData.get('password')
-  }
-  
   $.ajax({
     url: `${API_BASE_URL}/users/login`,
     method: 'POST',
@@ -253,16 +283,9 @@ function handleLogin(e) {
       }
     },
     error: (xhr) => {
-      const error = xhr.responseJSON?.message || 'Login failed'
-      if (window.Swal) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Login Failed',
-          text: error
-        })
-      } else {
-        alert(error)
-      }
+      // Errors are now handled by jQuery Validation directly on the form fields.
+      // Keep console.error for debugging purposes.
+      console.error("Login AJAX error:", xhr.responseJSON?.message || 'Login failed');
     }
   })
 }
