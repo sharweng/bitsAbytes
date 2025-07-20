@@ -400,7 +400,7 @@ $(document).ready(() => {
   function createProductCard(product) {
     const imageUrl =
       product.images && product.images.length > 0
-        ? `${API_BASE_URL.replace("/api", "")}/${product.images[0]}`
+        ? `${product.images[0]}`
         : "/placeholder.svg?height=200&width=300"
 
     const price = Number.parseFloat(product.price)

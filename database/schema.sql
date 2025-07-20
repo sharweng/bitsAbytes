@@ -164,40 +164,6 @@ CREATE TABLE reviews (
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
--- Create Categories table
-CREATE TABLE categories (
-    category_id INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(100) UNIQUE NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Insert categories
-INSERT INTO categories (category_name, description) VALUES
-('Action', 'Fast-paced games with combat and adventure'),
-('RPG', 'Role-playing games with character development'),
-('Strategy', 'Games requiring tactical thinking and planning'),
-('Sports', 'Sports simulation and arcade games'),
-('Racing', 'Car and motorcycle racing games'),
-('Puzzle', 'Brain-teasing and logic games'),
-('Simulation', 'Life and world simulation games'),
-('Horror', 'Scary and suspenseful games'),
-('Indie', 'Independent developer games'),
-('Multiplayer', 'Games designed for multiple players');
-
--- Create Product Categories junction table
-CREATE TABLE product_categories (
-    product_id INT NOT NULL,
-    category_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (product_id, category_id),
-    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE
-);
-
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role_id);

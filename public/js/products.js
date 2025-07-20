@@ -35,7 +35,7 @@ $(document).ready(() => {
           render: (data) => {
             if (data && data.length > 0) {
               const imageCount = data.length
-              const firstImage = `<img src="${API_BASE_URL.replace("/api", "")}/${data[0]}" alt="Product" class="w-12 h-12 object-cover rounded">`
+              const firstImage = `<img src="${data[0]}" alt="Product" class="w-12 h-12 object-cover rounded">`
 
               if (imageCount > 1) {
                 return `<div class="relative inline-block">${firstImage}<span class="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">+${imageCount - 1}</span></div>`
@@ -109,7 +109,7 @@ $(document).ready(() => {
                 ${product.images
                   .map(
                     (img) =>
-                      `<img src="${API_BASE_URL.replace("/api", "")}/${img}" alt="Product image" class="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-75" onclick="openImageModal('${API_BASE_URL.replace("/api", "")}/${img}')">`,
+                      `<img src="${img}" alt="Product image" class="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-75" onclick="openImageModal('${img}')">`,
                   )
                   .join("")}
               </div>

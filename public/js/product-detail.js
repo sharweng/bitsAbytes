@@ -152,7 +152,7 @@ $(document).ready(() => {
                   .map(
                     (img, index) => `
                   <div class="carousel-slide">
-                    <img src="${API_BASE_URL.replace("/api", "")}/${img}" alt="${product.title}" class="w-full h-96 object-cover">
+                    <img src="${img}" alt="${product.title}" class="w-full h-96 object-cover">
                   </div>
                 `,
                   )
