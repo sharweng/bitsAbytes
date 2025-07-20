@@ -320,6 +320,9 @@ $(document).ready(() => {
         number: true,
         min: 0,
       },
+      description: {
+        minlength: 5,
+      },
       plat_id: {
         required: true,
       },
@@ -336,6 +339,12 @@ $(document).ready(() => {
         number: true,
         min: 0,
       },
+      developer: {
+        minlength: 3,
+      },
+      publisher: {
+        minlength: 3,
+      },
       releaseDate: {
         required: true, // Make release date required
       },
@@ -350,6 +359,9 @@ $(document).ready(() => {
         number: "Please enter a valid number for price.",
         min: "Price cannot be negative.",
       },
+      description: {
+        minlength: "Description must be at least 5 characters.",
+      },
       plat_id: {
         required: "Please select a platform.",
       },
@@ -360,6 +372,12 @@ $(document).ready(() => {
         required: "Quantity is required for physical products.",
         number: "Please enter a valid number for quantity.",
         min: "Quantity cannot be negative.",
+      },
+      developer: {
+        minlength: "Description must be at least 3 characters.",
+      },
+      publisher: {
+        minlength: "Description must be at least 3 characters.",
       },
       releaseDate: {
         required: "Please enter a release date.", // Message for required release date
