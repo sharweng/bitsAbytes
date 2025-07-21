@@ -138,6 +138,7 @@ $(document).ready(() => {
         },
         {
           data: "order_date",
+          type: "date",
           render: (data) => new Date(data).toLocaleDateString(),
         },
         { data: "total_items" },

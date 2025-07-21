@@ -53,6 +53,7 @@ $(document).ready(() => {
         },
         {
           data: "created_at",
+          type: "date",
           render: (data) => new Date(data).toLocaleDateString(),
         },
         {
