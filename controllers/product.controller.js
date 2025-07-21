@@ -45,12 +45,18 @@ const getAllProducts = (req, res) => {
     case "price_high":
       orderBy = "ORDER BY p.price DESC"
       break
-    case "title":
+    case "title_asc":
       orderBy = "ORDER BY p.title ASC"
+      break
+    case "title_desc":
+      orderBy = "ORDER BY p.title DESC"
+      break
+    case "oldest":
+      orderBy = "ORDER BY p.product_id ASC"
       break
     case "newest":
     default:
-      orderBy = "ORDER BY p.created_at DESC"
+      orderBy = "ORDER BY p.product_id DESC"
       break
   }
 
