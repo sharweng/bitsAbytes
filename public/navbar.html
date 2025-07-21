@@ -3,7 +3,7 @@
     <div class="flex justify-between h-16">
       <!-- Logo and Brand -->
       <div class="flex items-center">
-        <a href="index.html" class="flex items-center space-x-2">
+        <a href="#" id="logoLink" class="flex items-center space-x-2">
           <i class="fas fa-gamepad text-2xl text-blue-600"></i>
           <span class="text-xl font-bold text-gray-800">BitsAbytes</span>
         </a>
@@ -201,6 +201,23 @@ function initializeNavbarEvents() {
       $('#loginForm').trigger('submit');
     }
   });
+
+  // Logo link handler
+  $('#logoLink').off('click').on('click', (e) => {
+    e.preventDefault()
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const isDashboardPage = window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('users.html') || window.location.pathname.includes('products.html') || window.location.pathname.includes('reviews.html') || window.location.pathname.includes('admin-orders.html')
+    
+    if (user.role === 'admin') {
+      if (isDashboardPage) {
+        window.location.href = 'dashboard.html'
+      } else {
+        window.location.href = 'index.html'
+      }
+    } else {
+      window.location.href = 'index.html'
+    }
+  })
 }
 
 function checkAuthStatus() {
@@ -220,6 +237,17 @@ function showAuthenticatedState(user, isDashboardPage) {
   $('#logoutBtn').removeClass('hidden')
   $('#userInfo').removeClass('hidden')
   $('#userName').text(user.first_name || user.email)
+  
+  // Update logo link based on user role and current page
+  if (user.role === 'admin') {
+    if (isDashboardPage) {
+      $('#logoLink').attr('title', 'Go to Dashboard')
+    } else {
+      $('#logoLink').attr('title', 'Go to Website')
+    }
+  } else {
+    $('#logoLink').attr('href', 'index.html').attr('title', 'Home')
+  }
   
   if (isDashboardPage) {
     // Dashboard page: only logo, website button, and logout
@@ -257,6 +285,9 @@ function showUnauthenticatedState(isDashboardPage) {
   $('#myOrdersBtn').addClass('hidden')
   $('#dashboardBtn').addClass('hidden')
   $('#websiteBtn').addClass('hidden')
+  
+  // Reset logo link to home
+  $('#logoLink').attr('href', 'index.html').attr('title', 'Home')
   
   // Redirect to home if trying to access dashboard or profile without auth
   if (isDashboardPage) {
@@ -298,6 +329,14 @@ function performLogin(loginData) {
             timer: 1500,
             showConfirmButton: false
           })
+        }
+        
+        // Auto-redirect admin to dashboard after login
+        if (response.user.role === 'admin' && !isDashboardPage) {
+          setTimeout(() => {
+            window.location.href = 'dashboard.html'
+          }, 1500)
+          return
         }
         
         // Update cart count if not on dashboard or profile
