@@ -158,7 +158,7 @@ $(document).ready(() => {
     // Handle search result clicks
     $(".search-result-item").click(function () {
       const productId = $(this).data("product-id")
-      viewProductDetails(productId)
+      window.location.href = `product-detail.html?id=${productId}`
       hideSearchDropdown()
     })
   }
@@ -528,72 +528,6 @@ $(document).ready(() => {
     }
   }
 
-  // Product details modal
-  function viewProductDetails(productId) {
-    $.ajax({
-      url: `${API_BASE_URL}/products/${productId}`,
-      method: "GET",
-      success: (response) => {
-        if (response.success) {
-          const product = response.result
-          showProductModal(product)
-        }
-      },
-      error: (xhr) => {
-        console.error("Error loading product details:", xhr)
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Failed to load product details",
-        })
-      },
-    })
-  }
-
-  function showProductModal(product) {
-    const imagesHtml =
-      product.images && product.images.length > 0
-        ? product.images
-            .map(
-              (img) =>
-                `<img src="${API_BASE_URL.replace("/api", "")}/${img}" alt="${product.title}" class="w-full h-64 object-cover rounded-lg mb-2">`,
-            )
-            .join("")
-        : `<div class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-                 <i class="fas fa-gamepad text-4xl text-gray-400"></i>
-               </div>`
-
-    const price = Number.parseFloat(product.price)
-    const priceDisplay = price === 0 ? "Free" : `$${price.toFixed(2)}`
-
-    Swal.fire({
-      title: product.title,
-      html: `
-                <div class="text-left">
-                    ${imagesHtml}
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div><strong>Platform:</strong> ${product.platform_type || "Unknown"}</div>
-                        <div><strong>Type:</strong> ${product.product_type || "Digital"}</div>
-                        <div><strong>Developer:</strong> ${product.developer || "Unknown"}</div>
-                        <div><strong>Publisher:</strong> ${product.publisher || "Unknown"}</div>
-                        <div><strong>Price:</strong> <span class="text-blue-600 font-bold">${priceDisplay}</span></div>
-                        <div><strong>Stock:</strong> ${product.quantity || 0} available</div>
-                    </div>
-                    ${product.release_date ? `<div class="mb-4"><strong>Release Date:</strong> ${new Date(product.release_date).toLocaleDateString()}</div>` : ""}
-                    <div class="mb-4">
-                        <strong>Description:</strong>
-                        <p class="mt-2 text-gray-600">${product.description || "No description available"}</p>
-                    </div>
-                </div>
-            `,
-      width: "800px",
-      showCloseButton: true,
-      showConfirmButton: false,
-      customClass: {
-        popup: "text-left",
-      },
-    })
-  }
 
   // Authentication
   function handleLogin(e) {
