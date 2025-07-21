@@ -4,6 +4,7 @@ const upload = require("../utils/multer")
 const {
   registerUser,
   loginUser,
+  logoutUser,
   updateUser,
   deactivateUser,
   reactivateUser,
@@ -20,6 +21,7 @@ router.post("/register", registerUser)
 router.post("/login", loginUser)
 
 // Protected routes
+router.post("/logout", isAuthenticatedUser, logoutUser)
 router.get("/profile/:user_id", isAuthenticatedUser, getUserProfile)
 router.put("/profile/:user_id", isAuthenticatedUser, upload.single("image"), updateUser)
 router.put("/change-password/:user_id", isAuthenticatedUser, changePassword)

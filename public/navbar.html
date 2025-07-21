@@ -423,6 +423,55 @@ function logout() {
 }
 
 function performLogout() {
+  const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api'
+  const token = localStorage.getItem('token')
+  
+  if (!token) {
+    // If no token, just clear everything and redirect
+    clearSessionAndRedirect()
+    return
+  }
+  
+  // Show loading state
+  if (window.Swal) {
+    Swal.fire({
+      title: 'Logging out...',
+      text: 'Please wait while we log you out.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading()
+      }
+    })
+  }
+  
+  // Call logout API
+  $.ajax({
+    url: `${API_BASE_URL}/users/logout`,
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    success: (response) => {
+      if (response.success) {
+        clearSessionAndRedirect()
+      } else {
+        console.error('Logout API returned error:', response.message)
+        // Still clear session even if API fails
+        clearSessionAndRedirect()
+      }
+    },
+    error: (xhr) => {
+      console.error('Logout API call failed:', xhr)
+      // Still clear session even if API call fails
+      clearSessionAndRedirect()
+    }
+  })
+}
+
+function clearSessionAndRedirect() {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
   localStorage.removeItem('cart') // Clear cart on logout

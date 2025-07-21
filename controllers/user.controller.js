@@ -20,7 +20,7 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10)
     const userSql = "INSERT INTO users (email, password_hash, image_url, role_id) VALUES (?, ?, ?, ?)"
 
-    connection.execute(userSql, [email, hashedPassword, '/images/default-user.jpg', 1], (err, result) => {
+    connection.execute(userSql, [email, hashedPassword, "/images/default-user.jpg", 1], (err, result) => {
       if (err) {
         console.log(err)
         if (err.code === "ER_DUP_ENTRY") {
@@ -121,11 +121,26 @@ const loginUser = (req, res) => {
         { expiresIn: "24h" },
       )
 
-      return res.status(200).json({
-        success: true,
-        message: "Login successful",
-        user: user,
-        token: token,
+      // Save token to database
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      const updateTokenSql = "UPDATE users SET token = ?, token_expires_at = ? WHERE user_id = ?"
+
+      connection.execute(updateTokenSql, [token, expiresAt, user.user_id], (tokenErr, tokenResult) => {
+        if (tokenErr) {
+          console.log("Error saving token:", tokenErr)
+          return res.status(500).json({
+            success: false,
+            message: "Error creating session",
+            error: tokenErr.message,
+          })
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Login successful",
+          user: user,
+          token: token,
+        })
       })
     } catch (error) {
       console.log(error)
@@ -466,9 +481,39 @@ const changePassword = async (req, res) => {
   }
 }
 
+const logoutUser = (req, res) => {
+  const user_id = req.user.id || req.user.user_id
+
+  if (!user_id) {
+    return res.status(400).json({
+      success: false,
+      message: "User ID not found in token",
+    })
+  }
+
+  const sql = "UPDATE users SET token = NULL, token_expires_at = NULL WHERE user_id = ?"
+
+  connection.execute(sql, [user_id], (err, result) => {
+    if (err) {
+      console.log(err)
+      return res.status(500).json({
+        success: false,
+        message: "Error logging out",
+        error: err.message,
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    })
+  })
+}
+
 module.exports = {
   registerUser,
   loginUser,
+  logoutUser,
   updateUser,
   deactivateUser,
   reactivateUser,
