@@ -8,7 +8,7 @@ $(document).ready(() => {
   function initializeUsersTable() {
     usersTable = $("#usersTable").DataTable({
       ajax: {
-        url: `${API_BASE_URL}/users`,
+        url: `${API_BASE_URL}/users?include_deleted=true`,
         headers: window.getAuthHeaders(),
         dataSrc: "users",
         error: (xhr, error, code) => {

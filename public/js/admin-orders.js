@@ -129,7 +129,6 @@ $(document).ready(() => {
       columns: [
         {
           data: "order_id",
-          render: (data) => `#${data}`,
         },
         {
           data: null,

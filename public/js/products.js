@@ -129,7 +129,7 @@ $(document).ready(() => {
               <div><strong>Stock:</strong> ${product.product_type && product.product_type.toLowerCase() === "digital" ? "N/A" : product.quantity || 0}</div>
               <div><strong>Developer:</strong> ${product.developer || "N/A"}</div>
               <div><strong>Publisher:</strong> ${product.publisher || "N/A"}</div>
-              <div><strong>Release Date:</strong> ${product.releaseDate ? new Date(product.releaseDate).toLocaleDateString() : "N/A"}</div>
+              <div><strong>Release Date:</strong> ${product.release_date ? new Date(product.release_date).toLocaleDateString() : "N/A"}</div>
               <div class="md:col-span-2"><strong>Description:</strong> ${product.description || "No description available"}</div>
             </div>
           </div>
@@ -286,7 +286,9 @@ $(document).ready(() => {
           $("#quantity").val(product.quantity)
           $("#developer").val(product.developer)
           $("#publisher").val(product.publisher)
-          $("#releaseDate").val(product.releaseDate ? product.releaseDate.split("T")[0] : "")
+
+          // Fix the release date field - use release_date instead of releaseDate
+          $("#releaseDate").val(product.release_date ? product.release_date.split("T")[0] : "")
 
           // Set platform and product type after a short delay to ensure options are loaded
           setTimeout(() => {
