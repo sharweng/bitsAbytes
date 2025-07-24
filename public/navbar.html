@@ -210,9 +210,9 @@ function initializeNavbarEvents() {
     
     if (user.role === 'admin') {
       if (isDashboardPage) {
-        window.location.href = 'dashboard.html'
-      } else {
         window.location.href = 'index.html'
+      } else {
+        window.location.href = 'dashboard.html'
       }
     } else {
       window.location.href = 'index.html'
@@ -241,9 +241,9 @@ function showAuthenticatedState(user, isDashboardPage) {
   // Update logo link based on user role and current page
   if (user.role === 'admin') {
     if (isDashboardPage) {
-      $('#logoLink').attr('title', 'Go to Dashboard')
-    } else {
       $('#logoLink').attr('title', 'Go to Website')
+    } else {
+      $('#logoLink').attr('title', 'Go to Dashboard')
     }
   } else {
     $('#logoLink').attr('href', 'index.html').attr('title', 'Home')
@@ -297,6 +297,41 @@ function showUnauthenticatedState(isDashboardPage) {
 
 // New function to perform the actual login AJAX request
 function performLogin(loginData) {
+  // Use the centralized login function from auth.js
+  if (window.loginUser) {
+    window.loginUser(loginData.email, loginData.password)
+      .then((response) => {
+        console.log("Login successful via centralized auth")
+        $('#loginModal').addClass('hidden')
+        
+        // Clear the form after successful login
+        $('#loginForm')[0].reset()
+        
+        // Update navbar state
+        const isDashboardPage = window.location.pathname.includes('dashboard.html')
+        showAuthenticatedState(response.user, isDashboardPage)
+        
+        // Update cart count if not on dashboard or profile
+        if (!isDashboardPage) {
+          updateCartCount()
+        }
+        
+        // Trigger custom event for other scripts to listen to
+        $(document).trigger('authStateChanged', [true, response.user])
+      })
+      .catch((error) => {
+        console.error("Login failed:", error)
+        // Error handling is already done in the centralized login function
+      })
+  } else {
+    // Fallback to original implementation if auth.js not loaded
+    console.warn("Centralized auth not available, using fallback")
+    performLoginFallback(loginData)
+  }
+}
+
+// Fallback login function (original implementation)
+function performLoginFallback(loginData) {
   const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api'
   
   // Clear any existing errors
@@ -310,8 +345,13 @@ function performLogin(loginData) {
     data: JSON.stringify(loginData),
     success: (response) => {
       if (response.success) {
-        localStorage.setItem('token', response.token)
-        localStorage.setItem('user', JSON.stringify(response.user))
+        // Use centralized auth storage if available
+        if (window.setAuth) {
+          window.setAuth(response.token, response.user)
+        } else {
+          localStorage.setItem('token', response.token)
+          localStorage.setItem('user', JSON.stringify(response.user))
+        }
         
         const isDashboardPage = window.location.pathname.includes('dashboard.html')
         showAuthenticatedState(response.user, isDashboardPage)
@@ -451,12 +491,21 @@ function logout() {
       confirmButtonText: 'Yes, logout'
     }).then((result) => {
       if (result.isConfirmed) {
-        performLogout()
+        // Use centralized logout if available
+        if (window.logoutUser) {
+          window.logoutUser()
+        } else {
+          performLogout()
+        }
       }
     })
   } else {
     if (confirm('Are you sure you want to logout?')) {
-      performLogout()
+      if (window.logoutUser) {
+        window.logoutUser()
+      } else {
+        performLogout()
+      }
     }
   }
 }

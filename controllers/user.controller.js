@@ -121,9 +121,15 @@ const loginUser = (req, res) => {
         { expiresIn: "24h" },
       )
 
-      // Save token to database
+      // Save token to database - this will overwrite any existing token
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
       const updateTokenSql = "UPDATE users SET token = ?, token_expires_at = ? WHERE user_id = ?"
+
+      console.log("=== Login Token Save ===")
+      console.log("Saving new token to database for user:", user.user_id)
+      console.log("New token:", token)
+      console.log("Token length:", token.length)
+      console.log("Expires at:", expiresAt.toISOString())
 
       connection.execute(updateTokenSql, [token, expiresAt, user.user_id], (tokenErr, tokenResult) => {
         if (tokenErr) {
@@ -134,6 +140,9 @@ const loginUser = (req, res) => {
             error: tokenErr.message,
           })
         }
+
+        console.log("Token saved successfully to database")
+        console.log("Affected rows:", tokenResult.affectedRows)
 
         return res.status(200).json({
           success: true,
@@ -147,6 +156,78 @@ const loginUser = (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Error during authentication",
+        error: error.message,
+      })
+    }
+  })
+}
+
+// NEW: Dedicated password verification endpoint
+const verifyPassword = async (req, res) => {
+  const { user_id } = req.params
+  const { password } = req.body
+
+  console.log("=== Password Verification Request ===")
+  console.log("User ID:", user_id)
+  console.log("Password provided:", !!password)
+
+  if (!user_id || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "User ID and password are required",
+    })
+  }
+
+  // Verify that the requesting user matches the user_id in the token
+  if (req.user.user_id !== Number.parseInt(user_id)) {
+    return res.status(403).json({
+      success: false,
+      message: "You can only verify your own password",
+    })
+  }
+
+  const sql = "SELECT password_hash FROM users WHERE user_id = ? AND deleted = 0"
+
+  connection.execute(sql, [user_id], async (err, results) => {
+    if (err) {
+      console.log("Database error during password verification:", err)
+      return res.status(500).json({
+        success: false,
+        message: "Error verifying password",
+        error: err.message,
+      })
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found or account deactivated",
+      })
+    }
+
+    const user = results[0]
+
+    try {
+      const match = await bcrypt.compare(password, user.password_hash)
+
+      console.log("Password verification result:", match)
+
+      if (match) {
+        return res.status(200).json({
+          success: true,
+          message: "Password verified successfully",
+        })
+      } else {
+        return res.status(401).json({
+          success: false,
+          message: "Incorrect password",
+        })
+      }
+    } catch (error) {
+      console.log("Error during password comparison:", error)
+      return res.status(500).json({
+        success: false,
+        message: "Error verifying password",
         error: error.message,
       })
     }
@@ -514,6 +595,7 @@ module.exports = {
   registerUser,
   loginUser,
   logoutUser,
+  verifyPassword, // NEW: Export the password verification function
   updateUser,
   deactivateUser,
   reactivateUser,
