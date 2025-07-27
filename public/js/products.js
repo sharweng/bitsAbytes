@@ -183,7 +183,7 @@ $(document).ready(() => {
       success: (response) => {
         if (response.success) {
           const select = $("#platId")
-          select.find("option:not(:first)").remove()
+          select.empty().append('<option value="">Select Platform</option>') // Clear all and add fresh placeholder
 
           response.platforms.forEach((platform) => {
             select.append(`<option value="${platform.plat_id}">${platform.description}</option>`)
@@ -204,7 +204,7 @@ $(document).ready(() => {
       success: (response) => {
         if (response.success) {
           const select = $("#ptypeId")
-          select.find("option:not(:first)").remove()
+          select.empty().append('<option value="">Select Product Type</option>') // Clear all and add fresh placeholder
 
           response.productTypes.forEach((type) => {
             select.append(`<option value="${type.ptype_id}">${type.description}</option>`)

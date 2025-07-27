@@ -145,6 +145,13 @@ $(document).ready(() => {
           `
           }
 
+          let uStat;
+          if(user.deleted){
+            uStat = '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Deactivated</span>'
+          }else{
+            uStat = '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>'
+          }
+
           const content = `
           <div class="space-y-4">
             ${imageHtml}
@@ -156,9 +163,7 @@ $(document).ready(() => {
               <div><strong>Contact Number:</strong> ${user.contact_number || "N/A"}</div>
               <div><strong>Role:</strong> ${user.role}</div>
               <div><strong>Account Created:</strong> ${new Date(user.created_at).toLocaleDateString()}</div>
-              <div><strong>Status:</strong> 
-                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>
-              </div>
+              <div><strong>Status:</strong> ${uStat}</div>
             </div>
           </div>
         `
