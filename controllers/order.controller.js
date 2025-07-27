@@ -202,28 +202,15 @@ const createOrder = (req, res) => {
               const [orderAndUserDetailsRaw] = await connection.promise().execute(getOrderAndUserDetailsSql, [orderId])
 
               if (orderAndUserDetailsRaw.length > 0) {
-                // Aggregate items to ensure uniqueness and correct quantities
-                const itemsMap = new Map()
-                orderAndUserDetailsRaw.forEach((row) => {
-                  if (row.product_id) {
-                    // If the product is already in the map, update its quantity
-                    if (itemsMap.has(row.product_id)) {
-                      const existingItem = itemsMap.get(row.product_id)
-                      existingItem.quantity += row.quantity // Sum quantities if product appears multiple times (e.g., if multiple order_items for same product)
-                      itemsMap.set(row.product_id, existingItem)
-                    } else {
-                      itemsMap.set(row.product_id, {
-                        product_id: row.product_id,
-                        quantity: row.quantity,
-                        title: row.title,
-                        price: row.price,
-                        product_type: row.product_type,
-                        image_url: row.image_url,
-                      })
-                    }
-                  }
-                })
-                const aggregatedItems = Array.from(itemsMap.values())
+                // No need to aggregate items here since we're grouping by product_id and quantity in SQL
+                const orderItems = orderAndUserDetailsRaw.map((row) => ({
+                  product_id: row.product_id,
+                  quantity: row.quantity,
+                  title: row.title,
+                  price: row.price,
+                  product_type: row.product_type,
+                  image_url: row.image_url,
+                }))
 
                 const orderDetails = {
                   order_id: orderAndUserDetailsRaw[0].order_id,
@@ -234,7 +221,7 @@ const createOrder = (req, res) => {
                   first_name: orderAndUserDetailsRaw[0].first_name,
                   last_name: orderAndUserDetailsRaw[0].last_name,
                   shipping_address: orderAndUserDetailsRaw[0].shipping_address,
-                  items: aggregatedItems,
+                  items: orderItems,
                 }
 
                 const orderDate = new Date(orderDetails.order_date).toLocaleDateString()
@@ -453,11 +440,11 @@ JOIN users u ON o.user_id = u.user_id
 WHERE o.order_id = ? AND o.user_id = ?
 `
 
-  // Get order items
+  // Get order items - REMOVED SUM aggregation to get actual quantities
   const itemsSql = `
 SELECT 
   oi.product_id,
-  SUM(oi.quantity) as quantity, -- Sum quantities for the same product
+  oi.quantity,
   p.title,
   p.price,
   p.description,
@@ -468,7 +455,7 @@ JOIN products p ON oi.product_id = p.product_id
 JOIN product_types pt ON p.ptype_id = pt.ptype_id
 LEFT JOIN product_images pi ON p.product_id = pi.product_id
 WHERE oi.order_id = ?
-GROUP BY oi.product_id, p.title, p.price, p.description, pt.description
+GROUP BY oi.product_id, oi.quantity, p.title, p.price, p.description, pt.description
 `
 
   try {
@@ -606,11 +593,11 @@ JOIN users u ON o.user_id = u.user_id
 WHERE o.order_id = ?
 `
 
-  // Get order items
+  // Get order items - REMOVED SUM aggregation to get actual quantities
   const itemsSql = `
 SELECT 
   oi.product_id,
-  SUM(oi.quantity) as quantity, -- Sum quantities for the same product
+  oi.quantity,
   p.title,
   p.price,
   p.description,
@@ -621,7 +608,7 @@ JOIN products p ON oi.product_id = p.product_id
 JOIN product_types pt ON p.ptype_id = pt.ptype_id
 LEFT JOIN product_images pi ON p.product_id = pi.product_id
 WHERE oi.order_id = ?
-GROUP BY oi.product_id, p.title, p.price, p.description, pt.description
+GROUP BY oi.product_id, oi.quantity, p.title, p.price, p.description, pt.description
 `
 
   try {
@@ -699,27 +686,15 @@ const updateOrderStatus = (req, res) => {
         })
       }
 
-      // Aggregate items to ensure uniqueness and correct quantities
-      const itemsMap = new Map()
-      resultsRaw.forEach((row) => {
-        if (row.product_id) {
-          if (itemsMap.has(row.product_id)) {
-            const existingItem = itemsMap.get(row.product_id)
-            existingItem.quantity += row.quantity
-            itemsMap.set(row.product_id, existingItem)
-          } else {
-            itemsMap.set(row.product_id, {
-              product_id: row.product_id,
-              quantity: row.quantity,
-              title: row.title,
-              price: row.price,
-              product_type: row.product_type,
-              image_url: row.image_url,
-            })
-          }
-        }
-      })
-      const aggregatedItems = Array.from(itemsMap.values())
+      // No need to aggregate items here since we're grouping by product_id and quantity in SQL
+      const orderItems = resultsRaw.map((row) => ({
+        product_id: row.product_id,
+        quantity: row.quantity,
+        title: row.title,
+        price: row.price,
+        product_type: row.product_type,
+        image_url: row.image_url,
+      }))
 
       // Reconstruct order object from flat results
       const orderData = {
@@ -733,7 +708,7 @@ const updateOrderStatus = (req, res) => {
         first_name: resultsRaw[0].first_name,
         last_name: resultsRaw[0].last_name,
         shipping_address: resultsRaw[0].shipping_address,
-        items: aggregatedItems,
+        items: orderItems,
       }
 
       const previousStatId = orderData.stat_id
@@ -855,27 +830,15 @@ const updateOrderStatus = (req, res) => {
                 const [updatedOrderResultsRaw] = await connection.promise().execute(getUpdatedOrderSql, [orderId])
 
                 if (updatedOrderResultsRaw.length > 0) {
-                  // Aggregate items to ensure uniqueness and correct quantities
-                  const itemsMap = new Map()
-                  updatedOrderResultsRaw.forEach((row) => {
-                    if (row.product_id) {
-                      if (itemsMap.has(row.product_id)) {
-                        const existingItem = itemsMap.get(row.product_id)
-                        existingItem.quantity += row.quantity
-                        itemsMap.set(row.product_id, existingItem)
-                      } else {
-                        itemsMap.set(row.product_id, {
-                          product_id: row.product_id,
-                          quantity: row.quantity,
-                          title: row.title,
-                          price: row.price,
-                          product_type: row.product_type,
-                          image_url: row.image_url,
-                        })
-                      }
-                    }
-                  })
-                  const aggregatedItems = Array.from(itemsMap.values())
+                  // No need to aggregate items here since we're grouping by product_id and quantity in SQL
+                  const updatedOrderItems = updatedOrderResultsRaw.map((row) => ({
+                    product_id: row.product_id,
+                    quantity: row.quantity,
+                    title: row.title,
+                    price: row.price,
+                    product_type: row.product_type,
+                    image_url: row.image_url,
+                  }))
 
                   const updatedOrder = {
                     order_id: updatedOrderResultsRaw[0].order_id,
@@ -888,7 +851,7 @@ const updateOrderStatus = (req, res) => {
                     first_name: updatedOrderResultsRaw[0].first_name,
                     last_name: updatedOrderResultsRaw[0].last_name,
                     shipping_address: updatedOrderResultsRaw[0].shipping_address,
-                    items: aggregatedItems,
+                    items: updatedOrderItems,
                   }
 
                   const orderDate = new Date(updatedOrder.order_date).toLocaleDateString()
