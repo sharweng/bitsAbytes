@@ -11,52 +11,116 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
-    
+
     <style>
         .tab-button.active {
-            border-bottom: 2px solid #3b82f6;
-            color: #3b82f6;
+            border-bottom: 2px solid #38bdf8;
+            color: #38bdf8;
             font-weight: 600;
         }
+
+        .tab-button:hover {
+            color: #38bdf8;
+            border-bottom: 2px solid #38bdf8;
+            transition: all 0.3s ease-in-out;
+        }
+
         .profile-image-preview {
             width: 120px;
             height: 120px;
             object-fit: cover;
             border-radius: 50%;
-            border: 2px solid #e5e7eb;
+            border: 2px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            transition: transform 0.3s ease-in-out;
         }
+
+        .profile-image-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+        }
+
+        .upload-button {
+            transition: all 0.3s ease-in-out;
+            background: linear-gradient(to right, #3b82f6, #06b6d4);
+        }
+
+        .upload-button:hover {
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+            transform: scale(1.05);
+        }
+
+        input:focus, textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 10px #3b82f6;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .form-button {
+            transition: all 0.3s ease-in-out;
+            background: linear-gradient(to right, #3b82f6, #06b6d4);
+        }
+
+        .form-button:hover {
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
+        }
+
         .error {
-            color: red;
+            color: #f87171;
             font-size: 0.875em;
             margin-top: 0.25em;
         }
+        
+        body {
+            background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+            color: white;
+            font-family: 'Rubik', sans-serif;
+        }
+
+        .form-container {
+            background-color: rgba(31, 27, 58, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid #7c3aed;
+        }
+
+        .form-input {
+            background-color: rgba(42, 37, 69, 0.8);
+            border: 1px solid #7c3aed;
+        }
+
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="min-h-screen">
     <!-- Navigation -->
     <div id="navbar-container"></div>
 
     <main class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">My Profile</h1>
+        <h1 class="text-4xl font-extrabold text-center mb-10 tracking-wide text-purple-300 drop-shadow-lg">My Gamer Profile</h1>
 
-        <div class="bg-white rounded-lg shadow-md p-6 md:p-8 max-w-3xl mx-auto">
+        <div class="form-container rounded-2xl shadow-2xl p-6 md:p-10 max-w-4xl mx-auto border border-purple-700">
             <!-- Tabs Navigation -->
-            <div class="flex border-b border-gray-200 mb-6">
-                <button id="infoTabBtn" class="tab-button py-3 px-6 text-gray-600 hover:text-blue-600 focus:outline-none active" data-tab="information">
+            <div class="flex border-b border-purple-700 mb-6">
+                <button id="infoTabBtn" class="tab-button py-3 px-6 text-purple-300 hover:text-purple-500 focus:outline-none active transition duration-300" data-tab="information">
                     Information
                 </button>
-                <button id="securityTabBtn" class="tab-button py-3 px-6 text-gray-600 hover:text-blue-600 focus:outline-none" data-tab="security">
+                <button id="securityTabBtn" class="tab-button py-3 px-6 text-purple-300 hover:text-purple-500 focus:outline-none transition duration-300" data-tab="security">
                     Security
                 </button>
             </div>
 
             <!-- Tab Content -->
             <div id="informationTabContent" class="tab-content">
-                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Personal Information</h2>
+                <h2 class="text-2xl font-bold text-purple-200 mb-6">Personal Information</h2>
                 <form id="infoForm" enctype="multipart/form-data">
                     <div class="mb-6 text-center">
-                        <img id="profileImagePreview" src="/placeholder.svg?height=120&width=120" alt="Profile Image" class="profile-image-preview mx-auto mb-4">
-                        <label for="image" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                        <img id="profileImagePreview" src="/placeholder.svg?height=120&width=120" alt="Profile Image" class="profile-image-preview mx-auto mb-4 shadow-md">
+                        <label for="image" class="upload-button cursor-pointer text-white px-4 py-2 rounded-lg inline-block">
                             <i class="fas fa-upload mr-2"></i>Upload Image
                         </label>
                         <input type="file" id="image" name="image" accept="image/*" class="hidden">
@@ -64,44 +128,44 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label for="firstName" class="block text-gray-700 text-sm font-bold mb-2">First Name</label>
-                            <input type="text" id="firstName" name="first_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <label for="firstName" class="block text-purple-300 text-sm font-semibold mb-2">First Name</label>
+                            <input type="text" id="firstName" name="first_name" class="form-input w-full px-4 py-2 text-white rounded-lg focus:outline-none">
                         </div>
                         <div>
-                            <label for="lastName" class="block text-gray-700 text-sm font-bold mb-2">Last Name</label>
-                            <input type="text" id="lastName" name="last_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <label for="lastName" class="block text-purple-300 text-sm font-semibold mb-2">Last Name</label>
+                            <input type="text" id="lastName" name="last_name" class="form-input w-full px-4 py-2 text-white rounded-lg focus:outline-none">
                         </div>
                     </div>
                     <div class="mb-6">
-                        <label for="contactNumber" class="block text-gray-700 text-sm font-bold mb-2">Contact Number</label>
-                        <input type="text" id="contactNumber" name="contact_number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <label for="contactNumber" class="block text-purple-300 text-sm font-semibold mb-2">Contact Number</label>
+                        <input type="text" id="contactNumber" name="contact_number" class="form-input w-full px-4 py-2 text-white rounded-lg focus:outline-none">
                     </div>
                     <div class="mb-6">
-                        <label for="shippingAddress" class="block text-gray-700 text-sm font-bold mb-2">Shipping Address</label>
-                        <textarea id="shippingAddress" name="shipping_address" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" rows="3" placeholder="Enter your shipping address (optional)"></textarea>
+                        <label for="shippingAddress" class="block text-purple-300 text-sm font-semibold mb-2">Shipping Address</label>
+                        <textarea id="shippingAddress" name="shipping_address" class="form-input w-full px-4 py-2 text-white rounded-lg focus:outline-none" rows="3" placeholder="Enter your shipping address (optional)"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                    <button type="submit" class="form-button w-full text-white py-3 px-4 rounded-lg">
                         Save Information
                     </button>
                 </form>
             </div>
 
             <div id="securityTabContent" class="tab-content hidden">
-                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Account Security</h2>
+                <h2 class="text-2xl font-bold text-purple-200 mb-6">Account Security</h2>
                 <form id="securityForm">
                     <div class="mb-6">
-                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                        <input type="email" id="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" readonly>
+                        <label for="email" class="block text-purple-300 text-sm font-semibold mb-2">Email</label>
+                        <input type="email" id="email" name="email" class="form-input w-full px-4 py-2 bg-gray-800 text-white rounded-lg cursor-not-allowed" readonly>
                     </div>
                     <div class="mb-6">
-                        <label for="newPassword" class="block text-gray-700 text-sm font-bold mb-2">New Password</label>
-                        <input type="password" id="newPassword" name="new_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Leave blank to keep current password">
+                        <label for="newPassword" class="block text-purple-300 text-sm font-semibold mb-2">New Password</label>
+                        <input type="password" id="newPassword" name="new_password" class="form-input w-full px-4 py-2 text-white rounded-lg focus:outline-none" placeholder="Leave blank to keep current password">
                     </div>
                     <div class="mb-6">
-                        <label for="confirmPassword" class="block text-gray-700 text-sm font-bold mb-2">Confirm New Password</label>
-                        <input type="password" id="confirmPassword" name="confirm_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Re-enter new password">
+                        <label for="confirmPassword" class="block text-purple-300 text-sm font-semibold mb-2">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" name="confirm_password" class="form-input w-full px-4 py-2 text-white rounded-lg focus:outline-none" placeholder="Re-enter new password">
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                    <button type="submit" class="form-button w-full text-white py-3 px-4 rounded-lg">
                         Update Security
                     </button>
                 </form>
@@ -110,7 +174,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-12 mt-12">
+    <footer class="bg-[#1c1a35] text-gray-300 py-12 mt-12">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
@@ -122,29 +186,29 @@
                 <div>
                     <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
                     <ul class="space-y-2">
-                        <li><a href="index.html" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
-                        <li><a href="index.html#products" class="text-gray-400 hover:text-white transition duration-200">Games</a></li>
-                        <li><a href="index.html#about" class="text-gray-400 hover:text-white transition duration-200">About</a></li>
+                        <li><a href="index.html" class="hover:text-white transition duration-200">Home</a></li>
+                        <li><a href="index.html#products" class="hover:text-white transition duration-200">Games</a></li>
+                        <li><a href="index.html#about" class="hover:text-white transition duration-200">About</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-lg font-semibold mb-4">Platforms</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">PC Games</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Console Games</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Mobile Games</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-200">PC Games</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-200">Console Games</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-200">Mobile Games</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-lg font-semibold mb-4">Contact</h4>
                     <ul class="space-y-2">
-                        <li class="text-gray-400"><i class="fas fa-envelope mr-2"></i>info@bitsandbytes.com</li>
-                        <li class="text-gray-400"><i class="fas fa-phone mr-2"></i>+1 (555) 123-4567</li>
+                        <li><i class="fas fa-envelope mr-2"></i>info@bitsandbytes.com</li>
+                        <li><i class="fas fa-phone mr-2"></i>+1 (555) 123-4567</li>
                     </ul>
                 </div>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center">
-                <p class="text-gray-400">&copy;
+            <div class="border-t border-purple-800 mt-8 pt-8 text-center">
+                <p class="text-gray-500">&copy;
                     <span id="copyright">
                         <script>document.getElementById('copyright').appendChild(document.createTextNode(new Date().getFullYear()))</script>
                     </span> BITS & BYTES. All rights reserved.
@@ -157,7 +221,6 @@
         // Load navbar
         $(document).ready(function() {
             $('#navbar-container').load('navbar.html', function() {
-                // Ensure navbar scripts are re-initialized if needed
                 if (typeof initializeNavbar === 'function') {
                     initializeNavbar();
                 }

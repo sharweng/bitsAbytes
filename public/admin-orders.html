@@ -5,47 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rubik:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+            color: white;
+            font-family: 'Rubik', sans-serif;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        table.dataTable thead th {
+            background-color: #2e2e4d;
+            color: white;
+        }
+
+        table.dataTable tbody td {
+            color: white;
+            background-color: #1c1c2e;
+        }
+
+        .dataTables_filter input,
+        .dataTables_length select {
+            background-color: #2e2e4d;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+        }
+
+        a.quick-action {
+            transition: transform 0.2s, box-shadow 0.3s;
+        }
+        a.quick-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 10px #8e44ad;
+        }
+
+        .modal-animation {
+            animation: fadeInScale 0.3s ease-out;
+            
+        }
+
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+
+    </style>
 </head>
-<body class="bg-gray-100">
-    <!-- Navigation -->
+<body class="font-sans">
     <div id="navbar-container"></div>
-    
     <div class="container mx-auto px-4 py-8">
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+        <div class="bg-gradient-to-r from-[#282e47] to-[#1c1f2e] rounded-xl shadow-xl p-6 mb-8 border border-purple-800">
+            <h2 class="text-2xl font-extrabold text-white mb-4 tracking-wide">Quick Actions</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <a href="users.html" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                <a href="users.html" class="quick-action bg-purple-700 hover:bg-purple-800 text-white px-6 py-3 rounded-lg text-center shadow-md">
                     <i class="fas fa-users mr-2"></i>Manage Users
                 </a>
-                <a href="products.html" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                <a href="products.html" class="quick-action bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-lg text-center shadow-md">
                     <i class="fas fa-box mr-2"></i>Manage Products
                 </a>
-                <a href="reviews.html" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                <a href="reviews.html" class="quick-action bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-center shadow-md">
                     <i class="fas fa-star mr-2"></i>Manage Reviews
                 </a>
-                <a href="admin-orders.html" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
+                <a href="admin-orders.html" class="quick-action bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-center shadow-md">
                     <i class="fas fa-shopping-cart mr-2"></i>Manage Orders
                 </a>
             </div>
         </div>
-        
-        <div class="bg-white rounded-lg shadow-md p-6">
+
+        <div class="bg-gradient-to-r from-[#2a2f4d] to-[#1a1d2e] rounded-xl shadow-lg p-6 border border-indigo-800">
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">Order Management</h1>
+                <h1 class="text-3xl font-bold text-white tracking-wider">Order Management</h1>
             </div>
-            
+
             <div class="overflow-x-auto">
-                <table id="ordersTable" class="w-full">
+                <table id="ordersTable" class="w-full text-white rounded-lg">
                     <thead>
-                        <tr class="bg-gray-50">
+                        <tr>
                             <th class="px-4 py-2 text-left">Order ID</th>
                             <th class="px-4 py-2 text-left">Customer</th>
                             <th class="px-4 py-2 text-left">Date</th>
@@ -62,70 +109,57 @@
     </div>
 
     <!-- Order Details Modal -->
-    <div id="orderModal" class="flex fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 max-h-[calc(100vh-40px)] overflow-y-auto">
-            <div class="flex justify-between items-center p-6 border-b">
-                <h3 class="text-lg font-semibold">Order Details</h3>
-                <button id="closeOrderModal" class="text-gray-400 hover:text-gray-600">
+    <div id="orderModal" class="modal-animation fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="bg-gradient-to-br from-[#2a2f4d] to-[#1a1d2e] rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[calc(100vh-40px)] overflow-y-auto border border-purple-800">
+            <div class="flex justify-between items-center p-6 border-b border-indigo-700">
+                <h3 class="text-lg font-semibold text-white">Order Details</h3>
+                <button id="closeOrderModal" class="text-gray-400 hover:text-white">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
-            <div id="orderDetails" class="p-6">
-                <!-- Order details will be loaded here -->
-            </div>
+            <div id="orderDetails" class="p-6"></div>
         </div>
     </div>
 
     <!-- Update Status Modal -->
-    <div id="updateStatusModal" class="flex fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
-            <div class="flex justify-between items-center p-6 border-b">
-                <h3 class="text-lg font-semibold">Update Order Status</h3>
-                <button id="closeStatusModal" class="text-gray-400 hover:text-gray-600">
+    <div id="updateStatusModal" class="flex modal-animation fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="bg-gradient-to-br from-[#2a2f4d] to-[#1a1d2e] rounded-xl shadow-xl w-full max-w-md mx-4 border border-purple-800">
+            <div class="flex justify-between items-center p-6 border-b border-indigo-700">
+                <h3 class="text-lg font-semibold text-white">Update Order Status</h3>
+                <button id="closeStatusModal" class="text-gray-400 hover:text-white">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
-            <form id="updateStatusForm" class="p-6">
+            <form id="updateStatusForm" class="p-6 text-white">
                 <input type="hidden" id="updateOrderId">
-                
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select id="newStatus" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <!-- Options will be loaded dynamically -->
-                    </select>
+                    <label class="block text-sm font-medium mb-2">Status</label>
+                    <select id="newStatus" class="w-full px-4 py-2 bg-[#2e2e4d] border border-purple-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"></select>
                 </div>
-                
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Shipped Date</label>
-                    <input type="date" id="shippedDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-sm font-medium mb-2">Shipped Date</label>
+                    <input type="date" id="shippedDate" class="w-full px-4 py-2 bg-[#2e2e4d] border border-purple-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600">
                 </div>
-                
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Delivered Date</label>
-                    <input type="date" id="deliveredDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-sm font-medium mb-2">Delivered Date</label>
+                    <input type="date" id="deliveredDate" class="w-full px-4 py-2 bg-[#2e2e4d] border border-purple-700 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600">
                 </div>
-                
                 <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancelStatusUpdate" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                        Update Status
-                    </button>
+                    <button type="button" id="cancelStatusUpdate" class="px-4 py-2 text-white border border-gray-400 rounded-md hover:bg-[#3b3b5d] transition duration-200">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition duration-200">Update Status</button>
                 </div>
             </form>
         </div>
     </div>
-    
+
     <script src="js/auth.js"></script>
     <script src="js/admin-orders.js"></script>
     <script>
-        // Load navbar
         $(document).ready(function() {
             $('#navbar-container').load('navbar.html');
         });
     </script>
 </body>
 </html>
+
+

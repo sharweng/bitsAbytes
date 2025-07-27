@@ -1,48 +1,48 @@
-<nav class="bg-white shadow-lg border-b border-gray-200">
+<nav class="bg-white dark:bg-[#1C1C1C] shadow-lg border-b border-gray-200 dark:border-gray-700">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between h-16">
       <!-- Logo and Brand -->
       <div class="flex items-center">
         <a href="#" id="logoLink" class="flex items-center space-x-2">
-          <i class="fas fa-gamepad text-2xl text-blue-600"></i>
-          <span class="text-xl font-bold text-gray-800">BitsAbytes</span>
+          <i class="fas fa-gamepad text-2xl text-blue-600 dark:text-blue-400"></i>
+          <span class="text-xl font-bold text-gray-800 dark:text-white">BitsAbytes</span>
         </a>
       </div>
 
       <!-- Right side buttons -->
       <div class="flex items-center space-x-4">
         <!-- Dashboard/Website Button (for dashboard page) -->
-        <button id="websiteBtn" class="hidden bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+        <button id="websiteBtn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-300">
           <i class="fas fa-globe mr-1"></i>Website
         </button>
 
         <!-- Cart Button (logged in users only, not on dashboard) -->
-        <button id="cartBtn" class="hidden relative text-gray-700 hover:text-blue-600 transition duration-200">
+        <button id="cartBtn" class="hidden relative text-gray-700 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 transition duration-200">
           <i class="fas fa-shopping-cart text-xl"></i>
           <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
         </button>
 
         <!-- My Orders Button (logged in users only, not on dashboard) -->
-        <button id="myOrdersBtn" class="hidden text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
+        <button id="myOrdersBtn" class="hidden text-gray-700 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-200">
           <i class="fas fa-box mr-1"></i>My Orders
         </button>
 
         <!-- Dashboard Button (admin only, not on dashboard page) -->
-        <button id="dashboardBtn" class="hidden bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300">
+        <button id="dashboardBtn" class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-300">
           <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
         </button>
 
         <!-- User Info - Now clickable to go to profile page -->
-        <a href="profile.html" id="userInfo" class="hidden flex items-center space-x-2 cursor-pointer hover:text-blue-600 transition duration-200">
-          <i class="fas fa-user text-gray-600"></i>
-          <span id="userName" class="text-gray-700 font-medium"></span>
+        <a href="profile.html" id="userInfo" class="hidden flex items-center space-x-2 cursor-pointer hover:text-blue-600 transition duration-200 dark:hover:text-blue-400">
+          <i class="fas fa-user text-gray-600 dark:text-gray-300"></i>
+          <span id="userName" class="text-gray-700 dark:text-white font-medium"></span>
         </a>
 
         <!-- Auth Buttons -->
-        <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+        <button id="loginBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-300">
           <i class="fas fa-sign-in-alt mr-1"></i>Login
         </button>
-        <button id="logoutBtn" class="hidden bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300">
+        <button id="logoutBtn" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300">
           <i class="fas fa-sign-out-alt mr-1"></i>Logout
         </button>
       </div>
@@ -53,30 +53,28 @@
 <!-- Login Modal -->
 <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
   <div class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold text-gray-800">Login</h2>
-        <button type="button" class="close-modal text-gray-500 hover:text-gray-700">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">Login</h2>
+        <button type="button" class="close-modal text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
           <i class="fas fa-times text-xl"></i>
         </button>
       </div>
-      <!-- KEY FIXES: Added method="post" and action="#" to prevent GET submission -->
       <form id="loginForm" method="post" action="#" novalidate>
         <div class="mb-4">
-          <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-          <input type="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+          <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Email</label>
+          <input type="email" name="email" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 text-gray-800 dark:text-white dark:bg-gray-700" required>
         </div>
         <div class="mb-6">
-          <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-          <input type="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+          <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Password</label>
+          <input type="password" name="password" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 text-gray-800 dark:text-white dark:bg-gray-700" required>
         </div>
-        <!-- KEY FIX: Explicitly set type="submit" -->
-        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition duration-300">
           Login
         </button>
       </form>
       <div class="mt-4 text-center">
-        <a href="register.html" class="text-blue-600 hover:text-blue-800 text-sm">Don't have an account? Register here</a>
+        <a href="register.html" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm">Don't have an account? Register here</a>
       </div>
     </div>
   </div>
@@ -99,7 +97,11 @@ $(document).ready(() => {
 
 function initializeNavbar() {
   // Check if we're on dashboard page or profile page
-  const isDashboardPage = window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('users.html') || window.location.pathname.includes('products.html') || window.location.pathname.includes('reviews.html') || window.location.pathname.includes('admin-orders.html')
+  const isDashboardPage = window.location.pathname.includes('dashboard.html') || 
+                         window.location.pathname.includes('users.html') || 
+                         window.location.pathname.includes('products.html') || 
+                         window.location.pathname.includes('reviews.html') || 
+                         window.location.pathname.includes('admin-orders.html')
   
   // Initialize auth state
   checkAuthStatus()
@@ -147,9 +149,9 @@ function initializeNavbarEvents() {
     window.location.href = 'index.html'
   })
   
-  // KEY FIX: Enhanced form submission handling
+  // Enhanced form submission handling
   $('#loginForm').off('submit').on('submit', function(e) {
-    e.preventDefault(); // Always prevent default form submission
+    e.preventDefault();
     e.stopPropagation();
     
     if ($(this).valid()) {
@@ -158,9 +160,20 @@ function initializeNavbarEvents() {
         email: formData.get("email"),
         password: formData.get("password"),
       };
-      performLogin(loginData);
+      
+      if (window.loginUser) {
+        window.loginUser(loginData.email, loginData.password)
+          .then((response) => {
+            handleSuccessfulLogin(response);
+          })
+          .catch((error) => {
+            console.error("Login failed:", error);
+          });
+      } else {
+        performLoginFallback(loginData);
+      }
     }
-    return false; // Extra safety to prevent form submission
+    return false;
   });
   
   // Initialize jQuery Validation for login form
@@ -186,17 +199,16 @@ function initializeNavbarEvents() {
     errorElement: "div",
     errorClass: "text-red-500 text-xs mt-1",
     highlight: (element, errorClass, validClass) => {
-      $(element).addClass("border-red-500").removeClass("border-gray-300");
+      $(element).addClass("border-red-500").removeClass("border-gray-300 dark:border-gray-600");
     },
     unhighlight: (element, errorClass, validClass) => {
-      $(element).removeClass("border-red-500").addClass("border-gray-300");
-    },
-    // REMOVED submitHandler to use our custom submit event handler instead
+      $(element).removeClass("border-red-500").addClass("border-gray-300 dark:border-gray-600");
+    }
   });
 
-  // KEY FIX: Additional Enter key handling
+  // Enter key handling
   $('#loginForm input').off('keypress').on('keypress', function(e) {
-    if (e.which === 13) { // Enter key
+    if (e.which === 13) {
       e.preventDefault();
       $('#loginForm').trigger('submit');
     }
@@ -206,102 +218,134 @@ function initializeNavbarEvents() {
   $('#logoLink').off('click').on('click', (e) => {
     e.preventDefault()
     const user = JSON.parse(localStorage.getItem('user') || '{}')
-    const isDashboardPage = window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('users.html') || window.location.pathname.includes('products.html') || window.location.pathname.includes('reviews.html') || window.location.pathname.includes('admin-orders.html')
+    const isDashboardPage = window.location.pathname.includes('dashboard.html') || 
+                           window.location.pathname.includes('users.html') || 
+                           window.location.pathname.includes('products.html') || 
+                           window.location.pathname.includes('reviews.html') || 
+                           window.location.pathname.includes('admin-orders.html')
     
     if (user.role === 'admin') {
-      if (isDashboardPage) {
-        window.location.href = 'dashboard.html'
-      } else {
-        window.location.href = 'index.html'
-      }
+      window.location.href = isDashboardPage ? 'index.html' : 'dashboard.html'
     } else {
       window.location.href = 'index.html'
     }
   })
 }
 
+function handleSuccessfulLogin(response) {
+  $('#loginModal').addClass('hidden');
+  $('#loginForm')[0].reset();
+  
+  const isDashboardPage = window.location.pathname.includes('dashboard.html') || 
+                         window.location.pathname.includes('users.html') || 
+                         window.location.pathname.includes('products.html') || 
+                         window.location.pathname.includes('reviews.html') || 
+                         window.location.pathname.includes('admin-orders.html');
+  
+  showAuthenticatedState(response.user, isDashboardPage);
+  
+  if (window.Swal) {
+    Swal.fire({
+      icon: 'success',
+      title: 'Welcome!',
+      text: 'Login successful',
+      timer: 1500,
+      showConfirmButton: false
+    });
+  }
+  
+  // Auto-redirect admin to dashboard after login
+  if (response.user.role === 'admin' && !isDashboardPage) {
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 1500);
+    return;
+  }
+  
+  // Update cart count if not on dashboard
+  if (!isDashboardPage) {
+    updateCartCount();
+  }
+  
+  // Trigger custom event for other scripts
+  $(document).trigger('authStateChanged', [true, response.user]);
+}
+
 function checkAuthStatus() {
-  const token = localStorage.getItem('token')
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const isDashboardPage = window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('users.html') || window.location.pathname.includes('products.html') || window.location.pathname.includes('reviews.html') || window.location.pathname.includes('admin-orders.html')
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isDashboardPage = window.location.pathname.includes('dashboard.html') || 
+                         window.location.pathname.includes('users.html') || 
+                         window.location.pathname.includes('products.html') || 
+                         window.location.pathname.includes('reviews.html') || 
+                         window.location.pathname.includes('admin-orders.html');
   
   if (token && user.email) {
-    showAuthenticatedState(user, isDashboardPage)
+    showAuthenticatedState(user, isDashboardPage);
   } else {
-    showUnauthenticatedState(isDashboardPage)
+    showUnauthenticatedState(isDashboardPage);
   }
 }
 
 function showAuthenticatedState(user, isDashboardPage) {
-  $('#loginBtn').addClass('hidden')
-  $('#logoutBtn').removeClass('hidden')
-  $('#userInfo').removeClass('hidden')
-  $('#userName').text(user.first_name || user.email)
+  $('#loginBtn').addClass('hidden');
+  $('#logoutBtn').removeClass('hidden');
+  $('#userInfo').removeClass('hidden');
+  $('#userName').text(user.first_name || user.email);
   
   // Update logo link based on user role and current page
   if (user.role === 'admin') {
-    if (isDashboardPage) {
-      $('#logoLink').attr('title', 'Go to Dashboard')
-    } else {
-      $('#logoLink').attr('title', 'Go to Website')
-    }
+    $('#logoLink').attr('title', isDashboardPage ? 'Go to Website' : 'Go to Dashboard');
   } else {
-    $('#logoLink').attr('href', 'index.html').attr('title', 'Home')
+    $('#logoLink').attr('href', 'index.html').attr('title', 'Home');
   }
   
   if (isDashboardPage) {
     // Dashboard page: only logo, website button, and logout
-    $('#navLinks').addClass('hidden')
-    $('#cartBtn').addClass('hidden')
-    $('#myOrdersBtn').addClass('hidden')
-    $('#dashboardBtn').addClass('hidden')
-    $('#websiteBtn').removeClass('hidden')
-    $('#userInfo').addClass('hidden') // Hide profile link on dashboard
-  }
-  else {
-    // Regular pages: show navigation and user-specific buttons
-    $('#customerNav').removeClass('hidden').addClass('flex')
-    $('#navLinks').removeClass('hidden')
-    $('#cartBtn').removeClass('hidden')
-    $('#myOrdersBtn').removeClass('hidden')
-    $('#websiteBtn').addClass('hidden')
+    $('#cartBtn').addClass('hidden');
+    $('#myOrdersBtn').addClass('hidden');
+    $('#dashboardBtn').addClass('hidden');
+    $('#websiteBtn').removeClass('hidden');
+    $('#userInfo').addClass('hidden'); // Hide profile link on dashboard
+  } else {
+    // Regular pages: show user-specific buttons
+    $('#cartBtn').removeClass('hidden');
+    $('#myOrdersBtn').removeClass('hidden');
+    $('#websiteBtn').addClass('hidden');
     
     // Show dashboard button for admin users
     if (user.role === 'admin') {
-      $('#dashboardBtn').removeClass('hidden')
+      $('#dashboardBtn').removeClass('hidden');
     } else {
-      $('#dashboardBtn').addClass('hidden')
+      $('#dashboardBtn').addClass('hidden');
     }
   }
 }
 
 function showUnauthenticatedState(isDashboardPage) {
-  $('#loginBtn').removeClass('hidden')
-  $('#logoutBtn').addClass('hidden')
-  $('#userInfo').addClass('hidden')
-  $('#customerNav').addClass('hidden')
-  $('#navLinks').addClass('hidden')
-  $('#cartBtn').addClass('hidden')
-  $('#myOrdersBtn').addClass('hidden')
-  $('#dashboardBtn').addClass('hidden')
-  $('#websiteBtn').addClass('hidden')
+  $('#loginBtn').removeClass('hidden');
+  $('#logoutBtn').addClass('hidden');
+  $('#userInfo').addClass('hidden');
+  $('#cartBtn').addClass('hidden');
+  $('#myOrdersBtn').addClass('hidden');
+  $('#dashboardBtn').addClass('hidden');
+  $('#websiteBtn').addClass('hidden');
   
   // Reset logo link to home
-  $('#logoLink').attr('href', 'index.html').attr('title', 'Home')
+  $('#logoLink').attr('href', 'index.html').attr('title', 'Home');
   
-  // Redirect to home if trying to access dashboard or profile without auth
+  // Redirect to home if trying to access dashboard without auth
   if (isDashboardPage) {
-    window.location.href = 'index.html'
+    window.location.href = 'index.html';
   }
 }
 
-// New function to perform the actual login AJAX request
-function performLogin(loginData) {
-  const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api'
+function performLoginFallback(loginData) {
+  const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api';
   
   // Clear any existing errors
-  $('#loginForm').find('.error').remove()
-  $('#loginForm').find('input').removeClass('border-red-500').addClass('border-gray-300')
+  $('#loginForm').find('.error').remove();
+  $('#loginForm').find('input').removeClass('border-red-500').addClass('border-gray-300 dark:border-gray-600');
   
   $.ajax({
     url: `${API_BASE_URL}/users/login`,
@@ -310,93 +354,58 @@ function performLogin(loginData) {
     data: JSON.stringify(loginData),
     success: (response) => {
       if (response.success) {
-        localStorage.setItem('token', response.token)
-        localStorage.setItem('user', JSON.stringify(response.user))
-        
-        const isDashboardPage = window.location.pathname.includes('dashboard.html')
-        showAuthenticatedState(response.user, isDashboardPage)
-        $('#loginModal').addClass('hidden')
-        
-        // Clear the form after successful login
-        $('#loginForm')[0].reset()
-        
-        // Show success message
-        if (window.Swal) {
-          Swal.fire({
-            icon: 'success',
-            title: 'Welcome!',
-            text: 'Login successful',
-            timer: 1500,
-            showConfirmButton: false
-          })
+        if (window.setAuth) {
+          window.setAuth(response.token, response.user);
+        } else {
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('user', JSON.stringify(response.user));
         }
-        
-        // Auto-redirect admin to dashboard after login
-        if (response.user.role === 'admin' && !isDashboardPage) {
-          setTimeout(() => {
-            window.location.href = 'dashboard.html'
-          }, 1500)
-          return
-        }
-        
-        // Update cart count if not on dashboard or profile
-        if (!isDashboardPage) {
-          updateCartCount()
-        }
-        
-        // Trigger custom event for other scripts to listen to
-        $(document).trigger('authStateChanged', [true, response.user])
+        handleSuccessfulLogin(response);
       }
     },
     error: (xhr) => {
-      const errorResponse = xhr.responseJSON
-      const errorMessage = errorResponse?.message || 'Login failed'
-      const errorType = errorResponse?.errorType
+      const errorResponse = xhr.responseJSON;
+      const errorMessage = errorResponse?.message || 'Login failed';
+      const errorType = errorResponse?.errorType;
       
       // Handle specific error types
       if (errorType === 'ACCOUNT_DEACTIVATED') {
-        // Show SweetAlert for deactivated account
         if (window.Swal) {
           Swal.fire({
             icon: 'error',
             title: 'Account Deactivated',
             text: errorMessage,
             confirmButtonText: 'OK'
-          })
+          });
         }
       } else if (errorType === 'EMAIL_NOT_FOUND') {
-        // Show error under email field
-        const emailField = $('#loginForm input[name="email"]')
-        emailField.addClass('border-red-500').removeClass('border-gray-300')
-        emailField.after('<div class="error text-red-500 text-xs mt-1">Email not registered</div>')
+        const emailField = $('#loginForm input[name="email"]');
+        emailField.addClass('border-red-500').removeClass('border-gray-300 dark:border-gray-600');
+        emailField.after('<div class="error text-red-500 text-xs mt-1">Email not registered</div>');
       } else if (errorType === 'WRONG_PASSWORD') {
-        // Show error under password field
-        const passwordField = $('#loginForm input[name="password"]')
-        passwordField.addClass('border-red-500').removeClass('border-gray-300')
-        passwordField.after('<div class="error text-red-500 text-xs mt-1">Wrong password</div>')
+        const passwordField = $('#loginForm input[name="password"]');
+        passwordField.addClass('border-red-500').removeClass('border-gray-300 dark:border-gray-600');
+        passwordField.after('<div class="error text-red-500 text-xs mt-1">Wrong password</div>');
       } else {
-        // Generic error handling
         if (window.Swal) {
           Swal.fire({
             icon: 'error',
             title: 'Login Failed',
             text: errorMessage,
-          })
+          });
         }
       }
-      
-      console.error("Login AJAX error:", errorMessage);
     }
-  })
+  });
 }
 
 function deactivated() {
-  const API_BASE_URL = window.API_BASE_URL || "http://localhost:4000/api"
-  const token = localStorage.getItem("token")
-  const user = JSON.parse(localStorage.getItem("user"))
+  const API_BASE_URL = window.API_BASE_URL || "http://localhost:4000/api";
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || {});
 
   // If no token or user, do nothing
-  if (!token || !user?.user_id) return;
+  if (!token || !user.user_id) return;
 
   $.ajax({
     url: `${API_BASE_URL}/users/profile/${user.user_id}`,
@@ -406,14 +415,14 @@ function deactivated() {
     },
     success: (response) => {
       if (response.success) {
-        const currentUser = response.user
+        const currentUser = response.user;
 
         // If account is deactivated (deleted === 1)
         if (currentUser.deleted == 1) {
           // Clear session data
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-          localStorage.removeItem('cart')
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('cart');
           
           // Show alert
           if (window.Swal) {
@@ -421,22 +430,22 @@ function deactivated() {
               icon: 'error',
               title: 'Account Deactivated',
               text: 'Your account has been deactivated. Please contact support for assistance.',
-            })
+            });
           }
           // Redirect after delay
           setTimeout(() => {
-            window.location.href = 'index.html'
-          }, 1500)
+            window.location.href = 'index.html';
+          }, 1500);
         } else {
           // Update the latest user info if still active
-          localStorage.setItem('user', JSON.stringify(currentUser))
+          localStorage.setItem('user', JSON.stringify(currentUser));
         }
       }
     },
     error: (xhr) => {
-      console.error("Error fetching user profile:", xhr)
+      console.error("Error fetching user profile:", xhr);
     }
-  })
+  });
 }
 
 function logout() {
@@ -451,24 +460,24 @@ function logout() {
       confirmButtonText: 'Yes, logout'
     }).then((result) => {
       if (result.isConfirmed) {
-        performLogout()
+        performLogout();
       }
-    })
+    });
   } else {
     if (confirm('Are you sure you want to logout?')) {
-      performLogout()
+      performLogout();
     }
   }
 }
 
 function performLogout() {
-  const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api'
-  const token = localStorage.getItem('token')
+  const API_BASE_URL = window.API_BASE_URL || 'http://localhost:4000/api';
+  const token = localStorage.getItem('token');
   
   if (!token) {
     // If no token, just clear everything and redirect
-    clearSessionAndRedirect()
-    return
+    clearSessionAndRedirect();
+    return;
   }
   
   // Show loading state
@@ -480,9 +489,9 @@ function performLogout() {
       allowEscapeKey: false,
       showConfirmButton: false,
       didOpen: () => {
-        Swal.showLoading()
+        Swal.showLoading();
       }
-    })
+    });
   }
   
   // Call logout API
@@ -495,31 +504,36 @@ function performLogout() {
     },
     success: (response) => {
       if (response.success) {
-        clearSessionAndRedirect()
+        clearSessionAndRedirect();
       } else {
-        console.error('Logout API returned error:', response.message)
+        console.error('Logout API returned error:', response.message);
         // Still clear session even if API fails
-        clearSessionAndRedirect()
+        clearSessionAndRedirect();
       }
     },
     error: (xhr) => {
-      console.error('Logout API call failed:', xhr)
+      console.error('Logout API call failed:', xhr);
       // Still clear session even if API call fails
-      clearSessionAndRedirect()
+      clearSessionAndRedirect();
     }
-  })
+  });
 }
 
 function clearSessionAndRedirect() {
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-  localStorage.removeItem('cart') // Clear cart on logout
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('cart'); // Clear cart on logout
   
-  const isDashboardPage = window.location.pathname.includes('dashboard.html')
-  showUnauthenticatedState(isDashboardPage)
+  const isDashboardPage = window.location.pathname.includes('dashboard.html') || 
+                         window.location.pathname.includes('users.html') || 
+                         window.location.pathname.includes('products.html') || 
+                         window.location.pathname.includes('reviews.html') || 
+                         window.location.pathname.includes('admin-orders.html');
+  
+  showUnauthenticatedState(isDashboardPage);
   
   // Trigger custom event for other scripts to listen to
-  $(document).trigger('authStateChanged', [false, null])
+  $(document).trigger('authStateChanged', [false, null]);
   
   if (window.Swal) {
     Swal.fire({
@@ -528,28 +542,28 @@ function clearSessionAndRedirect() {
       text: 'You have been successfully logged out',
       timer: 1500,
       showConfirmButton: false
-    })
+    });
   }
   
   // Redirect to home page after logout
   setTimeout(() => {
-    window.location.href = 'index.html'
-  }, 1500)
+    window.location.href = 'index.html';
+  }, 1500);
 }
 
 function updateCartCount() {
-  const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   
   if (totalItems > 0) {
-    $('#cartCount').text(totalItems).removeClass('hidden')
+    $('#cartCount').text(totalItems).removeClass('hidden');
   } else {
-    $('#cartCount').addClass('hidden')
+    $('#cartCount').addClass('hidden');
   }
 }
 
 // Make functions globally available
-window.logout = logout
-window.checkAuthStatus = checkAuthStatus
-window.updateCartCount = updateCartCount
+window.logout = logout;
+window.checkAuthStatus = checkAuthStatus;
+window.updateCartCount = updateCartCount;
 </script>

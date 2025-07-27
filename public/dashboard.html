@@ -1,140 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="js/auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rubik&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    body {
+      font-family: 'Rubik', sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #e0e0e0;
+    }
+    h3, h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: #39FF14;
+    }
+    .dashboard-card {
+      background-color: #1A1A1A;
+      border: 1px solid #1E90FF;
+      box-shadow: 0 0 10px #1E90FF;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+    .dashboard-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 20px #00FFFF;
+    }
+    .chart-container canvas {
+      background-color: #121212;
+      border-radius: 8px;
+    }
+    .quick-action-btn {
+      background-color: #1E1E2F;
+      border: 1px solid #1E90FF;
+      color: #00FFFF;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .quick-action-btn:hover {
+      background-color: #00FFFF;
+      color: #1A1A1A;
+      transform: scale(1.05);
+    }
+  </style>
+   <script>
+    Chart.defaults.color = "#ffffff";
+  </script>
 </head>
-<body class="bg-gray-100">
-    <!-- Navigation -->
-    <div id="navbar-container"></div>
-    
-    <div class="container mx-auto px-4 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Dashboard Cards -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-500 text-white">
-                        <i class="fas fa-users text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
-                        <p class="text-2xl font-bold text-blue-600" id="totalUsers">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-500 text-white">
-                        <i class="fas fa-box text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-700">Total Products</h3>
-                        <p class="text-2xl font-bold text-green-600" id="totalProducts">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-500 text-white">
-                        <i class="fas fa-star text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-700">Total Reviews</h3>
-                        <p class="text-2xl font-bold text-yellow-600" id="totalReviews">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-purple-500 text-white">
-                        <i class="fas fa-shopping-cart text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-700">Total Orders</h3>
-                        <p class="text-2xl font-bold text-purple-600" id="totalOrders">0</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <a href="users.html" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-users mr-2"></i>Manage Users
-                </a>
-                <a href="products.html" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-box mr-2"></i>Manage Products
-                </a>
-                <a href="reviews.html" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-star mr-2"></i>Manage Reviews
-                </a>
-                <a href="admin-orders.html" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-center transition duration-200">
-                    <i class="fas fa-shopping-cart mr-2"></i>Manage Orders
-                </a>
-            </div>
-        </div>
-    
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            <!-- Bar Chart - Products by Types -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Products by Types</h3>
-                <div class="chart-container" style="position: relative; height: 300px;">
-                    <canvas id="productTypesChart"></canvas>
-                </div>
-            </div>
-            
-            <!-- Bar Chart - Products by Platform -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Products by Platform</h3>
-                <div class="chart-container" style="position: relative; height: 300px;">
-                    <canvas id="platformChart"></canvas>
-                </div>
-            </div>
-        </div>
+<body>
+  <div id="navbar-container"></div>
 
-        <!-- Bottom Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <!-- Line Chart - Orders Over Time -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Orders Over Time</h3>
-                <div class="chart-container" style="position: relative; height: 300px;">
-                    <canvas id="ordersChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Pie Chart - Order Status Distribution -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Status Distribution</h3>
-                <div class="chart-container" style="position: relative; height: 300px;">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
+  <div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="dashboard-card rounded-lg p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-blue-500 text-white">
+            <i class="fas fa-users text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-semibold">Total Users</h3>
+            <p class="text-2xl font-bold text-blue-400" id="totalUsers">0</p>
+          </div>
         </div>
+      </div>
+
+      <div class="dashboard-card rounded-lg p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-green-500 text-white">
+            <i class="fas fa-box text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-semibold">Total Products</h3>
+            <p class="text-2xl font-bold text-green-400" id="totalProducts">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-card rounded-lg p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-yellow-500 text-white">
+            <i class="fas fa-star text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-semibold">Total Reviews</h3>
+            <p class="text-2xl font-bold text-yellow-300" id="totalReviews">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-card rounded-lg p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-purple-500 text-white">
+            <i class="fas fa-shopping-cart text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-semibold">Total Orders</h3>
+            <p class="text-2xl font-bold text-purple-300" id="totalOrders">0</p>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <script src="js/dashboard.js"></script>
-    <script>
-        // Load navbar
-        $(document).ready(function() {
-            $('#navbar-container').load('navbar.html');
-        });
-    </script>
+
+    <div class="dashboard-card rounded-lg p-6">
+      <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <a href="users.html" class="quick-action-btn px-6 py-3 rounded-lg text-center">
+          <i class="fas fa-users mr-2"></i>Manage Users
+        </a>
+        <a href="products.html" class="quick-action-btn px-6 py-3 rounded-lg text-center">
+          <i class="fas fa-box mr-2"></i>Manage Products
+        </a>
+        <a href="reviews.html" class="quick-action-btn px-6 py-3 rounded-lg text-center">
+          <i class="fas fa-star mr-2"></i>Manage Reviews
+        </a>
+        <a href="admin-orders.html" class="quick-action-btn px-6 py-3 rounded-lg text-center">
+          <i class="fas fa-shopping-cart mr-2"></i>Manage Orders
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+      <div class="dashboard-card rounded-lg p-6">
+        <h3 class="text-lg font-semibold mb-4">Products by Types</h3>
+        <div class="chart-container" style="position: relative; height: 300px;">
+          <canvas id="productTypesChart"></canvas>
+        </div>
+      </div>
+
+      <div class="dashboard-card rounded-lg p-6">
+        <h3 class="text-lg font-semibold mb-4">Products by Platform</h3>
+        <div class="chart-container" style="position: relative; height: 300px;">
+          <canvas id="platformChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div class="dashboard-card rounded-lg p-6">
+        <h3 class="text-lg font-semibold mb-4">Orders Over Time</h3>
+        <div class="chart-container" style="position: relative; height: 300px;">
+          <canvas id="ordersChart"></canvas>
+        </div>
+      </div>
+
+      <div class="dashboard-card rounded-lg p-6">
+        <h3 class="text-lg font-semibold mb-4">Order Status Distribution</h3>
+        <div class="chart-container" style="position: relative; height: 300px;">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('#navbar-container').load('navbar.html');
+    });
+  </script>
 </body>
 </html>

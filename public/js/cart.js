@@ -160,35 +160,34 @@ $(document).ready(() => {
           : "/placeholder.svg?height=100&width=100"
 
         return `
-        <div class="bg-white rounded-lg shadow-md p-4 cart-item" data-product-id="${item.product_id}">
+<div class="bg-gray-800 rounded-lg shadow-md p-4 cart-item" data-product-id="${item.product_id}">
           <div class="flex items-center space-x-4">
             <img src="${imageUrl}" alt="${item.title}" class="w-20 h-20 object-cover rounded">
             
-            <div class="flex-1">
-              <h3 class="font-semibold text-lg">${item.title}</h3>
-              <p class="text-gray-600 text-sm">${item.platform_type || "Unknown Platform"}</p>
-              <p class="text-blue-600 font-semibold">${priceDisplay}</p>
-              ${isPhysical ? `<p class="text-xs text-gray-500">Stock: ${stock} available</p>` : ""}
-            </div>
+              <div class="flex-1">
+  <h3 class="font-semibold text-lg text-gray-100">${item.title}</h3>
+  <p class="text-gray-300 text-sm">${item.platform_type || "Unknown Platform"}</p>
+  <p class="text-blue-400 font-semibold">${priceDisplay}</p>
+  ${isPhysical ? `<p class="text-xs text-gray-400">Stock: ${stock} available</p>` : ""}
+</div>
             
-            <div class="flex items-center space-x-3">
-              <button class="quantity-btn minus bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center" data-product-id="${item.product_id}">
-                <i class="fas fa-minus text-sm"></i>
-              </button>
-              <span class="quantity font-semibold text-lg w-8 text-center">${item.quantity}</span>
-              <button class="quantity-btn plus bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center ${
-                isPhysical && item.quantity >= stock ? "opacity-50 cursor-not-allowed" : ""
-              }" data-product-id="${item.product_id}" ${isPhysical && item.quantity >= stock ? "disabled" : ""}>
-                <i class="fas fa-plus text-sm"></i>
-              </button>
-            </div>
+           <div class="flex items-center space-x-3">
+  <button class="quantity-btn minus bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center" data-product-id="${item.product_id}">
+    <i class="fas fa-minus text-sm text-gray-200"></i>
+  </button>
+  <span class="quantity font-semibold text-lg w-8 text-center text-gray-100">${item.quantity}</span>
+  <button class="quantity-btn plus bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center ${isPhysical && item.quantity >= stock ? "opacity-50 cursor-not-allowed" : ""
+    }" data-product-id="${item.product_id}" ${isPhysical && item.quantity >= stock ? "disabled" : ""}>
+    <i class="fas fa-plus text-sm text-gray-200"></i>
+  </button>
+</div>
             
-            <div class="text-right">
-              <p class="font-semibold text-lg">${totalDisplay}</p>
-              <button class="remove-item text-red-600 hover:text-red-800 text-sm mt-1" data-product-id="${item.product_id}">
-                <i class="fas fa-trash mr-1"></i>Remove
-              </button>
-            </div>
+           <div class="text-right">
+  <p class="font-semibold text-lg text-gray-100">${totalDisplay}</p>
+  <button class="remove-item text-red-400 hover:text-red-300 text-sm mt-1" data-product-id="${item.product_id}">
+    <i class="fas fa-trash mr-1"></i>Remove
+  </button>
+</div>
           </div>
         </div>
       `
@@ -484,7 +483,7 @@ $(document).ready(() => {
             console.error("Error saving shipping address:", xhr)
             showError(
               xhr.responseJSON?.message ||
-                "Error saving shipping address. Order will proceed with the entered address but it won't be saved to your profile.",
+              "Error saving shipping address. Order will proceed with the entered address but it won't be saved to your profile.",
             )
             // Do not return, allow order to proceed with the entered address
           }

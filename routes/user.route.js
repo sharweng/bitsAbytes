@@ -11,6 +11,7 @@ const {
   getUserProfile,
   getAllUsers,
   getAllRoles,
+  verifyPassword,
   changePassword,
 } = require("../controllers/user.controller.js")
 
@@ -22,6 +23,7 @@ router.post("/login", loginUser)
 
 // Protected routes
 router.post("/logout", isAuthenticatedUser, logoutUser)
+router.post("/verify-password/:user_id", isAuthenticatedUser, verifyPassword)
 router.get("/profile/:user_id", isAuthenticatedUser, getUserProfile)
 router.put("/profile/:user_id", isAuthenticatedUser, upload.single("image"), updateUser)
 router.put("/change-password/:user_id", isAuthenticatedUser, changePassword)

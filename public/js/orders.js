@@ -45,13 +45,13 @@ $(document).ready(() => {
     $("#loadingState").addClass("hidden")
     $("#noOrders").removeClass("hidden")
     $("#noOrders").html(`
-<i class="fas fa-lock text-6xl text-gray-300 mb-4"></i>
-<h3 class="text-xl font-semibold text-gray-700 mb-2">Login Required</h3>
-<p class="text-gray-600 mb-6">Please login to view your orders.</p>
-<button id="showLoginModal" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">
-  Login
-</button>
-`)
+      <i class="fas fa-lock text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-200 mb-2">Login Required</h3>
+      <p class="text-gray-400 mb-6">Please login to view your orders.</p>
+      <button id="showLoginModal" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">
+        Login
+      </button>
+    `)
 
     $("#showLoginModal").click(() => $("#loginModal").removeClass("hidden"))
   }
@@ -92,9 +92,9 @@ $(document).ready(() => {
       method: "GET",
       success: (response) => {
         if (response.success) {
-          let statusOptions = '<option value="">All Orders</option>'
+          let statusOptions = '<option value="" class="bg-gray-700">All Orders</option>'
           response.statuses.forEach((status) => {
-            statusOptions += `<option value="${status.stat_id}">${status.description.charAt(0).toUpperCase() + status.description.slice(1)}</option>`
+            statusOptions += `<option value="${status.stat_id}" class="bg-gray-700">${status.description.charAt(0).toUpperCase() + status.description.slice(1)}</option>`
           })
           $("#statusFilter").html(statusOptions)
         }
@@ -171,18 +171,17 @@ $(document).ready(() => {
         let cancelButtonHtml = ""
         if (isCancellable) {
           cancelButtonHtml = `
-          <button class="cancel-order-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
+          <button class="cancel-order-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition duration-300"
                   data-order-id="${order.order_id}" title="Click to cancel this order">
             Cancel Order
           </button>
         `
         }
-        // If not cancellable, cancelButtonHtml remains an empty string, effectively hiding the button.
 
         let deliveredButtonHtml = ""
         if (order.status.toLowerCase() === "shipped") {
           deliveredButtonHtml = `
-          <button class="mark-delivered-btn bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300"
+          <button class="mark-delivered-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition duration-300"
                   data-order-id="${order.order_id}" title="Mark this order as delivered">
             Delivered
           </button>
@@ -190,11 +189,11 @@ $(document).ready(() => {
         }
 
         return `
-      <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-300">
+      <div class="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition duration-300 border border-gray-700">
         <div class="flex justify-between items-start mb-4">
           <div>
-            <h3 class="text-lg font-semibold text-gray-800">Order #${order.order_id}</h3>
-            <p class="text-gray-600 text-sm">Placed on ${orderDateFormatted}</p>
+            <h3 class="text-lg font-semibold text-gray-100">Order #${order.order_id}</h3>
+            <p class="text-gray-400 text-sm">Placed on ${orderDateFormatted}</p>
           </div>
           <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">
             ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
@@ -203,26 +202,26 @@ $(document).ready(() => {
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <p class="text-sm text-gray-600">Items</p>
-            <p class="font-semibold">${order.total_items} item(s)</p>
+            <p class="text-sm text-gray-400">Items</p>
+            <p class="font-semibold text-gray-100">${order.total_items} item(s)</p>
           </div>
           <div>
-            <p class="text-sm text-gray-600">Total Amount</p>
-            <p class="font-semibold">₱${totalAmount.toFixed(2)}</p>
+            <p class="text-sm text-gray-400">Total Amount</p>
+            <p class="font-semibold text-gray-100">₱${totalAmount.toFixed(2)}</p>
           </div>
           <div>
-            <p class="text-sm text-gray-600">Type</p>
-            <p class="font-semibold">${orderType}</p>
+            <p class="text-sm text-gray-400">Type</p>
+            <p class="font-semibold text-gray-100">${orderType}</p>
           </div>
         </div>
         
         <div class="flex justify-between items-center">
-          <div class="text-sm text-gray-600">
+          <div class="text-sm text-gray-400">
             ${order.shipped_date ? `Shipped: ${new Date(order.shipped_date).toLocaleDateString()}` : ""}
             ${order.delivered_date ? `Delivered: ${new Date(order.delivered_date).toLocaleDateString()}` : ""}
           </div>
           <div class="flex space-x-2">
-            <button class="view-order bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300" 
+            <button class="view-order bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300" 
                     data-order-id="${order.order_id}">
               View Details
             </button>
@@ -263,28 +262,28 @@ $(document).ready(() => {
   function getStatusColor(status) {
     switch (status.toLowerCase()) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-800 text-yellow-100"
       case "processing":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-800 text-blue-100"
       case "shipped":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-800 text-purple-100"
       case "delivered":
-        return "bg-green-100 text-green-800"
+        return "bg-green-800 text-green-100"
       case "cancelled":
-        return "bg-red-100 text-red-800"
+        return "bg-red-800 text-red-100"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-700 text-gray-100"
     }
   }
 
   function viewOrderDetails(orderId) {
     // Show loading in modal
     $("#orderDetails").html(`
-<div class="text-center py-8">
-  <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mb-4"></i>
-  <p class="text-gray-600">Loading order details...</p>
-</div>
-`)
+      <div class="text-center py-8">
+        <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-4"></i>
+        <p class="text-gray-400">Loading order details...</p>
+      </div>
+    `)
     $("#orderModal").removeClass("hidden")
 
     $.ajax({
@@ -301,11 +300,11 @@ $(document).ready(() => {
       error: (xhr) => {
         const error = xhr.responseJSON?.message || "Failed to load order details"
         $("#orderDetails").html(`
-    <div class="text-center py-8">
-      <i class="fas fa-exclamation-triangle text-2xl text-red-600 mb-4"></i>
-      <p class="text-red-600">${error}</p>
-    </div>
-  `)
+          <div class="text-center py-8">
+            <i class="fas fa-exclamation-triangle text-2xl text-red-500 mb-4"></i>
+            <p class="text-red-400">${error}</p>
+          </div>
+        `)
       },
     })
   }
@@ -323,35 +322,34 @@ $(document).ready(() => {
     let shippingInfoBlock = ""
     if (hasDigital && !hasPhysical) {
       shippingInfoBlock = `
-    <div class="bg-blue-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Order Type: Digital Only</h4>
-      <p class="text-sm text-blue-600">This order contains only digital products - no shipping required.</p>
-    </div>
-  `
+        <div class="bg-blue-900 bg-opacity-30 p-4 rounded-lg border border-blue-800">
+          <h4 class="font-semibold text-blue-300 mb-2">Order Type: Digital Only</h4>
+          <p class="text-sm text-blue-400">This order contains only digital products - no shipping required.</p>
+        </div>
+      `
     } else if (!hasDigital && hasPhysical) {
       shippingInfoBlock = `
-    <div class="bg-green-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Order Type: Physical Only</h4>
-      <p class="text-sm text-green-600">This order contains only physical products and will be shipped to your address.</p>
-      <p class="text-sm text-gray-600 mt-2">Shipping Address: ${order.user_shipping_address || "N/A"}</p>
-    </div>
-  `
+        <div class="bg-green-900 bg-opacity-30 p-4 rounded-lg border border-green-800">
+          <h4 class="font-semibold text-green-300 mb-2">Order Type: Physical Only</h4>
+          <p class="text-sm text-green-400">This order contains only physical products and will be shipped to your address.</p>
+          <p class="text-sm text-gray-400 mt-2">Shipping Address: ${order.user_shipping_address || "N/A"}</p>
+        </div>
+      `
     } else if (hasDigital && hasPhysical) {
       shippingInfoBlock = `
-    <div class="bg-yellow-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Order Type: Mixed (Digital & Physical)</h4>
-      <p class="text-sm text-yellow-800">This order contains both digital and physical products.</p>
-      <p class="text-sm text-gray-600 mt-2">Physical items will be shipped to: ${order.user_shipping_address || "N/A"}</p>
-    </div>
-  `
+        <div class="bg-yellow-900 bg-opacity-30 p-4 rounded-lg border border-yellow-800">
+          <h4 class="font-semibold text-yellow-300 mb-2">Order Type: Mixed (Digital & Physical)</h4>
+          <p class="text-sm text-yellow-400">This order contains both digital and physical products.</p>
+          <p class="text-sm text-gray-400 mt-2">Physical items will be shipped to: ${order.user_shipping_address || "N/A"}</p>
+        </div>
+      `
     } else {
-      // Fallback for empty order or unknown types
       shippingInfoBlock = `
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Order Type</h4>
-      <p class="text-sm text-gray-600">No specific product type information available.</p>
-    </div>
-  `
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+          <h4 class="font-semibold text-gray-300 mb-2">Order Type</h4>
+          <p class="text-sm text-gray-400">No specific product type information available.</p>
+        </div>
+      `
     }
 
     const itemsHtml = order.items
@@ -364,101 +362,101 @@ $(document).ready(() => {
 
         const productTypeBadge =
           item.product_type === "digital"
-            ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Digital</span>'
-            : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Physical</span>'
+            ? '<span class="bg-blue-800 text-blue-100 text-xs px-2 py-1 rounded">Digital</span>'
+            : '<span class="bg-green-800 text-green-100 text-xs px-2 py-1 rounded">Physical</span>'
 
         return `
-    <div class="flex items-center space-x-4 p-4 border-b border-gray-200">
-      <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded cursor-pointer product-item-image" data-product-id="${item.product_id}">
-      <div class="flex-1">
-        <h4 class="font-semibold cursor-pointer hover:text-blue-600 product-item-title" data-product-id="${item.product_id}">${item.title}</h4>
-        <div class="flex items-center space-x-2 mt-1">
-          <span class="text-sm text-gray-600">Qty: ${item.quantity}</span>
-          ${productTypeBadge}
+        <div class="flex items-center space-x-4 p-4 border-b border-gray-700">
+          <img src="${imageUrl}" alt="${item.title}" class="w-16 h-16 object-cover rounded cursor-pointer product-item-image" data-product-id="${item.product_id}">
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-100 cursor-pointer hover:text-blue-400 transition duration-300 product-item-title" data-product-id="${item.product_id}">${item.title}</h4>
+            <div class="flex items-center space-x-2 mt-1">
+              <span class="text-sm text-gray-400">Qty: ${item.quantity}</span>
+              ${productTypeBadge}
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-semibold text-gray-100">₱${price.toFixed(2)} each</p>
+            <p class="text-sm text-gray-400">Total: ₱${total.toFixed(2)}</p>
+          </div>
         </div>
-      </div>
-      <div class="text-right">
-        <p class="font-semibold">₱${price.toFixed(2)} each</p>
-        <p class="text-sm text-gray-600">Total: ₱${total.toFixed(2)}</p>
-      </div>
-    </div>
-  `
+      `
       })
       .join("")
 
     const totalAmount = order.items.reduce((sum, item) => sum + Number.parseFloat(item.price) * item.quantity, 0)
 
     $("#orderDetails").html(`
-  <div class="space-y-6">
-    <!-- Order Header -->
-    <div class="flex justify-between items-start">
-      <div>
-        <h3 class="text-xl font-bold text-gray-800">Order #${order.order_id}</h3>
-        <p class="text-gray-600">Placed on ${orderDate}</p>
-      </div>
-      <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">
-        ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-      </span>
-    </div>
-
-    <!-- Customer Info -->
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Customer Information</h4>
-      <p class="text-sm text-gray-600">${order.first_name || ""} ${order.last_name || ""}</p>
-      <p class="text-sm text-gray-600">${order.email}</p>
-    </div>
-
-    <!-- Shipping Info (Conditional) -->
-    ${shippingInfoBlock}
-
-    <!-- Order Timeline -->
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Order Timeline</h4>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between">
-          <span>Order Placed</span>
-          <span class="text-gray-600">${orderDate}</span>
+      <div class="space-y-6">
+        <!-- Order Header -->
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="text-xl font-bold text-gray-100">Order #${order.order_id}</h3>
+            <p class="text-gray-400">Placed on ${orderDate}</p>
+          </div>
+          <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">
+            ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          </span>
         </div>
-        ${
-          shippedDate
-            ? `
-          <div class="flex justify-between">
-            <span>Shipped</span>
-            <span class="text-gray-600">${shippedDate}</span>
-          </div>
-        `
-            : ""
-        }
-        ${
-          deliveredDate
-            ? `
-          <div class="flex justify-between">
-            <span>Delivered</span>
-            <span class="text-gray-600">${deliveredDate}</span>
-          </div>
-        `
-            : ""
-        }
-      </div>
-    </div>
 
-    <!-- Order Items -->
-    <div>
-      <h4 class="font-semibold mb-4">Order Items</h4>
-      <div class="border border-gray-200 rounded-lg">
-        ${itemsHtml}
-      </div>
-    </div>
+        <!-- Customer Info -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+          <h4 class="font-semibold text-gray-300 mb-2">Customer Information</h4>
+          <p class="text-sm text-gray-400">${order.first_name || ""} ${order.last_name || ""}</p>
+          <p class="text-sm text-gray-400">${order.email}</p>
+        </div>
 
-    <!-- Order Total -->
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <div class="flex justify-between items-center">
-        <span class="font-semibold">Total Amount</span>
-        <span class="text-xl font-bold text-blue-600">₱${totalAmount.toFixed(2)}</span>
+        <!-- Shipping Info (Conditional) -->
+        ${shippingInfoBlock}
+
+        <!-- Order Timeline -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+          <h4 class="font-semibold text-gray-300 mb-2">Order Timeline</h4>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-300">Order Placed</span>
+              <span class="text-gray-400">${orderDate}</span>
+            </div>
+            ${
+              shippedDate
+                ? `
+              <div class="flex justify-between">
+                <span class="text-gray-300">Shipped</span>
+                <span class="text-gray-400">${shippedDate}</span>
+              </div>
+            `
+                : ""
+            }
+            ${
+              deliveredDate
+                ? `
+              <div class="flex justify-between">
+                <span class="text-gray-300">Delivered</span>
+                <span class="text-gray-400">${deliveredDate}</span>
+              </div>
+            `
+                : ""
+            }
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div>
+          <h4 class="font-semibold text-gray-300 mb-4">Order Items</h4>
+          <div class="border border-gray-700 rounded-lg">
+            ${itemsHtml}
+          </div>
+        </div>
+
+        <!-- Order Total -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+          <div class="flex justify-between items-center">
+            <span class="font-semibold text-gray-300">Total Amount</span>
+            <span class="text-xl font-bold text-blue-400">₱${totalAmount.toFixed(2)}</span>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-`)
+    `)
 
     // Add click handlers for product items
     $(".product-item-image, .product-item-title").click(function () {

@@ -7,17 +7,59 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rubik&display=swap" rel="stylesheet">
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <style>
+        body {
+            background: linear-gradient(135deg, #030309, #1a1838, #24243e);
+            font-family: 'Rubik', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Orbitron', sans-serif;
+        }
         .product-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background-color: #1A1A1A;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(30, 144, 255, 0.2);
+            border: 1px solid #1E90FF;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 14px 35px rgba(0, 157, 255, 0.627);
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+        }
+        .product-content {
+            padding: 1.25rem;
+        }
+        .product-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #39FF14;
+            margin-bottom: 0.5rem;
+        }
+        .product-desc {
+            color: #ccc;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #FF6F00;
         }
         .search-dropdown {
             max-height: 300px;
@@ -25,7 +67,7 @@
         }
         .loading-spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
+            border-top: 3px solid #1E90FF;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -36,41 +78,42 @@
             100% { transform: rotate(360deg); }
         }
         .hero-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1E90FF 0%, #121212 100%);
         }
         .filter-chip {
             transition: all 0.3s ease;
         }
         .filter-chip.active {
-            background-color: #3b82f6;
+            background-color: #FF6F00;
             color: white;
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-[#121212] text-[#E0E0E0]">
     <!-- Navigation -->
     <div id="navbar-container"></div>
 
     <!-- Hero Section -->
     <section class="hero-bg text-white py-20">
         <div class="container mx-auto px-4 text-center">
-            <h1 class="text-5xl md:text-6xl font-bold mb-6">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">
                 Your Ultimate Gaming Destination
             </h1>
             <p class="text-xl md:text-2xl mb-8 opacity-90">
                 Discover amazing games across PC, Console, and Mobile platforms
             </p>
-            
+
             <!-- Search Bar -->
             <div class="max-w-2xl mx-auto relative">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Search for games, developers, or genres..." 
-                           class="w-full px-6 py-4 text-lg text-gray-800 rounded-full focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-lg">
-                    <button id="searchBtn" class="absolute right-2 top-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full transition duration-200">
+                    <input type="text" id="searchInput" placeholder="Search for games, developers, or genres..."
+                        class="w-full px-6 py-4 text-lg text-[#121212] bg-white rounded-full focus:outline-none focus:ring-4 focus:ring-[#1E90FF] shadow-lg">
+                    <button id="searchBtn"
+                        class="absolute right-2 top-2 bg-[#FF6F00] hover:bg-orange-700 text-white px-6 py-2 rounded-full transition duration-200">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
-                
+
                 <!-- Search Dropdown -->
                 <div id="searchDropdown" class="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-2 hidden search-dropdown z-50">
                     <div id="searchResults" class="py-2">
@@ -82,34 +125,34 @@
     </section>
 
     <!-- Filters Section -->
-    <section class="bg-white py-6 shadow-sm">
+    <section class="bg-[#1A1A1A] py-6 shadow-sm">
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-gray-700 font-medium">Filter by:</span>
-                    <button class="filter-chip active px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="all">
+                    <span class="text-[#E0E0E0] font-medium">Filter by:</span>
+                    <button class="filter-chip active px-4 py-2 rounded-full border border-gray-600 text-sm hover:bg-gray-700" data-filter="all">
                         All Games
                     </button>
-                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="platform" data-value="1">
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-600 text-sm hover:bg-gray-700" data-filter="platform" data-value="1">
                         Mobile
                     </button>
-                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="platform" data-value="2">
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-600 text-sm hover:bg-gray-700" data-filter="platform" data-value="2">
                         PC
                     </button>
-                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="platform" data-value="3">
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-600 text-sm hover:bg-gray-700" data-filter="platform" data-value="3">
                         Console
                     </button>
-                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="type" data-value="1">
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-600 text-sm hover:bg-gray-700" data-filter="type" data-value="1">
                         Digital
                     </button>
-                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-300 text-sm hover:bg-gray-100" data-filter="type" data-value="2">
+                    <button class="filter-chip px-4 py-2 rounded-full border border-gray-600 text-sm hover:bg-gray-700" data-filter="type" data-value="2">
                         Physical
                     </button>
                 </div>
-                
+
                 <div class="flex items-center gap-2">
-                    <span class="text-gray-700 text-sm">Sort by:</span>
-                    <select id="sortSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="text-sm text-gray-300">Sort by:</span>
+                    <select id="sortSelect" class="px-3 py-2 border border-gray-600 bg-[#1E1E1E] text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E90FF]">
                         <option value="newest">Newest First</option>
                         <option value="oldest">Oldest First</option>
                         <option value="price_low">Price: Low to High</option>
@@ -123,56 +166,53 @@
     </section>
 
     <!-- Products Section -->
-    <section id="products" class="py-12">
+    <section id="products" class="py-16">
         <div class="container mx-auto px-4">
             <div class="text-center mb-12">
-                <h2 class="text-4xl font-bold text-gray-800 mb-4">Featured Games</h2>
-                <p class="text-xl text-gray-600">Discover the latest and greatest games</p>
+                <h2 class="text-4xl font-bold mb-4">Featured Games</h2>
+                <p class="text-xl text-gray-400">Discover the latest and greatest games</p>
             </div>
-            
-            <!-- Products Grid -->
+
             <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 <!-- Products will be loaded here -->
             </div>
-            
-            <!-- Loading Indicator -->
+
             <div id="loadingIndicator" class="text-center py-8 hidden">
                 <div class="loading-spinner mx-auto mb-4"></div>
-                <p class="text-gray-600">Loading more games...</p>
+                <p class="text-gray-400">Loading more games...</p>
             </div>
-            
-            <!-- No More Products -->
+
             <div id="noMoreProducts" class="text-center py-8 hidden">
-                <p class="text-gray-600">You've seen all available games!</p>
+                <p class="text-gray-400">You've seen all available games!</p>
             </div>
         </div>
     </section>
 
     <!-- About Section -->
-    <section id="about" class="bg-gray-100 py-16">
+    <section id="about" class="bg-[#1A1A1A] py-16">
         <div class="container mx-auto px-4">
             <div class="max-w-4xl mx-auto text-center">
-                <h2 class="text-4xl font-bold text-gray-800 mb-8">About BITS & BYTES</h2>
-                <p class="text-lg text-gray-600 mb-8">
-                    BITS & BYTES is your ultimate destination for video games across all platforms. We specialize in offering 
-                    a wide range of games including popular AAA titles, indie gems, and classic favorites. Whether you're 
+                <h2 class="text-4xl font-bold mb-8">About BITS & BYTES</h2>
+                <p class="text-lg text-gray-400 mb-8">
+                    BITS & BYTES is your ultimate destination for video games across all platforms. We specialize in offering
+                    a wide range of games including popular AAA titles, indie gems, and classic favorites. Whether you're
                     gaming on PC, console, or mobile, we have something for every type of gamer.
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-white p-6 rounded-lg shadow-md">
-                        <i class="fas fa-gamepad text-4xl text-blue-500 mb-4"></i>
+                    <div class="bg-[#1E1E1E] p-6 rounded-lg shadow-lg">
+                        <i class="fas fa-gamepad text-4xl text-[#39FF14] mb-4"></i>
                         <h3 class="text-xl font-semibold mb-2">Wide Selection</h3>
-                        <p class="text-gray-600">Thousands of games across all platforms and genres</p>
+                        <p class="text-gray-400">Thousands of games across all platforms and genres</p>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-md">
-                        <i class="fas fa-shield-alt text-4xl text-green-500 mb-4"></i>
+                    <div class="bg-[#1E1E1E] p-6 rounded-lg shadow-lg">
+                        <i class="fas fa-shield-alt text-4xl text-[#39FF14] mb-4"></i>
                         <h3 class="text-xl font-semibold mb-2">Secure Transactions</h3>
-                        <p class="text-gray-600">Safe and secure payment processing for all purchases</p>
+                        <p class="text-gray-400">Safe and secure payment processing for all purchases</p>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-md">
-                        <i class="fas fa-shipping-fast text-4xl text-purple-500 mb-4"></i>
+                    <div class="bg-[#1E1E1E] p-6 rounded-lg shadow-lg">
+                        <i class="fas fa-shipping-fast text-4xl text-[#39FF14] mb-4"></i>
                         <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
-                        <p class="text-gray-600">Quick digital downloads and fast physical shipping</p>
+                        <p class="text-gray-400">Quick digital downloads and fast physical shipping</p>
                     </div>
                 </div>
             </div>
@@ -180,7 +220,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-12">
+    <footer class="bg-[#121212] text-[#E0E0E0] py-12">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
@@ -192,17 +232,17 @@
                 <div>
                     <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Home</a></li>
-                        <li><a href="#products" class="text-gray-400 hover:text-white transition duration-200">Games</a></li>
-                        <li><a href="#about" class="text-gray-400 hover:text-white transition duration-200">About</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-[#1E90FF] transition duration-200">Home</a></li>
+                        <li><a href="#products" class="text-gray-400 hover:text-[#1E90FF] transition duration-200">Games</a></li>
+                        <li><a href="#about" class="text-gray-400 hover:text-[#1E90FF] transition duration-200">About</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-lg font-semibold mb-4">Platforms</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">PC Games</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Console Games</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-200">Mobile Games</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-[#1E90FF] transition duration-200">PC Games</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-[#1E90FF] transition duration-200">Console Games</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-[#1E90FF] transition duration-200">Mobile Games</a></li>
                     </ul>
                 </div>
                 <div>
@@ -225,8 +265,7 @@
 
     <script src="js/home.js"></script>
     <script>
-        // Load navbar
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#navbar-container').load('navbar.html');
         });
     </script>

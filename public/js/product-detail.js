@@ -574,7 +574,7 @@ $(document).ready(() => {
 
     const modalHtml = `
       <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="modal-content bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="modal-content bg-black rounded-lg p-6 w-full max-w-md mx-4">
           <div class="flex justify-between items-center mb-4">
             <h3 id="reviewModalTitle" class="text-lg font-semibold">${modalTitle}</h3>
             <button class="close-modal text-gray-400 hover:text-gray-600">
@@ -589,7 +589,7 @@ $(document).ready(() => {
             <input type="hidden" id="selectedRating" name="rating" value="${isEdit ? existingReview.rating : "5"}">
             
             <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Rating *</label>
+              <label class="block text-sm font-medium text-white-700 mb-2">Rating *</label>
               <div class="flex space-x-1">
                 ${[1, 2, 3, 4, 5]
                   .map(
@@ -606,7 +606,7 @@ $(document).ready(() => {
             </div>
             
             <div class="mb-4">
-              <label for="reviewTitle" class="block text-sm font-medium text-gray-700 mb-2">Review Title</label>
+              <label for="reviewTitle" class="block text-sm font-medium text-white-700 mb-2">Review Title</label>
               <input type="text" id="reviewTitle" name="review_title" 
                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                      placeholder="Brief summary of your review"
@@ -614,7 +614,7 @@ $(document).ready(() => {
             </div>
             
             <div class="mb-6">
-              <label for="reviewText" class="block text-sm font-medium text-gray-700 mb-2">Review</label>
+              <label for="reviewText" class="block text-sm font-medium text-white-700 mb-2">Review</label>
               <textarea id="reviewText" name="review_text" rows="4"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Share your thoughts about this game...">${isEdit && existingReview.review_text ? existingReview.review_text : ""}</textarea>
