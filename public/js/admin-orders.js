@@ -278,7 +278,7 @@ $(document).ready(() => {
             ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Digital</span>'
             : '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Physical</span>'
         const imageUrl = item.image_url
-          ? `${window.API_BASE_URL.replace("/api", "")}/${item.image_url}`
+          ? `${item.image_url}`
           : "/placeholder.svg"
 
         return `

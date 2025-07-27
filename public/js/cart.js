@@ -59,6 +59,9 @@ $(document).ready(() => {
         $(this).addClass("hidden")
       }
     })
+
+    // Ensure login modal has proper z-index
+    $("#loginModal").css("z-index", "9999")
   }
 
   function loadCart() {
@@ -79,16 +82,28 @@ $(document).ready(() => {
 
     for (const item of cart) {
       try {
-        // Fetch current product data to get latest stock
+        // Fetch current product data to get latest stock - with authorization
+        const token = localStorage.getItem("token")
+        const headers = {}
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`
+        }
+
         const response = await $.ajax({
           url: `${API_BASE_URL}/products/${item.product_id}`,
           method: "GET",
+          headers: headers,
         })
 
         if (response.success) {
           const product = response.result
           const isPhysical = product.product_type === "physical"
-          const currentStock = Number.parseInt(product.quantity) || 0
+          const currentStock = isPhysical ? Number.parseInt(product.quantity) || 0 : 999999
+
+          console.log(
+            `Product ${item.product_id}: type=${product.product_type}, stock=${currentStock}, quantity from API=${product.quantity}`,
+          )
 
           if (isPhysical && currentStock === 0) {
             // Remove out of stock items
@@ -104,7 +119,7 @@ $(document).ready(() => {
             hasChanges = true
             showError(`${item.title} quantity has been adjusted to available stock (${currentStock}).`)
           } else {
-            // Update stock info
+            // Update stock info - ensure stock is stored as number
             item.stock = currentStock
             item.product_type = product.product_type
           }
@@ -117,7 +132,13 @@ $(document).ready(() => {
         }
       } catch (error) {
         console.error(`Error validating product ${item.product_id}:`, error)
-        // Keep item in cart if validation fails
+        // Keep item in cart if validation fails, but set reasonable defaults
+        if (!item.hasOwnProperty("stock")) {
+          item.stock = item.product_type === "physical" ? 1 : 999999
+        }
+        if (!item.hasOwnProperty("product_type")) {
+          item.product_type = "physical" // Default assumption
+        }
         updatedCart.push(item)
       }
     }
@@ -155,9 +176,7 @@ $(document).ready(() => {
         const isPhysical = item.product_type === "physical"
         const stock = Number.parseInt(item.stock) || 0
 
-        const imageUrl = item.image
-          ? `${item.image}`
-          : "/placeholder.svg?height=100&width=100"
+        const imageUrl = item.image ? `${item.image}` : "/placeholder.svg?height=100&width=100"
 
         return `
 <div class="bg-gray-800 rounded-lg shadow-md p-4 cart-item" data-product-id="${item.product_id}">
@@ -168,7 +187,7 @@ $(document).ready(() => {
   <h3 class="font-semibold text-lg text-gray-100">${item.title}</h3>
   <p class="text-gray-300 text-sm">${item.platform_type || "Unknown Platform"}</p>
   <p class="text-blue-400 font-semibold">${priceDisplay}</p>
-  ${isPhysical ? `<p class="text-xs text-gray-400">Stock: ${stock} available</p>` : ""}
+  ${isPhysical ? `<p class="text-xs text-gray-400">Stock: ${stock} available</p>` : `<p class="text-xs text-gray-400">Digital Product</p>`}
 </div>
             
            <div class="flex items-center space-x-3">
@@ -176,8 +195,9 @@ $(document).ready(() => {
     <i class="fas fa-minus text-sm text-gray-200"></i>
   </button>
   <span class="quantity font-semibold text-lg w-8 text-center text-gray-100">${item.quantity}</span>
-  <button class="quantity-btn plus bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center ${isPhysical && item.quantity >= stock ? "opacity-50 cursor-not-allowed" : ""
-    }" data-product-id="${item.product_id}" ${isPhysical && item.quantity >= stock ? "disabled" : ""}>
+  <button class="quantity-btn plus bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full flex items-center justify-center ${
+    isPhysical && item.quantity >= stock ? "opacity-50 cursor-not-allowed" : ""
+  }" data-product-id="${item.product_id}" ${isPhysical && item.quantity >= stock ? "disabled" : ""}>
     <i class="fas fa-plus text-sm text-gray-200"></i>
   </button>
 </div>
@@ -211,32 +231,65 @@ $(document).ready(() => {
     })
   }
 
-  function updateQuantity(productId, action) {
+  async function updateQuantity(productId, action) {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]")
     const itemIndex = cart.findIndex((item) => item.product_id === productId)
 
     if (itemIndex === -1) return
 
     const item = cart[itemIndex]
-    const isPhysical = item.product_type === "physical"
-    const stock = Number.parseInt(item.stock) || 0
 
-    if (action === "increase") {
-      if (isPhysical && item.quantity >= stock) {
-        showError(`Only ${stock} items available in stock`)
-        return
+    // Fetch fresh stock data before updating quantity
+    try {
+      const token = localStorage.getItem("token")
+      const headers = {}
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
       }
-      cart[itemIndex].quantity += 1
-    } else if (action === "decrease") {
-      if (cart[itemIndex].quantity > 1) {
-        cart[itemIndex].quantity -= 1
+
+      const response = await $.ajax({
+        url: `${API_BASE_URL}/products/${productId}`,
+        method: "GET",
+        headers: headers,
+      })
+
+      if (response.success) {
+        const product = response.result
+        const isPhysical = product.product_type === "physical"
+        const currentStock = isPhysical ? Number.parseInt(product.quantity) || 0 : 999999
+
+        console.log(
+          `Fresh stock check for product ${productId}: type=${product.product_type}, stock=${currentStock}, current quantity=${item.quantity}`,
+        )
+
+        // Update the item with fresh data
+        item.stock = currentStock
+        item.product_type = product.product_type
+
+        if (action === "increase") {
+          if (isPhysical && item.quantity >= currentStock) {
+            showError(`Only ${currentStock} items available in stock`)
+            return
+          }
+          cart[itemIndex].quantity += 1
+        } else if (action === "decrease") {
+          if (cart[itemIndex].quantity > 1) {
+            cart[itemIndex].quantity -= 1
+          } else {
+            cart.splice(itemIndex, 1)
+          }
+        }
+
+        localStorage.setItem("cart", JSON.stringify(cart))
+        loadCart()
       } else {
-        cart.splice(itemIndex, 1)
+        showError("Unable to verify stock levels. Please try again.")
       }
+    } catch (error) {
+      console.error(`Error fetching fresh stock for product ${productId}:`, error)
+      showError("Unable to verify stock levels. Please try again.")
     }
-
-    localStorage.setItem("cart", JSON.stringify(cart))
-    loadCart()
   }
 
   function removeItem(productId) {
@@ -309,8 +362,14 @@ $(document).ready(() => {
   }
 
   async function checkout() {
+    // Ensure login modal is hidden first
+    $("#loginModal").addClass("hidden")
+
     if (!currentUser) {
-      $("#loginModal").removeClass("hidden")
+      // Small delay to ensure any existing modals are closed
+      setTimeout(() => {
+        $("#loginModal").removeClass("hidden")
+      }, 100)
       return
     }
 
@@ -483,7 +542,7 @@ $(document).ready(() => {
             console.error("Error saving shipping address:", xhr)
             showError(
               xhr.responseJSON?.message ||
-              "Error saving shipping address. Order will proceed with the entered address but it won't be saved to your profile.",
+                "Error saving shipping address. Order will proceed with the entered address but it won't be saved to your profile.",
             )
             // Do not return, allow order to proceed with the entered address
           }
@@ -611,7 +670,7 @@ $(document).ready(() => {
     }).then((result) => {
       if (result.isConfirmed) {
         localStorage.removeItem("token")
-        localStorage.removeItem("user") // Corrected from removeUser to removeItem
+        localStorage.removeItem("user")
         currentUser = null
         showUnauthenticatedState()
         Swal.fire({

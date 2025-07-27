@@ -489,7 +489,7 @@ $(document).ready(() => {
           <div class="flex justify-between items-start mb-2">
             <div>
               <div class="flex items-center space-x-2 mb-1">
-                <span class="font-semibold">${review.first_name} ${review.last_name}</span>
+                <span class="font-semibold text-black">${review.first_name} ${review.last_name}</span>
                 <div class="flex items-center space-x-1">
                   ${starsHtml}
                 </div>
@@ -608,7 +608,7 @@ $(document).ready(() => {
             <div class="mb-4">
               <label for="reviewTitle" class="block text-sm font-medium text-white-700 mb-2">Review Title</label>
               <input type="text" id="reviewTitle" name="review_title" 
-                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     class="w-full px-3 py-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                      placeholder="Brief summary of your review"
                      value="${isEdit && existingReview.review_title ? existingReview.review_title : ""}">
             </div>
@@ -616,7 +616,7 @@ $(document).ready(() => {
             <div class="mb-6">
               <label for="reviewText" class="block text-sm font-medium text-white-700 mb-2">Review</label>
               <textarea id="reviewText" name="review_text" rows="4"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Share your thoughts about this game...">${isEdit && existingReview.review_text ? existingReview.review_text : ""}</textarea>
             </div>
             
